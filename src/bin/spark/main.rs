@@ -1,6 +1,7 @@
 use std::env;
-use error::SparkError;
-mod error;
+mod errors;
+use errors::SparkError;
+use crate::errors::cmd;
 mod cli;
 mod commands;
 fn main(){
@@ -18,7 +19,7 @@ fn run() -> Result<(), SparkError> {
         commands::help::show_help();
         return Ok(());
     }
-    let _efi_bin_path = cli::get_efi_bin_path()?;
+    // let _efi_bin_path = cli::get_efi_bin_path()?;
     // Converts the second argument into string and starts matching
     match args[1].as_str() {
         "install" => commands::install::install_spark()?,
@@ -27,7 +28,7 @@ fn run() -> Result<(), SparkError> {
         "clean" => commands::clean::clean_entries()?,
         "help" => commands::help::show_help(),
         "test" => commands::help::show_help(), // This option is for WIP options. Do not execute.
-        _ => return Err(SparkError::InvalidArgument(args[1].to_string()))
+        _ => return Err(cmd::Error::InvalidArgument(args[1].to_string()))?
     }
     Ok(())
 }
