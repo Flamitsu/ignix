@@ -17,7 +17,7 @@ impl std::fmt::Display for SparkError {
 }
 
 impl std::error::Error for SparkError {}
-// Conversions from a type of error to another (mantains compatibility)
+// Conversions from a type of error to another (keeps compatibility)
 impl From<cmd::Error> for SparkError {
     fn from(err: cmd::Error) -> Self {
         Self::Cmd(err)
