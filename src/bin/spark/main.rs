@@ -1,28 +1,33 @@
-use std::env;
 mod errors;
-use errors::SparkError;
-use crate::errors::cmd;
 mod cli;
 mod commands;
+use std::{env, path::Path};
+use errors::SparkError;
+use crate::errors::cmd;
 fn main(){
     // This if runs the actual program, if there is any error, it will exit it.
-    if let Err(e) = run(){
-        eprintln!("ERROR: {}",e);
+    if let Err(error) = run(){
+        eprintln!("{}",error);
         std::process::exit(1);
     }
 }
 /// The run function is the one that runs the program. If there is some problem it will tell it to the main function and the main function will exit the program with a message.
 fn run() -> Result<(), SparkError> {
     let args: Vec<String> = env::args().collect();
+    
     // If there is not any argument, it will show the help.
     if args.len() < 2{
         commands::help::show_help();
         return Ok(());
     }
-    // let _efi_bin_path = cli::get_efi_bin_path()?;
+    
+    let skip_confirmation: bool = cli::skip_user_confirmation(&args);
     // Converts the second argument into string and starts matching
     match args[1].as_str() {
-        "install" => commands::install::install_spark()?,
+        "install" => {
+            let efi_bin_path: &Path = cli::get_efi_bin_path(&args)?;
+            commands::install::install_spark(efi_bin_path, skip_confirmation)?
+        },
         "remove" => commands::remove::remove_spark_installation()?,
         "update" => commands::update::update_entries()?,
         "clean" => commands::clean::clean_entries()?,

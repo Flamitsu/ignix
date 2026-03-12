@@ -4,14 +4,14 @@ pub mod nvram;
 #[derive(Debug)]
 pub enum SparkError {
     Cmd(cmd::Error),
-    NVRAM(nvram::Error),
+    Nvram(nvram::Error),
 }
 
 impl std::fmt::Display for SparkError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Cmd(e) => write!(f, "{}", e),
-            Self::NVRAM(e) => write!(f, "NVRAM: {}", e),
+            Self::Nvram(e) => write!(f, "NVRAM: {}", e),
         }
     }
 }
@@ -26,6 +26,6 @@ impl From<cmd::Error> for SparkError {
 
 impl From<nvram::Error> for SparkError {
     fn from(err: nvram::Error) -> Self {
-        Self::NVRAM(err)
+        Self::Nvram(err)
     }
 }
