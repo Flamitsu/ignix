@@ -59,11 +59,11 @@ Clone the repository and compile:
 ```bash
 git clone https://github.com/Flamitsu/spark
 cd spark
-cargo build-uefi # This command builds the binary for the .efi bin.
-cargo build-normal # This command builds the general binary.
+cargo loader # This command builds the binary for the .efi bin.
+cargo cli # This command builds the general binary.
 ```
-However, `cargo build-uefi` may produce an error. If that happens, it may be that you don't have the toolchain installed. 
-To proceed execute: `rustup target add x86_64-unknown-uefi` and re-run: `cargo build-uefi` command.
+However, `cargo loader` may produce an error. If that happens, it may be that you don't have the toolchain installed. 
+To proceed execute: `rustup target add x86_64-unknown-uefi` and re-run: `cargo loader` command.
 ## Execution
 ### Disclaimer
 > This code is still work in progress and it is not meant to be executed in the host machine in any way. You should have a QEMU snapshot (or the software you are using to virtualize an environment) and then execute the software.

@@ -1,0 +1,5 @@
+[alias]
+cli = "build -p spark-cli"
+loader = "build -p spark-loader --target x86_64-unknown-uefi"
+[target.x86_64-unknown-uefi]
+linker = "lld"
