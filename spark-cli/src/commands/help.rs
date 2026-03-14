@@ -9,6 +9,8 @@ USAGE:
 COMMANDS:
     install     Installs spark binary into the EFI System Partition
     remove      Removes spark and its configuration from the ESP
+    list        List all the current entries in the system
+    check       Check the current configured entries and their integrity
     update      Synchronizes kernel entries and updates boot configuration
     clean       Removes invalid boot entries
     help        Prints this help information

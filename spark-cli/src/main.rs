@@ -1,6 +1,7 @@
-mod errors;
+mod boot;
 mod cli;
 mod commands;
+mod errors;
 use std::env;
 use errors::SparkError;
 use crate::errors::cmd;

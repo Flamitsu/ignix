@@ -14,7 +14,7 @@ pub fn get_efi_bin_path(arguments: &[String]) -> Result<&Path, cmd::Error>{
         // Defines the route and checks if it exists or ends with "efi".
         let route = Path::new(&argument[EFI_BIN_PATH_FLAG.len()..]);
         if !route.ends_with(".efi") || !route.exists(){
-            eprintln!("The route '{}' is not valid. Check if the binary exists.",route.display());
+            eprintln!("The route '{}' is not a valid EFI binary. Check if the binary exists.",route.display());
             eprintln!("Fallback to the default '{}' path",DEFAULT_EFI_BIN_PATH);
             break;
         }
