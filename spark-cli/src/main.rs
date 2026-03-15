@@ -5,7 +5,7 @@ mod errors;
 use std::env;
 use errors::SparkError;
 use crate::errors::cmd;
-
+use boot::esp::Operations;
 fn main(){
     // This if runs the actual program, if there is any error, it will exit it.
     if let Err(error) = run(){
@@ -35,7 +35,7 @@ fn run() -> Result<(), SparkError> {
         "list" => todo!("This command should list all the aviable kernels configured"),
         "clean" => commands::clean::clean_entries()?,
         "help" => commands::help::show_help(),
-        "test" => commands::help::show_help(), // This option is for WIP options. Do not execute.
+        "test" => boot::esp::manage_esp_structure(Operations::Create)?, // This option is for WIP options. Do not execute.
         _ => return Err(cmd::Error::InvalidArgument(args[1].to_string()))?
     }
     Ok(())
