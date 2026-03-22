@@ -1,5 +1,5 @@
 [package]
-name = "spark-loader"
+name = "ignix-loader"
 version.workspace = true
 edition.workspace = true
 description = "Boot loader core made purely in Rust to ensure stability and speed."

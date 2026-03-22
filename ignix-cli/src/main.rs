@@ -2,6 +2,7 @@ mod boot;
 mod cli;
 mod commands;
 mod errors;
+mod config; // Here is where all the consts resides centralized
 use std::env;
 use crate::errors::IgnixError;
 use crate::errors::cmd;
@@ -27,8 +28,8 @@ fn run() -> Result<(), IgnixError> {
     
     // Converts the second argument into string and starts matching
     match args[1].as_str() {
-        "install" => commands::install::install_spark(&args, force)?,
-        "remove" => commands::remove::remove_spark_installation(force)?,
+        "install" => commands::install::install_ignix(&args, force)?,
+        "remove" => commands::remove::remove_ignix_installation(force)?,
         "update" => commands::update::update_entries()?,
         "check" => todo!("This command should check the configs and the kernels"),
         "list" => todo!("This command should list all the aviable kernels configured"),

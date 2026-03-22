@@ -25,7 +25,7 @@ fn main() -> Status {
     configuration::boot_entries();
     // Function to load the kernel from the ESP partition
     kernel::load_kernel();
-    println!("---- Spark bootmanager ----");
+    println!("---- Ignix bootmanager ----");
     
     // If the input had an error reading the keyboard event, then it will print which error.
     if let Err(e) = input::read_keyboard_events() { // Invokes the function

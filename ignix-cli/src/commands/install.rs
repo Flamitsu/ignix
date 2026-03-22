@@ -3,7 +3,7 @@ use crate::cli;
 use crate::errors::cmd;
 use crate::IgnixError;
 /// This function should install the ignixx64.efi binary in the current ESP partition.
-pub fn install_spark(args: &[String], force_install: bool) -> Result<(), IgnixError>{
+pub fn install_ignix(args: &[String], force_install: bool) -> Result<(), IgnixError>{
     let _efi_bin_path: &Path = cli::get_efi_bin_path(args)?;
     
     // If the user did not used the flags '-y' or '--yes' in the execution, ask confirmation prompt

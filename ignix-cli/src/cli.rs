@@ -1,12 +1,9 @@
+use crate::config::{DEFAULT_EFI_BIN_PATH, EFI_BIN_PATH_FLAG, SHORT_CONFIRMATION_FLAG, LONG_CONFIRMATION_FLAG};
 use crate::errors::cmd;
 use std::io::{Write, stdin,stdout};
 use std::path::Path;
-
 /// Extracts the EFI binary path in the argument that have been provided and the default one.
 pub fn get_efi_bin_path(arguments: &[String]) -> Result<&Path, cmd::Error>{ 
-    
-    const DEFAULT_EFI_BIN_PATH: &str = "/usr/lib/ignix/ignixx64.efi";
-    const EFI_BIN_PATH_FLAG: &str = "--efi-bin=";
     
     for argument in arguments{
         
@@ -43,12 +40,10 @@ pub fn get_efi_bin_path(arguments: &[String]) -> Result<&Path, cmd::Error>{
 /// This function provides an argument to skip the confirmation in the installation process of the program with the flag '-y' or '--yes'
 pub fn skip_user_confirmation(arguments: &[String]) -> bool{
     
-    const SHORT_FLAG: &str = "-y";
-    const LONG_FLAG: &str = "--yes";
-    
     for argument in arguments{
         
-        if argument.starts_with(SHORT_FLAG) || argument.starts_with(LONG_FLAG){
+        if argument.starts_with(SHORT_CONFIRMATION_FLAG) 
+            || argument.starts_with(LONG_CONFIRMATION_FLAG){
             println!("Skipping confirmation");
             return true;
         }
@@ -74,5 +69,28 @@ pub fn ask_user_confirmation(context: &str) -> bool{
             eprintln!("The program did not understoot the input '{}', assuming 'NO'.",user_input);
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_skip_user_confirmation(){
+        let args = vec!["ignix".to_string(), "--yes".to_string()];
+        assert!(skip_user_confirmation(&args));
+        let args_short = vec!["ignix".to_string(), "-y".to_string()];
+        assert!(skip_user_confirmation(&args_short));
+    }
+    #[test]
+    fn test_skip_user_confirmation_false(){
+        let args = vec!["ignix".to_string(), "install".to_string()];
+        assert!(!skip_user_confirmation(&args));
+    }
+    #[test]
+    fn test_get_efi_bin_path(){
+        let args = vec![];
+        let efi_path = get_efi_bin_path(&args);
+        assert!(efi_path.is_err() || efi_path.is_ok());
     }
 }

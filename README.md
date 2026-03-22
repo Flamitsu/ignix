@@ -1,6 +1,6 @@
-# Spark
+# Ignix
 ## Pre alpha stage
-**BIG DISCLAIMER** - **Spark** is a **PRE ALPHA STAGE boot manager** written in Rust, **IT IS NOT MEANT TO BE USED IN PRODUCTION AT THIS MOMENT**.
+**BIG DISCLAIMER** - **Ignix** is a **PRE ALPHA STAGE boot manager** written in Rust, **IT IS NOT MEANT TO BE USED IN PRODUCTION AT THIS MOMENT**.
 ## Table of contents
 - [Description](#description)
 - [Features](#features)
@@ -12,14 +12,14 @@
 - [License](#license)
 - [Credits](#credits)
 ## Description
-**Spark** is a **boot manager** written in Rust that aims for **speed** and **stability** during the **boot** process.
+**Ignix** is a **boot manager** written in Rust that aims for **speed** and **stability** during the **boot** process.
 ## Features
 - Minimalist
 - Fast
 - Stable
 - Maintainable and modular
 ## TODO
-### TODO (spark-cli):
+### TODO (ignix-cli):
 - [X] ESP automatic detection
 
 - [X] Installation process and removal
@@ -33,7 +33,7 @@
 - [ ] Generating operating system entries
 
 - [ ] Supporting custom signatures of the binary
-### TODO (spark-loader):
+### TODO (ignix-loader):
 - [X] Detect user input
 
 - [ ] Booting any kernel with the initramfs
@@ -57,8 +57,8 @@ Make sure you have the [rustup](https://rust-lang.org/tools/install/) toolchain 
 
 Clone the repository and compile: 
 ```bash
-git clone https://github.com/Flamitsu/spark
-cd spark
+git clone https://github.com/Flamitsu/ignix
+cd ignix
 cargo loader # This command builds the binary for the .efi bin.
 cargo cli # This command builds the general binary.
 ```
@@ -77,13 +77,13 @@ cd scripts/
 ./only-loader.sh
 ```
 
-To execute the spark-cli or spark-loader binary as a whole, it is **extremely recommended** to be inside a **virtual machine**.
+To execute the ignix-cli or ignix-loader binary as a whole, it is **extremely recommended** to be inside a **virtual machine**.
 
 After the installation process is complete, you need to run the following command: `./tyr-virtual-machine.sh`, and it should be only executed inside a virtual machine. 
 
 ## Contribution
-To contribute to this project you should look at the [contributing guidelines](https://github.com/Flamitsu/spark/blob/main/CONTRIBUTING.md) first.
+To contribute to this project you should look at the [contributing guidelines](https://github.com/Flamitsu/ignix/blob/main/CONTRIBUTING.md) first.
 ## License
-This project is licensed under the [MIT](https://github.com/Flamitsu/spark/blob/main/LICENSE-MIT) license or under the [Apache 2.0 license](https://github.com/Flamitsu/spark/blob/main/LICENSE-APACHE)
+This project is licensed under the [MIT](https://github.com/Flamitsu/ignix/blob/main/LICENSE-MIT) license or under the [Apache 2.0 license](https://github.com/Flamitsu/ignix/blob/main/LICENSE-APACHE)
 ## Credits
 - [uefi](https://github.com/rust-osdev/uefi-rs/tree/main) - Crate to interact with the UEFI in Rust.

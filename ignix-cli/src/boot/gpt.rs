@@ -4,10 +4,9 @@ use std::fs::read_dir;
 use std::fs::File;
 use std::io::{Seek,SeekFrom,Read};
 use crate::errors::cmd;
+use crate::config::{BLOCK_DEV_ROUTE, LOGICAL_BLOCK};
 /// Returns the actual ESP partition, so the esp.rs module can discover its path.
 pub fn compatible_esp_partition() -> Result<String, IgnixError>{
-    const BLOCK_DEV_ROUTE: &str = "/sys/block/";
-    const LOGICAL_BLOCK: &str = "/queue/logical_block_size";
     let aviable_disks = get_disks(BLOCK_DEV_ROUTE)?;
 
     // Iterates the aviable disks in the system (plugged in)

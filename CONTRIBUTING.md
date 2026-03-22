@@ -1,4 +1,4 @@
-Steps for contributing to spark.
+Steps for contributing to ignix.
 Requirements:
 1. Install QEMU and configure it
 2. Install the toolchain with rustup
