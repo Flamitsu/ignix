@@ -18,7 +18,10 @@ COMMANDS:
 OPTIONS:
     -y, --yes               Skip all interactive confirmation prompts
     --efi-bin=[PATH]        Manual path to the EFI binary (default: auto-detect)
-
+    --no-nvram              Skips all the logic to write a NVRAM variable.
+    --allow-virtual         Allows to install the .efi bin in a virtual device.
+    --install-route=[PATH]  Skips the auto-detect of the ESP partition and install the .efi there
+    --removable             Allows to install the .efi bin to be installed in a removable device. 
 EXAMPLES:
     ignix install --yes
     ignix install --efi-bin=/usr/lib/ignix/ignixx64.efi
