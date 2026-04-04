@@ -39,3 +39,15 @@ pub fn calculate_crc32(data: &[u8]) -> u32{
     // Returns the NOT value of the final crc (0x04C11DB7 polynomial)
     !crc
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_calculate_crc32(){
+        let input = b"123456789";
+        let crc32_result = 0xCBF43926;
+        let crc32 = calculate_crc32(input);
+        assert_eq!(crc32,crc32_result, "CRC32 checksum function does not match the waited value.");
+    }
+}

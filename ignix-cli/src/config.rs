@@ -1,4 +1,8 @@
 // This is the archive where all the config of the program resides. 
+
+// GPT specification and Kernel sysfs interface.
+// mountpoints storage with the Kernel interface.
+pub const MOUNTPOINTS: &str = "/proc/mounts";
 /* Those strings are searched in the uevent file in the sysfs interface
  * to match the gpt.rs UUID.*/ 
 pub const DEVNAME: &str = "DEVNAME=";

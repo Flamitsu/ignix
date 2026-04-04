@@ -1,5 +1,4 @@
 use crate::boot::disk;
-use crate::boot::gpt;
 use crate::boot::esp::Operations;
 use crate::boot::esp::manage_esp_structure;
 use crate::cli;
@@ -17,11 +16,11 @@ pub fn install_ignix(options: cli::InstallOptions) -> Result<(), IgnixError>{
         route.to_string_lossy().to_string()
     } else {
         let disks = disk::get_system_disks(LOGICAL_BLOCK, &options)?;
-        gpt::compatible_esp_partition(disks)?
+        disk::compatible_esp_partition(disks)?
     };
  
     // Manages the structure detecting the disks and creating the basic structure
-    manage_esp_structure(Operations::Create, &esp_target, &options.efi_bin)?;
+    manage_esp_structure(Operations::Create, &esp_target, &options)?;
 
     Ok(())
 }
