@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Ignix.  If not, see <https://www.gnu.org/licenses/>.
  */
-use crate::uefi::header::HeaderTable;
+use crate::uefi::{header::HeaderTable, types::SimpleTextOutputProtocol};
 use core::ffi::c_void;
 // Code that is with '*mut c_void' is for structure normally. Don't even think of trying them!
 #[allow(unused)]
@@ -33,7 +33,7 @@ pub struct SystemTable{
     // structure
     console_out_handle: *mut c_void,
     // structure
-    con_out: *mut c_void,
+    pub con_out: *mut SimpleTextOutputProtocol,
     // structure
     standard_error_handle: *mut c_void,
     // structure

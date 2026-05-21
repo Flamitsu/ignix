@@ -1,3 +1,5 @@
+use core::ffi::c_void;
+
 /*
  * Copyright (C) 2026 Flamitsu
  *
@@ -19,4 +21,10 @@
 pub struct Status(pub usize);
 impl Status {
     pub const SUCCESS: Self = Status(0);
+}
+#[allow(unused)]
+pub struct SimpleTextOutputProtocol{
+    reset: *mut c_void,
+    pub output_string: unsafe extern "efiapi" fn(this: *mut SimpleTextOutputProtocol,
+        string: *const u16)
 }
