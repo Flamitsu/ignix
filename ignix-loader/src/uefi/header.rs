@@ -16,6 +16,7 @@
  * along with Ignix.  If not, see <https://www.gnu.org/licenses/>.
  */
 #[allow(unused)]
+#[repr(C)]
 pub struct HeaderTable{
     signature: u64,
     revision: u32,

@@ -23,9 +23,9 @@ use core::ffi::c_void;
 pub struct SystemTable{
     hdr: HeaderTable,
     // structure 
-    firmware_vendor: *mut c_void,
+    firmware_vendor: *mut u16,
     // structure
-    firmware_revision: *mut c_void,
+    firmware_revision: u32,
     // structure
     console_in_handle: *mut c_void,
     // structure

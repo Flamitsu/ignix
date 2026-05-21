@@ -26,12 +26,18 @@ extern "efiapi" fn efi_main(
     system_table: *mut SystemTable,
 ) -> Status {
     if system_table.is_null() {
-        return Status(0x8000_0000_0000_0004);
+        return Status(0x1);
     }
     let con_out = unsafe { (*system_table).con_out};
+    if con_out.is_null() {
+        return Status(0x2);
+    }
     // As UEFI uses UTF-16 and i don't have a macro yet, i need to convert it manually.
     let message = ['H' as u16, 'e' as u16, 'l' as u16, 'l' as u16, 'o' as u16,
-    ' ' as u16, 'w' as u16, 'o' as u16, 'r' as u16, 'l' as u16, 'd' as u16, '!' as u16];
-    unsafe { ((*con_out).output_string)(con_out, message.as_ptr())};
+    ' ' as u16, 'w' as u16, 'o' as u16, 'r' as u16, 'l' as u16, 'd' as u16, '!' as u16, 
+    // '\r' is neccesary so the pointer goes to the first char of the line. This created a funny
+    // bug when wasn't here the print just look like it was tabbed out lmao 
+    '\r' as u16, '\n' as u16, 0];
+    loop {unsafe { ((*con_out).output_string)(con_out, message.as_ptr())};}
     Status::SUCCESS
 }

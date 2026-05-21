@@ -23,6 +23,7 @@ impl Status {
     pub const SUCCESS: Self = Status(0);
 }
 #[allow(unused)]
+#[repr(C)]
 pub struct SimpleTextOutputProtocol{
     reset: *mut c_void,
     pub output_string: unsafe extern "efiapi" fn(this: *mut SimpleTextOutputProtocol,

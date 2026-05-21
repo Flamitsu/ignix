@@ -14,11 +14,20 @@ cargo loader || { echo "You may need to run the 'install-targets.sh' script in t
 # Will try to copy the recently compiled binary
 cp ../target/x86_64-unknown-uefi/debug/ignixx64.efi "$BOOT_DIR/esp/efi/boot/bootx64.efi"
 
+DEBUG_FLAGS=""
+if [ "$1" == "--debug" ]; then
+    echo "QEMU waiting LLDB in port 1234..."
+    DEBUG_FLAGS="-s -S"
+fi
+
 # Will try to run the script. 
 (
     cd ../boot-test || { echo "Could not change to the $BOOT_DIR directory."; exit 1; }
     qemu-system-x86_64 -enable-kvm \
         -drive if=pflash,format=raw,readonly=on,file=OVMF_CODE.fd \
         -drive if=pflash,format=raw,readonly=on,file=OVMF_VARS.fd \
-        -drive format=raw,file=fat:rw:esp || { echo ""; exit 1; }
+        -drive format=raw,file=fat:rw:esp \
+        $DEBUG_FLAGS || { echo ""; exit 1; }
 )
+
+
