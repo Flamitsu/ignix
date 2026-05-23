@@ -19,12 +19,14 @@
 #![no_main]
 mod panic_handler;
 mod uefi;
-use crate::uefi::{Status, SystemTable};
+use uefi::types::Status;
+use uefi::table::SystemTable;
 #[unsafe(no_mangle)]
 extern "efiapi" fn efi_main(
     _image_handle: *mut core::ffi::c_void,
     system_table: *mut SystemTable,
 ) -> Status {
+    const LOOPS: usize = 1000;
     if system_table.is_null() {
         return Status(0x1);
     }
@@ -38,6 +40,11 @@ extern "efiapi" fn efi_main(
     // '\r' is neccesary so the pointer goes to the first char of the line. This created a funny
     // bug when wasn't here the print just look like it was tabbed out lmao 
     '\r' as u16, '\n' as u16, 0];
-    loop {unsafe { ((*con_out).output_string)(con_out, message.as_ptr())};}
-    Status::SUCCESS
+    let mut result = Status::SUCCESS;
+    for _ in 1..=LOOPS{
+        unsafe { 
+            result = ((*con_out).output_string)(con_out, message.as_ptr())
+        }
+    }
+    result
 }

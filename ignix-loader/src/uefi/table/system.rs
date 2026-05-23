@@ -15,13 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with Ignix.  If not, see <https://www.gnu.org/licenses/>.
  */
-use crate::uefi::{header::HeaderTable, types::SimpleTextOutputProtocol};
+use crate::uefi::table::Header;
+use crate::uefi::protocol::console::SimpleTextOutputProtocol;
 use core::ffi::c_void;
 // Code that is with '*mut c_void' is for structure normally. Don't even think of trying them!
 #[allow(unused)]
 #[repr(C)]
 pub struct SystemTable{
-    hdr: HeaderTable,
+    hdr: Header,
     // structure 
     firmware_vendor: *mut u16,
     // structure

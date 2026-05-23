@@ -17,7 +17,7 @@
  */
 #[allow(unused)]
 #[repr(C)]
-pub struct HeaderTable{
+pub struct Header{
     signature: u64,
     revision: u32,
     header_size: u32,
