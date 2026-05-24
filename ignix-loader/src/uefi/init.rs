@@ -15,12 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with Ignix.  If not, see <https://www.gnu.org/licenses/>.
  */
-#[allow(unused)]
-#[repr(C)]
-pub struct Header {
-    signature: u64,
-    revision: u32,
-    header_size: u32,
-    crc32: u32,
-    reserved: u32,
+use crate::{SystemTable, uefi::types::Status};
+
+static mut SYSTEM_TABLE_PTR: *const SystemTable = core::ptr::null();
+
+pub fn init_services(system_table: *mut SystemTable) -> Result<(), Status> {
+    unsafe { SYSTEM_TABLE_PTR = system_table }
+    if system_table.is_null() {
+        Err(Status::INVALID_PARAMETER)?
+    }
+    Ok(())
+}
+
+pub fn get_system_table() -> &'static SystemTable {
+    unsafe {
+        if SYSTEM_TABLE_PTR.is_null() {}
+        &*SYSTEM_TABLE_PTR
+    }
 }
