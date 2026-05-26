@@ -15,21 +15,47 @@
  * You should have received a copy of the GNU General Public License
  * along with Ignix.  If not, see <https://www.gnu.org/licenses/>.
  */
-use crate::{SystemTable, uefi::types::Status};
+/*
+ * Copyright (C) 2026 Flamitsu
+ * Ignix Bootloader - UEFI Initialization and Safe Global State
+ */
 
-static mut SYSTEM_TABLE_PTR: *const SystemTable = core::ptr::null();
+use crate::uefi::table::SystemTable;
 
-pub fn init_services(system_table: *mut SystemTable) -> Result<(), Status> {
-    unsafe { SYSTEM_TABLE_PTR = system_table }
-    if system_table.is_null() {
-        Err(Status::INVALID_PARAMETER)?
-    }
-    Ok(())
+pub struct InitSystemTable {
+    ptr: core::cell::UnsafeCell<*const SystemTable>,
 }
 
-pub fn get_system_table() -> &'static SystemTable {
-    unsafe {
-        if SYSTEM_TABLE_PTR.is_null() {}
-        &*SYSTEM_TABLE_PTR
+unsafe impl Sync for InitSystemTable {}
+
+impl InitSystemTable {
+    pub const fn empty() -> Self {
+        Self {
+            ptr: core::cell::UnsafeCell::new(core::ptr::null()),
+        }
+    }
+
+    pub fn set(&self, table: *const SystemTable) -> Result<(), ()> {
+        unsafe {
+            let current = *self.ptr.get();
+            if !current.is_null() {
+                return Err(());
+            }
+            *self.ptr.get() = table;
+            Ok(())
+        }
+    }
+
+    pub fn get(&self) -> Option<&'static SystemTable> {
+        unsafe {
+            let p = *self.ptr.get();
+            if p.is_null() {
+                None
+            } else {
+                Some(&*p)
+            }
+        }
     }
 }
+
+pub static SYSTEM_TABLE: InitSystemTable = InitSystemTable::empty();

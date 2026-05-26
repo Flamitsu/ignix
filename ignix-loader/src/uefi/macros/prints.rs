@@ -17,11 +17,11 @@
  */
 use core::fmt::{self, Write};
 
-use crate::uefi::init::get_system_table;
+use crate::uefi::init::SYSTEM_TABLE;
 pub struct Writer;
 impl Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        let st = get_system_table();
+        let st = SYSTEM_TABLE.get().unwrap();
 
         let con_out = st.con_out;
         let mut buffer = [0u16; 128];
@@ -35,12 +35,16 @@ impl Write for Writer {
                 unsafe {
                     ((*con_out).output_string)(con_out, buffer.as_ptr());
                 }
+                buffer[0] = c;
+                i = 1;
             }
         }
-        buffer[i] = 0;
-        unsafe {
-            ((*con_out).output_string)(con_out, buffer.as_ptr());
-        };
+        if i > 0{
+            buffer[i] = 0;
+            unsafe {
+                (((*con_out).output_string)(con_out, buffer.as_ptr()));
+            }
+        }
         Ok(())
     }
 }
@@ -48,7 +52,7 @@ impl Write for Writer {
 macro_rules! print {
     ($($arg:tt)*) => {{
         use core::fmt::Write;
-        let mut writer = $crate::macros::Writer;
+        let mut writer = $crate::uefi::macros::prints::Writer;
         let _ = core::write!(writer, $($arg)*);
     }};
 }
