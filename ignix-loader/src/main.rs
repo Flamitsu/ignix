@@ -26,14 +26,13 @@ extern "efiapi" fn efi_main(
     _image_handle: *mut core::ffi::c_void,
     system_table: *mut SystemTable,
 ) -> Status {
+    // This will put the system table in the static variable
     SYSTEM_TABLE.set(system_table).unwrap();
     if let Err(e) = run() {
         println!("ERROR: {}", e);
     }
     Status::SUCCESS
 }
-
 fn run() -> Result<(), Status> {
-    
     Ok(())
 }

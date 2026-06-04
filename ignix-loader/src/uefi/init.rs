@@ -15,11 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with Ignix.  If not, see <https://www.gnu.org/licenses/>.
  */
-/*
- * Copyright (C) 2026 Flamitsu
- * Ignix Bootloader - UEFI Initialization and Safe Global State
- */
-
 use crate::uefi::table::SystemTable;
 
 pub struct InitSystemTable {

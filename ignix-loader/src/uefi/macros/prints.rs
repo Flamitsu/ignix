@@ -23,27 +23,25 @@ impl Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         let st = SYSTEM_TABLE.get().unwrap();
 
-        let con_out = st.con_out;
+        let mut con_out = st.stdout().unwrap();
         let mut buffer = [0u16; 128];
         let mut i = 0;
+        
         for c in s.encode_utf16() {
             if i < buffer.len() - 1 {
                 buffer[i] = c;
                 i += 1;
             } else {
                 buffer[i] = 0;
-                unsafe {
-                    ((*con_out).output_string)(con_out, buffer.as_ptr());
-                }
+                con_out.output_string(buffer.as_ptr());
                 buffer[0] = c;
                 i = 1;
             }
         }
+
         if i > 0{
             buffer[i] = 0;
-            unsafe {
-                (((*con_out).output_string)(con_out, buffer.as_ptr()));
-            }
+            con_out.output_string(buffer.as_ptr());
         }
         Ok(())
     }
@@ -56,7 +54,7 @@ macro_rules! print {
         let _ = core::write!(writer, $($arg)*);
     }};
 }
-/// Macro to print in each line. Max buffer default is 128 characters
+
 #[macro_export]
 macro_rules! println {
     // If not it will be just a normal print with a return carriage and next line
