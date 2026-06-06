@@ -24,7 +24,6 @@ use crate::uefi::types::Status;
 pub struct SimpleTextOutputProtocol {
     pub reset: unsafe extern "efiapi" fn(this: *mut Self, extended: bool) -> Status,
     pub output_string: unsafe extern "efiapi" fn(this: *mut Self, string: *const u16) -> Status,
-    /// This function tests if the string is compatible or not
     pub test_string: unsafe extern "efiapi" fn(this: *mut Self, string: *const u16) -> Status,
     pub query_mode: unsafe extern "efiapi" fn(
         this: *mut Self,
@@ -71,6 +70,13 @@ impl SimpleTextOutput{
     pub fn output_string(&mut self, string: *const u16) -> Status{
         if let Some(protocol) = self.get_protocol(){
             return unsafe {(protocol.output_string)(self.protocol, string)};
+        }
+        Status::INVALID_PARAMETER
+    }
+
+    pub fn test_string(self, string: *const u16) -> Status{
+        if let Some(protocol) = self.get_protocol(){
+            return unsafe {(protocol.test_string)(self.protocol, string)}
         }
         Status::INVALID_PARAMETER
     }

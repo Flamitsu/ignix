@@ -17,6 +17,8 @@
  */
 #[cfg(not(test))]
 #[panic_handler]
+#[allow(unused)]
+
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {
         unsafe {

@@ -22,31 +22,21 @@ use crate::uefi::table::runtime::RuntimeServices;
 use core::ffi::c_void;
 // Code that is with '*mut c_void' is for structure normally. Don't even think of trying them!
 #[allow(unused)]
+// All structs that are here, needs the parameter #[repr(C)]
 #[repr(C)]
 pub struct SystemTable {
     hdr: Header,
-    // structure
     firmware_vendor: *mut u16,
-    // structure
     firmware_revision: u32,
-    // structure
     console_in_handle: *mut c_void,
-    // structure
     con_in: *mut c_void,
-    // structure
     console_out_handle: *mut c_void,
-    
     con_out: *mut SimpleTextOutputProtocol,
-    
-    // structure
     standard_error_handle: *mut c_void,
-
     std_err: *mut SimpleTextOutputProtocol,
     runtime_services: *mut RuntimeServices,
     boot_services: *mut BootServices,
     number_of_table_entries: usize,
-    
-    // structure
     configuration_table: *mut c_void,
 }
 

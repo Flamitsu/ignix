@@ -1,8 +1,10 @@
 mod event;
+mod handler;
 mod image;
 mod memory;
 mod misc;
 pub use event::Event;
+pub use handler::Handler;
 pub use image::Image;
 pub use memory::Memory;
 pub use misc::Misc;
