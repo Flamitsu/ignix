@@ -40,11 +40,13 @@ pub struct SimpleTextOutputProtocol {
     pub enable_cursor: unsafe extern "efiapi" fn(this: *mut Self, visible: bool) -> Status,
     pub mode: *mut c_void,
 }
+
 #[allow(unused)]
 // This is the wrapper that allows to use SimpleTextOutputProtocol withouth unsafe lines
 pub struct SimpleTextOutput {
     protocol: *mut SimpleTextOutputProtocol,
 }
+
 #[allow(unused)]
 impl SimpleTextOutput{
     
@@ -52,27 +54,24 @@ impl SimpleTextOutput{
         Self { protocol }
     }
 
-    pub fn reset(&mut self, extended: bool) -> Status{
+    fn get_protocol(&self) -> Option<&SimpleTextOutputProtocol>{
         if self.protocol.is_null(){
-            return Status::INVALID_PARAMETER
+            return None;
         }
-        let protocol = unsafe {
-            &*self.protocol
-        };
-        unsafe {
-            (protocol.reset)(self.protocol, extended)
+        unsafe { Some(&*self.protocol) }
+    }
+
+    pub fn reset(&mut self, extended: bool) -> Status{
+        if let Some(protocol) = self.get_protocol(){
+            return unsafe {(protocol.reset)(self.protocol, extended)};
         }
+        Status::INVALID_PARAMETER
     }
 
     pub fn output_string(&mut self, string: *const u16) -> Status{
-        if self.protocol.is_null(){
-            return Status::INVALID_PARAMETER
+        if let Some(protocol) = self.get_protocol(){
+            return unsafe {(protocol.output_string)(self.protocol, string)};
         }
-        let protocol = unsafe {
-            &*self.protocol
-        };
-        unsafe {
-            (protocol.output_string)(self.protocol, string)
-        }
+        Status::INVALID_PARAMETER
     }
 }
