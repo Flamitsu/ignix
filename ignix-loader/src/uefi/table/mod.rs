@@ -1,4 +1,7 @@
+mod boot;
 mod header;
+mod runtime;
 mod system;
-pub use header::Header;
+
+use header::Header;
 pub use system::SystemTable;
