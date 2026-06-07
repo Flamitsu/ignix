@@ -33,6 +33,7 @@ extern "efiapi" fn efi_main(
     }
     Status::SUCCESS
 }
+
 fn run() -> Result<(), Status> {
     Ok(())
 }

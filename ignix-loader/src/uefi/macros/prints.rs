@@ -23,7 +23,7 @@ impl Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         let st = SYSTEM_TABLE.get().unwrap();
 
-        let mut con_out = st.stdout().unwrap();
+        let mut con_out = st.get_stdout().unwrap();
         let mut buffer = [0u16; 128];
         let mut i = 0;
         

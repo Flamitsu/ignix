@@ -41,7 +41,7 @@ pub struct SystemTable {
 }
 
 impl SystemTable{
-    pub fn stdout(&self) -> Option<SimpleTextOutput>{
+    pub fn get_stdout(&self) -> Option<SimpleTextOutput>{
         if self.con_out.is_null(){
             return None;
         }
@@ -50,7 +50,7 @@ impl SystemTable{
         })
     }
     #[allow(unused)]
-    pub fn stderr(&self) -> Option<SimpleTextOutput> {
+    pub fn get_stderr(&self) -> Option<SimpleTextOutput> {
         if self.std_err.is_null() && self.con_out.is_null(){
             return None
         }

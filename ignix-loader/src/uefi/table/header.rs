@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with Ignix.  If not, see <https://www.gnu.org/licenses/>.
  */
-#[allow(unused)]
 #[repr(C)]
 pub struct Header {
     signature: u64,

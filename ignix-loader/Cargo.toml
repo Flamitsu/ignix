@@ -9,7 +9,4 @@ license.workspace = true
 name = "ignixx64"
 path = "src/main.rs"
 
-[profile.test]
-panic = "abort"
-
 [dependencies]

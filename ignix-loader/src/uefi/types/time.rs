@@ -1,4 +1,5 @@
 /// Tries to translate to microseconds to use the stall boot service correctly
+#[repr(transparent)]
 pub struct StallDuration(pub usize);
 impl StallDuration{
     pub fn from_secs(secs: usize) -> Self{
