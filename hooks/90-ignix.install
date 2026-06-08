@@ -1,25 +1,5 @@
 #!/usr/bin/env bash
-#
-# Copyright (C) 2026 Flamitsu
-#
-# This file is part of Ignix.
-#
-# Ignix is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3.
-#
-# Ignix is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ignix.  If not, see <https://www.gnu.org/licenses/>.
-#
-
-# This script file is made for the old 'installkernel'. That is why it's way larger.
-# The script should be located in /etc/kernel/postinst.d/
-
+# SPDX-License-Identifier: GPL-3.0-only
 BIN="/usr/bin/ignix"
 
 if ! command -v "$BIN" &> /dev/null; then

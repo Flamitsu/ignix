@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 use crate::uefi::{init::SYSTEM_TABLE, table::boot::BootServicesWrapper, types::Tpl};
 impl BootServicesWrapper{
     pub fn raise_tpl(&self, new_tpl: Tpl) -> Option<TplGuardian> {
@@ -19,8 +20,9 @@ impl BootServicesWrapper{
  * Executing TPLs ABOVE TPL_APPLICATION for longer periods of time may also result 
  * in unpredictable behaviour
  * ( I was wondering how to manage this, looked to uefi-rs code in uefi/src/boot.rs 
- * and it shows this same solution. Thank you guys. 
- * SDPX-License identifier: MIT OR Apache 2.0 )*/
+ * and it shows this same solution. Thank you guys. ) 
+ * Just to clarify, this next section is licensed as:
+ * SDPX-License identifier: MIT OR Apache 2.0 */
 pub struct TplGuardian{
     pub old_tlp: Tpl
 }

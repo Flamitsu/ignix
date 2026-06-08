@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 use core::ffi::c_void;
 use crate::uefi::{table::header::Header, types::{Status, Tpl}};
 /*

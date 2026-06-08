@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 use crate::uefi::{table::boot::BootServicesWrapper, types::{Status}};
 use core::time::Duration;
 impl BootServicesWrapper {
