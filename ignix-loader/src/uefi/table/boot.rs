@@ -1,5 +1,5 @@
 use core::ffi::c_void;
-use crate::uefi::{table::header::Header, types::Status};
+use crate::uefi::{table::header::Header, types::{Status, Tpl}};
 /*
  * This structure can be found in page 92 UEFI spec 2.11
  */
@@ -9,8 +9,8 @@ pub struct BootServices{
     hdr: Header,
     
     // Task priority services (for more info refer to page 136 UEFI spec 2.11)
-    raise_tpl: *mut c_void,
-    restore_tpl: *mut c_void,
+    pub raise_tpl: unsafe extern "efiapi" fn(new_tlp: Tpl) -> Tpl,
+    pub restore_tpl: unsafe extern "efiapi" fn(old_tpl: Tpl),
 
     // Memory services
     allocate_pages: *mut c_void,

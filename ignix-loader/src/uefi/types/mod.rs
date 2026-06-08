@@ -1,3 +1,4 @@
 mod status;
-#[allow(unused)]
+mod tpl;
 pub use status::Status;
+pub use tpl::Tpl;
