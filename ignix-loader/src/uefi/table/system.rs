@@ -17,7 +17,7 @@
  */
 use crate::uefi::protocol::console::{SimpleTextOutput, SimpleTextOutputProtocol};
 use crate::uefi::table::Header;
-use crate::uefi::table::boot::BootServices;
+use crate::uefi::table::boot::{BootServices, BootServicesWrapper};
 use crate::uefi::table::runtime::RuntimeServices;
 use core::ffi::c_void;
 // Code that is with '*mut c_void' is for structure normally. Don't even think of trying them!
@@ -33,7 +33,7 @@ pub struct SystemTable {
     console_out_handle: *mut c_void,
     con_out: *mut SimpleTextOutputProtocol,
     standard_error_handle: *mut c_void,
-    std_err: *mut SimpleTextOutputProtocol,
+    std_err: *mut c_void,
     runtime_services: *mut RuntimeServices,
     boot_services: *mut BootServices,
     number_of_table_entries: usize,
@@ -56,6 +56,15 @@ impl SystemTable{
         }
         Some( unsafe {
             SimpleTextOutput::new(self.con_out)
+        })
+    }
+    #[allow(unused)]
+    pub fn get_boot_services(&self) -> Option<BootServicesWrapper>{
+        if self.boot_services.is_null() {
+            return None
+        }
+        Some( unsafe {
+            BootServicesWrapper::new(self.boot_services)
         })
     }
 }

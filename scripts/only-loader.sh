@@ -29,5 +29,3 @@ fi
         -drive format=raw,file=fat:rw:esp \
         $DEBUG_FLAGS || { echo ""; exit 1; }
 )
-
-
