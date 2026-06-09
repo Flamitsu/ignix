@@ -35,10 +35,10 @@ pub fn create_ignix_structure(
         }
 
         if dir.ends_with("BOOT") {
-            fs::copy(efi_bin, &efi_fallback.join("BOOTX64.efi.tmp"))?;
+            fs::copy(efi_bin, efi_fallback.join("BOOTX64.efi.tmp"))?;
             fs::rename(
-                &efi_fallback.join("BOOTX64.efi.tmp"),
-                &efi_fallback.join("BOOTX64.efi"),
+                efi_fallback.join("BOOTX64.efi.tmp"),
+                efi_fallback.join("BOOTX64.efi"),
             )?;
         }
     }
