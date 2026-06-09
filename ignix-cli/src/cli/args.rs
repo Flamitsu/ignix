@@ -13,20 +13,20 @@ pub struct RemoveOptions {
 }
 
 #[allow(unused)]
-pub struct AddOptions{
+pub struct AddOptions {
     pub title: String,
     pub kernel_version: String,
     pub machine_id: String,
     pub sort_key: String,
     pub options: String,
     pub linux: String,
-    pub initrd: Vec<String>
+    pub initrd: Vec<String>,
 }
 /*
  * This is because the bash hook needs to know the esp mountpoint and i refuse to
  * depend on findmnt etc. That is why i added a new flag named "hook"
 */
-pub struct HookHelp{
+pub struct HookHelp {
     pub get_machine_id: bool,
     pub get_esp_mountpoint: bool,
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pub mod cmd;
-pub mod nvram;
 pub mod io;
+pub mod nvram;
 use core::num::ParseIntError;
 use std::array::TryFromSliceError;
 #[derive(Debug)]
@@ -16,7 +16,7 @@ impl std::fmt::Display for IgnixError {
         match self {
             Self::Cmd(e) => write!(f, "{}", e),
             Self::Nvram(e) => write!(f, "NVRAM: {}", e),
-            Self::Io(e) => write!(f,"IO: {}",e),
+            Self::Io(e) => write!(f, "IO: {}", e),
         }
     }
 }
@@ -34,7 +34,7 @@ impl From<nvram::Error> for IgnixError {
         Self::Nvram(err)
     }
 }
-// Converts from std::io::Error to IgnixError 
+// Converts from std::io::Error to IgnixError
 impl From<std::io::Error> for IgnixError {
     fn from(err: std::io::Error) -> Self {
         Self::Io(io::Error::from(err))

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::errors::IgnixError;
+use crate::boot::disk::DiskScanner;
 use crate::cli::args::AddOptions;
-use crate::boot::disk::{DiskScanner};
+use crate::errors::IgnixError;
 use std::fs::{self, File};
 
 pub fn add_entry(options: AddOptions) -> Result<(), IgnixError> {
@@ -23,7 +23,7 @@ pub fn add_entry(options: AddOptions) -> Result<(), IgnixError> {
          sort-key    {}\n\
          options     {}\n\
          linux       {}\n",
-        options.title.trim_matches('\''), 
+        options.title.trim_matches('\''),
         options.kernel_version,
         options.machine_id,
         options.sort_key.trim_matches('\''),
