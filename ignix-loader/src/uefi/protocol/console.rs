@@ -31,36 +31,35 @@ pub struct SimpleTextOutput {
 }
 
 #[allow(unused)]
-impl SimpleTextOutput{
-    
+impl SimpleTextOutput {
     pub unsafe fn new(protocol: *mut SimpleTextOutputProtocol) -> Self {
         Self { protocol }
     }
 
-    fn get_protocol(&self) -> Option<&SimpleTextOutputProtocol>{
-        if self.protocol.is_null(){
+    fn get_protocol(&self) -> Option<&SimpleTextOutputProtocol> {
+        if self.protocol.is_null() {
             return None;
         }
         unsafe { Some(&*self.protocol) }
     }
 
-    pub fn reset(&mut self, extended: bool) -> Status{
-        if let Some(protocol) = self.get_protocol(){
-            return unsafe {(protocol.reset)(self.protocol, extended)};
+    pub fn reset(&mut self, extended: bool) -> Status {
+        if let Some(protocol) = self.get_protocol() {
+            return unsafe { (protocol.reset)(self.protocol, extended) };
         }
         Status::INVALID_PARAMETER
     }
 
-    pub fn output_string(&mut self, string: *const u16) -> Status{
-        if let Some(protocol) = self.get_protocol(){
-            return unsafe {(protocol.output_string)(self.protocol, string)};
+    pub fn output_string(&mut self, string: *const u16) -> Status {
+        if let Some(protocol) = self.get_protocol() {
+            return unsafe { (protocol.output_string)(self.protocol, string) };
         }
         Status::INVALID_PARAMETER
     }
 
-    pub fn test_string(self, string: *const u16) -> Status{
-        if let Some(protocol) = self.get_protocol(){
-            return unsafe {(protocol.test_string)(self.protocol, string)}
+    pub fn test_string(self, string: *const u16) -> Status {
+        if let Some(protocol) = self.get_protocol() {
+            return unsafe { (protocol.test_string)(self.protocol, string) };
         }
         Status::INVALID_PARAMETER
     }

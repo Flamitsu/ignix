@@ -24,31 +24,25 @@ pub struct SystemTable {
     configuration_table: *mut c_void,
 }
 
-impl SystemTable{
-    pub fn get_stdout(&self) -> Option<SimpleTextOutput>{
-        if self.con_out.is_null(){
+impl SystemTable {
+    pub fn get_stdout(&self) -> Option<SimpleTextOutput> {
+        if self.con_out.is_null() {
             return None;
         }
-        Some(unsafe {
-            SimpleTextOutput::new(self.con_out)
-        })
+        Some(unsafe { SimpleTextOutput::new(self.con_out) })
     }
     #[allow(unused)]
     pub fn get_stderr(&self) -> Option<SimpleTextOutput> {
-        if self.std_err.is_null() && self.con_out.is_null(){
-            return None
+        if self.std_err.is_null() && self.con_out.is_null() {
+            return None;
         }
-        Some( unsafe {
-            SimpleTextOutput::new(self.con_out)
-        })
+        Some(unsafe { SimpleTextOutput::new(self.con_out) })
     }
     #[allow(unused)]
-    pub fn get_boot_services(&self) -> Option<BootServicesWrapper>{
+    pub fn get_boot_services(&self) -> Option<BootServicesWrapper> {
         if self.boot_services.is_null() {
-            return None
+            return None;
         }
-        Some( unsafe {
-            BootServicesWrapper::new(self.boot_services)
-        })
+        Some(unsafe { BootServicesWrapper::new(self.boot_services) })
     }
 }

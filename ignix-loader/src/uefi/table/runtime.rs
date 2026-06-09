@@ -4,9 +4,9 @@ use core::ffi::c_void;
 use crate::uefi::table::header::Header;
 #[allow(unused)]
 #[repr(C)]
-pub struct RuntimeServices{
+pub struct RuntimeServices {
     hdr: Header,
-    // Time services 
+    // Time services
     get_time: *mut c_void,
     set_time: *mut c_void,
     get_wakeup_time: *mut c_void,
@@ -25,6 +25,6 @@ pub struct RuntimeServices{
     update_capsule: *mut c_void,
     query_capsule_capabilities: *mut c_void,
     // Miscellaneous UEFI 2.0 Service
-    query_variable_info: *mut c_void
+    query_variable_info: *mut c_void,
 }
-pub struct RuntimeServicesWrapper{}
+pub struct RuntimeServicesWrapper {}

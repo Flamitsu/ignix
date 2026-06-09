@@ -1,6 +1,6 @@
 pub(super) mod boot;
-pub(super) mod runtime;
 mod header;
+pub(super) mod runtime;
 mod system;
 
 use header::Header;

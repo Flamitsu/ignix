@@ -10,7 +10,7 @@ impl Write for Writer {
         let mut con_out = st.get_stdout().unwrap();
         let mut buffer = [0u16; 128];
         let mut i = 0;
-        
+
         for c in s.encode_utf16() {
             if i < buffer.len() - 1 {
                 buffer[i] = c;
@@ -23,7 +23,7 @@ impl Write for Writer {
             }
         }
 
-        if i > 0{
+        if i > 0 {
             buffer[i] = 0;
             con_out.output_string(buffer.as_ptr());
         }

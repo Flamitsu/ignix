@@ -28,11 +28,7 @@ impl InitSystemTable {
     pub fn get(&self) -> Option<&'static SystemTable> {
         unsafe {
             let p = *self.ptr.get();
-            if p.is_null() {
-                None
-            } else {
-                Some(&*p)
-            }
+            if p.is_null() { None } else { Some(&*p) }
         }
     }
 }

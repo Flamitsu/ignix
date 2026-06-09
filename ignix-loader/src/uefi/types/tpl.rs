@@ -4,7 +4,7 @@
 pub struct Tpl(pub usize);
 // Those numbers can be found in UEFI spec 2.11 page 150 section "Related definitions"
 #[allow(unused)]
-impl Tpl{
+impl Tpl {
     pub const TPL_APPLICATION: Self = Self(4);
     pub const TPL_CALLBACK: Self = Self(8);
     pub const TPL_NOTIFY: Self = Self(16);
