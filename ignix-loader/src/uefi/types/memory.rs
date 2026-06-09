@@ -11,47 +11,63 @@ use crate::uefi::types::{PhysicalAddress, VirtualAddress};
 #[repr(C)]
 pub enum MemoryType {
     /// Not usable memory
-    EfiReservedMemoryType = 0,
+    EfiReservedMemory = 0,
+
     /// Chunk used for a loaded UEFI application
     EfiLoaderCode = 1,
+
     /// Chunk used for loaded UEFI application and the default
     /// data allocation type used by the UEFI Boot Services Driver.
     EfiLoaderData = 2,
+
     /// Chunk of code used by a loaded UEFI boot service driver.
     EfiBootServicesCode = 3,
+
     /// Chunk used for loaded UEFI boot service driver and the default
     /// data allocation type used by the UEFI boot service drivers to allocate memory
     EfiBootServicesData = 4,
+
     /// Chunk portion of a loaded UEFI runtime driver
     EfiRuntimeServicesCode = 5,
+
     /// Chunk used for loaded UEFI runtime driver and the default
     /// data allocation type used by the UEFI runtime driver to allocate memory
     EfiRuntimeServicesData = 6,
+
     /// Free memory (unallocated)
     EfiConventionalMemory = 7,
+
     /// Memory in which errors have been detected.
     EfiUnusableMemory = 8,
+
     /// Memory that holds the ACPI tables
     EfiACPIReclaimMemory = 9,
+
     /// Address the space reserved use by the firmware
     EfiACPIMemoryNVS = 10,
+
     /// Used by the system firmware to request MMIO region be mapped by the OS to a virtual address
     /// so it can be used by the EFI runtime services.
     EfiMemoryMappedIO = 11,
+
     /// System MMIO region that is used to translate memory cycles to IO cycles by the CPU
     EfiMemoryMappedIOPortSpace = 12,
+
     /// Address space reserved by the firmware for code that is part of the CPU
     EfiPalCode = 13,
+
     /// Memory region that operates as EfiConventionalMemory but it also supports
     /// byte-addreseable non-volatility
     EfiPersistentMemory = 14,
+
     /// Memory region that is unaccepted memory, must be accepted by the boot target
     /// before it can be used. Unless otherwise noted, all other EFI memory types are accepted.
     /// For platforms that support unaccepted memory, all unacepted memory will be reported as
     /// unacepted memory map. Unreported physical address range must be treated as not-present
     /// memory.
-    EfiUnacceptedMemoryType = 15,
-    EfiMaxMemoryType = 16,
+    EfiUnacceptedMemory = 15,
+
+    EfiMaxMemory = 16,
 }
 
 impl MemoryType {
@@ -64,12 +80,15 @@ pub enum AllocateType {
     /// Allocates any pages that satisfies the request.
     /// On input, the address pointed to by Memory is ignored
     AllocateAnyPages = 0,
+
     /// allocate any aviable range of pages whose uppermost address
     /// is less than or equal to the address pointed to and by Memory on input
     AllocateMaxAddress = 1,
+
     /// Allocate pages at the address pointed by Memory on input
     AllocateAddress = 2,
-    MaxAllocateType = 3,
+
+    MaxAllocate = 3,
 }
 
 /// Size in bytes of UEFI Memory page (NOT CPU PAGES)
