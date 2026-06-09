@@ -1,4 +1,12 @@
 mod status;
 mod tpl;
+mod misc;
+mod memory;
 pub use status::Status;
 pub use tpl::Tpl;
+pub use memory::{MemoryType, AllocateType, MemoryAttributes, MemoryDescriptor};
+pub use misc::Char16;
+pub use misc::Event;
+pub use misc::Handle;
+pub use misc::PhysicalAddress;
+pub use misc::VirtualAddress;

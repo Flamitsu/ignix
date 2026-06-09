@@ -6,7 +6,7 @@ impl BootServicesWrapper {
         
         if let Some(function) = self.get_method() {
             let microseconds = duration.as_micros() as usize;
-            return unsafe {(function.stall)(2_000_000)};
+            return unsafe {(function.stall)(microseconds)};
         }
 
         Status::INVALID_PARAMETER

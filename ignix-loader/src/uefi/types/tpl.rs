@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #[derive(Clone, Copy)] // Just in case you need to use it inside a loop
-#[allow(unused)]
 #[repr(C)]
 pub struct Tpl(pub usize);
 // Those numbers can be found in UEFI spec 2.11 page 150 section "Related definitions"

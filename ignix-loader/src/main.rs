@@ -7,10 +7,10 @@ use core::time::Duration;
 use uefi::table::SystemTable;
 use uefi::types::Status;
 use uefi::init::SYSTEM_TABLE;
-
+use uefi::types::Handle;
 #[unsafe(no_mangle)]
 extern "efiapi" fn efi_main(
-    _image_handle: *mut core::ffi::c_void,
+    _image_handle: *mut Handle,
     system_table: *mut SystemTable ) -> Status {
     // This will put the system table in the static variable
     SYSTEM_TABLE.set(system_table).unwrap();

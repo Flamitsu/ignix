@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use core::ffi::c_void;
-use crate::uefi::{table::header::Header, types::{Status, Tpl}};
+use crate::uefi::{table::header::Header, types::{AllocateType, MemoryDescriptor, MemoryType, PhysicalAddress, Status, Tpl}};
 /*
  * This structure can be found in page 92 UEFI spec 2.11
  */
@@ -14,11 +14,18 @@ pub struct BootServices{
     pub restore_tpl: unsafe extern "efiapi" fn(old_tpl: Tpl),
 
     // Memory services
-    allocate_pages: *mut c_void,
-    free_pages: *mut c_void,
-    get_memory_map: *mut c_void,
-    allocate_pool: *mut c_void,
-    free_pool: *mut c_void,
+    pub allocate_pages: unsafe extern "efiapi" fn(
+        alloc_type: AllocateType, 
+        memory_type: MemoryType, 
+        pages: usize, 
+        memory: *mut PhysicalAddress) -> Status,
+    pub free_pages: unsafe extern "efiapi" fn(memory: PhysicalAddress, pages: usize) -> Status, 
+    pub get_memory_map: unsafe extern "efiapi" fn(
+        memory_map_size: *mut usize, memory_map: *mut MemoryDescriptor, map_key: *mut usize, 
+        descriptor_size: *mut usize, descriptor_version: *mut u32) -> Status,
+    pub allocate_pool: unsafe extern "efiapi" fn(pool_type: MemoryType, 
+        size: usize, buffer: *mut *mut u8) -> Status,
+    pub free_pool: unsafe extern "efiapi" fn(buffer: *mut u8) -> Status,
     
     // Event and Timer Services
     create_event: *mut c_void,
@@ -80,12 +87,10 @@ pub struct BootServices{
 }
 
 
-#[allow(unused)]
 pub struct BootServicesWrapper{
     function: *mut BootServices
 }
 
-#[allow(unused)]
 impl BootServicesWrapper{
     pub unsafe fn new(function: *mut BootServices) -> Self{
         Self { function }
