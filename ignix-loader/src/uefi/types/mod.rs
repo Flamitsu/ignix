@@ -1,7 +1,9 @@
+mod boolean;
 mod memory;
 mod misc;
 mod status;
 mod tpl;
+pub use boolean::Boolean;
 pub use memory::{AllocateType, MemoryAttributes, MemoryDescriptor, MemoryType};
 pub use misc::Char16;
 pub use misc::Event;
