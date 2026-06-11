@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 /*
  * Booleans in UEFI ABI are represented like this.
 
@@ -13,22 +14,19 @@ pub struct Boolean(pub u8);
 impl Boolean {
     pub const TRUE: Self = Self(1);
     pub const FALSE: Self = Self(0);
+    pub fn to_bool(self) -> bool {
+        self.0 != 0
+    }
 }
 
 impl From<bool> for Boolean {
     fn from(value: bool) -> Self {
-        match value {
-            true => Self(1),
-            false => Self(0),
-        }
+        Self(value as u8)
     }
 }
 
 impl From<Boolean> for bool {
     fn from(value: Boolean) -> Self {
-        if value.0 == 0 {
-            return false;
-        }
-        true
+        value.to_bool()
     }
 }

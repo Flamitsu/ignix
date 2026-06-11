@@ -17,7 +17,7 @@ pub struct SystemTable {
     console_out_handle: *mut c_void,
     con_out: *mut SimpleTextOutputProtocol,
     standard_error_handle: *mut c_void,
-    std_err: *mut c_void,
+    std_err: *mut SimpleTextOutputProtocol,
     runtime_services: *mut RuntimeServices,
     boot_services: *mut BootServices,
     number_of_table_entries: usize,
@@ -36,7 +36,7 @@ impl SystemTable {
         if self.std_err.is_null() && self.con_out.is_null() {
             return None;
         }
-        Some(unsafe { SimpleTextOutput::new(self.con_out) })
+        Some(unsafe { SimpleTextOutput::new(self.std_err) })
     }
     #[allow(unused)]
     pub fn get_boot_services(&self) -> Option<BootServicesWrapper> {

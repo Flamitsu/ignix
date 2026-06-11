@@ -1,35 +1,33 @@
 // SPDX-License-Identifier: GPL-3.0-only
+use core::sync::atomic::{AtomicPtr,Ordering};
 use crate::uefi::table::SystemTable;
 
 pub struct InitSystemTable {
-    ptr: core::cell::UnsafeCell<*const SystemTable>,
+    ptr: AtomicPtr<SystemTable>,
 }
-
-unsafe impl Sync for InitSystemTable {}
 
 impl InitSystemTable {
     pub const fn empty() -> Self {
         Self {
-            ptr: core::cell::UnsafeCell::new(core::ptr::null()),
+            ptr: AtomicPtr::new(core::ptr::null_mut()),
         }
     }
 
-    pub fn set(&self, table: *const SystemTable) -> Result<(), ()> {
-        unsafe {
-            let current = *self.ptr.get();
-            if !current.is_null() {
-                return Err(());
-            }
-            *self.ptr.get() = table;
-            Ok(())
-        }
+    pub fn set(&self, table: *const SystemTable) -> Result<(), ()> {    
+        let table_mut = table as *mut SystemTable;
+        self.ptr.compare_exchange(
+            core::ptr::null_mut(), 
+            table_mut, 
+            Ordering::SeqCst, 
+            Ordering::SeqCst).map(|_| ()).map_err(|_| ())
     }
 
     pub fn get(&self) -> Option<&'static SystemTable> {
-        unsafe {
-            let p = *self.ptr.get();
-            if p.is_null() { None } else { Some(&*p) }
+        let p = self.ptr.load(Ordering::SeqCst);
+        if p.is_null(){
+            return None;
         }
+        Some( unsafe { &*p } )
     }
 }
 
