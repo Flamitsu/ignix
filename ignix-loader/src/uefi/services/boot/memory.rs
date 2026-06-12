@@ -72,8 +72,10 @@ impl BootServicesWrapper {
          * Sometimes some bullshit implementations do too much
          * fragmentation so 8 is a good margin for me I think */
         mem_map.map_size += (mem_map.descriptor_size * 8);
-        // I know this is a war crime, but rust forced me to do '/ PAGE_SIZE' as that function.
-        let pages_needed = (mem_map.map_size + PAGE_SIZE - 1).div_ceil(PAGE_SIZE);
+        /* I know this is a war crime, but rust forced me to do this fix as that function.
+         * However since this is a cleaner method, I prefer to keep it.
+         * old: let pages_needed = (mem_map.map_size + PAGE_SIZE - 1) / PAGE_SIZE*/
+        let pages_needed = mem_map.map_size.div_ceil(PAGE_SIZE);
 
         let buffer_ptr = self.allocate_pages(
             AllocateType::AllocateAnyPages,
