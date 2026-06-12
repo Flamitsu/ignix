@@ -96,7 +96,7 @@ pub struct BootServices {
     set_mem: *mut c_void,
     create_event_ex: *mut c_void,
 }
-
+#[derive(Clone, Copy)]
 pub struct BootServicesWrapper {
     function: *mut BootServices,
 }

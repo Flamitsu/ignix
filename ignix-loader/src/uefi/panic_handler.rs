@@ -3,7 +3,7 @@
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     use crate::println;
-    println!("{}",info);
+    println!("{}", info);
     loop {
         unsafe {
             #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use core::ops::RangeInclusive;
-
 use crate::uefi::types::{PhysicalAddress, VirtualAddress};
+use core::{ops::RangeInclusive, ptr::NonNull};
 
 /* Those numbers are how enums are interpreted in C.
  * Basically a fancy way to represent an int, but since
@@ -103,7 +102,6 @@ pub struct MemoryDescriptor {
     pub page_count: u64,
     pub attributes: MemoryAttributes,
 }
-
 // All the info for this codes and descriptions can be found in
 // the UEFI Spec 2.11 page 158 to 159
 #[repr(C)]
@@ -188,4 +186,24 @@ impl MemoryAttributes {
     /// cacheability bits (EFI_MEMORY_UC, EFI_MEMORY_WC, EFI_MEMORY_WT, EFI_MEMORY_WB
     /// and EFI_MEMORY_UCE).
     pub const ISA_MASK: Self = Self(0x0FFFF00000000000);
+}
+
+pub struct MemoryMap {
+    pub map_size: usize,
+    pub descriptor: Option<NonNull<MemoryDescriptor>>,
+    pub key: usize,
+    pub descriptor_size: usize,
+    pub descriptor_version: u32,
+}
+
+impl MemoryMap {
+    pub fn new_empty() -> Self {
+        Self {
+            map_size: 0,
+            descriptor: None,
+            key: 0,
+            descriptor_size: 0,
+            descriptor_version: 0,
+        }
+    }
 }
