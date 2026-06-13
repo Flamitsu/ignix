@@ -7,7 +7,7 @@ use core::{ops::RangeInclusive, ptr::NonNull};
  * I don't want rustc do anything funny with it, I prefer explicitly
  * saying which value is associated*/
 #[allow(unused)]
-#[repr(C)]
+#[repr(u32)]
 pub enum MemoryType {
     /// Not usable memory
     EfiReservedMemory = 0,
@@ -70,11 +70,13 @@ pub enum MemoryType {
 }
 
 impl MemoryType {
+    /// NOT USABLE MEMORY BY THE BOOT LOADER
     pub const RESERVED_OEM_MEMORY: RangeInclusive<u32> = 0x70000000..=0x7FFFFFFF;
+    /// NOT USABLE MEMORY BY THE BOOT LOADER
     pub const RESERVED_OS_LOADER_MEMORY: RangeInclusive<u32> = 0x80000000..=0xFFFFFFFF;
 }
 
-#[repr(C)]
+#[repr(u32)]
 pub enum AllocateType {
     /// Allocates any pages that satisfies the request.
     /// On input, the address pointed to by Memory is ignored

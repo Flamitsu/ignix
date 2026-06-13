@@ -8,6 +8,10 @@ use uefi::init::SYSTEM_TABLE;
 use uefi::table::SystemTable;
 use uefi::types::Handle;
 use uefi::types::Status;
+
+use crate::uefi::types::AllocateType;
+use crate::uefi::types::MemoryType;
+use crate::uefi::types::PhysicalAddress;
 #[unsafe(no_mangle)]
 extern "efiapi" fn efi_main(_image_handle: *mut Handle, system_table: *mut SystemTable) -> Status {
     // This will put the system table in the static variable
@@ -19,14 +23,27 @@ extern "efiapi" fn efi_main(_image_handle: *mut Handle, system_table: *mut Syste
 }
 
 fn run() -> Result<(), Status> {
-    for n in 1..=10 {
-        let status = SYSTEM_TABLE
+    let st = SYSTEM_TABLE.get().unwrap().get_boot_services().unwrap();
+    for n in 1..=100 {
+        SYSTEM_TABLE
             .get()
             .unwrap()
-            .get_boot_services()
+            .get_stdout()
             .unwrap()
-            .stall(Duration::from_secs(1));
-        println!("{}: STATUS: {:?}", n, status);
+            .reset(true);
+        let buffer = st
+            .allocate_pages(AllocateType::AllocateAnyPages, MemoryType::EfiLoaderData, 2)
+            .unwrap();
+        let status = st.free_pages(buffer.as_ptr() as PhysicalAddress, 2);
+        let buff_alloc = st.allocate_pool(MemoryType::EfiLoaderData, 900);
+        let st_buf_alloc = st.free_pool(buff_alloc.unwrap());
+
+        println!("{:?}", buffer);
+        println!("{:?}", status);
+        println!("{:?}", buff_alloc);
+        println!("{:?}", st_buf_alloc);
+        println!("{}", n);
+        st.stall(Duration::from_secs(1)).unwrap();
     }
     Ok(())
 }
