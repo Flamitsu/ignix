@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-
-use crate::uefi::types::{Boolean, Status};
+use crate::uefi::types::{Boolean, Guid, Status, Uuid};
 #[repr(C)]
 pub struct SimpleTextOutputMode {
     pub max_mode: u32,
@@ -30,6 +29,15 @@ pub(crate) struct SimpleTextOutputProtocol {
         unsafe extern "efiapi" fn(this: *mut Self, column: usize, rows: usize) -> Status,
     pub enable_cursor: unsafe extern "efiapi" fn(this: *mut Self, visible: bool) -> Status,
     pub mode: *mut SimpleTextOutputMode,
+}
+
+impl Uuid for SimpleTextOutputProtocol {
+    const GUID: Guid = Guid::new(
+        0x387477c2,
+        0x69c7,
+        0x11d2,
+        [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
+    );
 }
 
 // This is the wrapper that allows to use SimpleTextOutputProtocol withouth unsafe lines

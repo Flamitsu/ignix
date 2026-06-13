@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::uefi::{
     table::header::Header,
-    types::{AllocateType, MemoryDescriptor, MemoryType, PhysicalAddress, Status, Tpl},
+    types::{
+        AllocateType, Event, EventNotifyFn, EventType, MemoryDescriptor, MemoryType,
+        PhysicalAddress, Status, Tpl,
+    },
 };
 use core::ffi::c_void;
 /*
@@ -39,7 +42,15 @@ pub struct BootServices {
     pub free_pool: unsafe extern "efiapi" fn(buffer: *mut u8) -> Status,
 
     // Event and Timer Services
-    create_event: *mut c_void,
+    pub create_event: unsafe extern "efiapi" fn(
+        typ: EventType,
+        tpl: Tpl,
+        notify_function: Option<EventNotifyFn>, /* There is no problem with calling it with
+                                                an option, just if someone was
+                                                as stupid as I was wondering it*/
+        notify_context: *mut c_void,
+        out_event: *mut Event,
+    ) -> Status,
     set_timer: *mut c_void,
     wait_for_event: *mut c_void,
     signal_event: *mut c_void,
