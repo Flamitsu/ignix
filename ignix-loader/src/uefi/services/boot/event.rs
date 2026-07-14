@@ -65,14 +65,16 @@ impl BootServicesWrapper {
             Some(group) => &event_group as *const Option<EventGroup>,
             None => core::ptr::null(),
         };
-        let status = unsafe {(function.create_event_ex)(
-            event_type,
-            tpl,
-            notify_function,
-            notify_context,
-            event_group_ptr,
-            &mut event,
-        )};
+        let status = unsafe {
+            (function.create_event_ex)(
+                event_type,
+                tpl,
+                notify_function,
+                notify_context,
+                event_group_ptr,
+                &mut event,
+            )
+        };
         if status.is_success() {
             return Ok(event);
         }
@@ -80,21 +82,27 @@ impl BootServicesWrapper {
     }
 
     pub fn close_event(&self, event: Event) -> Status {
-        let Some(function) = self.get_method() else { return Status::NOT_FOUND; };
-        let status = unsafe {(function.close_event)(event)};
+        let Some(function) = self.get_method() else {
+            return Status::NOT_FOUND;
+        };
+        let status = unsafe { (function.close_event)(event) };
         status
     }
 
     pub fn signal_event(&self, event: Event) -> Status {
-        let Some(function) = self.get_method() else { return Status::NOT_FOUND;};
+        let Some(function) = self.get_method() else {
+            return Status::NOT_FOUND;
+        };
         let status = unsafe { (function.signal_event)(event) };
         status
     }
 
     pub fn wait_for_event(&self, event: Event) -> Result<usize, Status> {
-        let Some(function) = self.get_method() else { return Err(Status::NOT_FOUND); };
+        let Some(function) = self.get_method() else {
+            return Err(Status::NOT_FOUND);
+        };
         let mut index = 0;
-        let status = unsafe { (function.wait_for_event)(0, &event, &mut index)};
+        let status = unsafe { (function.wait_for_event)(0, &event, &mut index) };
         if status.is_success() {
             return Ok(index);
         }
@@ -102,14 +110,18 @@ impl BootServicesWrapper {
     }
 
     pub fn check_event(&self, event: Event) -> Status {
-        let Some(function) = self.get_method() else { return Status::NOT_FOUND };
+        let Some(function) = self.get_method() else {
+            return Status::NOT_FOUND;
+        };
         let status = unsafe { (function.check_event)(event) };
         status
     }
 
     pub fn set_timer(&self, event: Event, timer_delay: TimerDelay, trigger_time: u64) -> Status {
-        let Some(function) = self.get_method() else { return Status::NOT_FOUND };
-        // Trigger time is in nanoseconds 
+        let Some(function) = self.get_method() else {
+            return Status::NOT_FOUND;
+        };
+        // Trigger time is in nanoseconds
         let status = unsafe { (function.set_timer)(event, timer_delay, trigger_time) };
         status
     }
