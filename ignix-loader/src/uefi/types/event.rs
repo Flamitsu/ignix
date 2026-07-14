@@ -46,8 +46,14 @@ pub struct Tpl(pub usize);
 // Those numbers can be found in UEFI spec 2.11 page 150 section "Related definitions"
 #[allow(unused)]
 impl Tpl {
+    /// the lowest priority level
     pub const TPL_APPLICATION: Self = Self(4);
+    /// An intermediate priority level
     pub const TPL_CALLBACK: Self = Self(8);
+    /// The highest priority level
     pub const TPL_NOTIFY: Self = Self(16);
+    /// Higher than TPL_NOTIFY (I know it doesn't make sense, 
+    /// I'm only redacting what the UEFI spec says). Don't use it for
+    /// long periods of time since it may cause inestability
     pub const TPL_HIGH_LEVEL: Self = Self(31);
 }
