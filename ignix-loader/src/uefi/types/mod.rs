@@ -5,7 +5,7 @@ mod misc;
 mod status;
 
 pub use boolean::Boolean;
-pub use event::{Event, EventNotifyFn, EventType, Tpl};
+pub use event::{EfiEventGroup, Event, EventNotifyFn, EventType, TimerDelay, Tpl};
 pub use memory::{
     AllocateType, MemoryAttributes, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE,
 };

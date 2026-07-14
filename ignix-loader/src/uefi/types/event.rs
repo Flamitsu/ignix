@@ -3,6 +3,7 @@ use crate::uefi::types::Guid;
 use core::ffi::c_void;
 
 pub type Event = *mut c_void;
+
 #[repr(transparent)]
 pub struct EventType(pub u32);
 
@@ -42,7 +43,7 @@ impl EventType {
 pub type EventNotifyFn = unsafe extern "efiapi" fn(event: Event, context: *mut c_void);
 
 #[derive(Clone, Copy)] // Just in case you need to use it inside a loop
-#[repr(C)]
+#[repr(transparent)]
 pub struct Tpl(pub usize);
 // Those numbers can be found in UEFI spec 2.11 page 150 section "Related definitions"
 #[allow(unused)]
@@ -59,6 +60,7 @@ impl Tpl {
     pub const TPL_HIGH_LEVEL: Self = Self(31);
 }
 
+#[repr(transparent)]
 pub struct EfiEventGroup(pub Guid);
 
 impl EfiEventGroup {
@@ -138,4 +140,16 @@ impl EfiEventGroup {
         0x485a,
         [0xa8, 0xda, 0xa3, 0xdd, 0x79, 0x12, 0xcb, 0x6b],
     ));
+}
+#[repr(C)]
+pub enum TimerDelay {
+    // The event's timer setting is cancelled and no time trigger is set. TriggerTime is ignored
+    TimerCancel = 0,
+    /* The event is signaled periodically at TriggerTime intervals from the current time.
+     * This is the only timer trigger Type for which the event timer does not need to be
+     * reset for each notification. All other timer trigger types are “one shot.”
+     */
+    TimerPeriodic = 1,
+    // The event is to be signaled in TriggerTime 100ns units.
+    TimerRelative = 2,
 }

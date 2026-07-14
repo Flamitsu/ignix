@@ -2,8 +2,8 @@
 use crate::uefi::{
     table::header::Header,
     types::{
-        AllocateType, Event, EventNotifyFn, EventType, MemoryDescriptor, MemoryType,
-        PhysicalAddress, Status, Tpl,
+        AllocateType, EfiEventGroup, Event, EventNotifyFn, EventType, MemoryDescriptor, MemoryType,
+        PhysicalAddress, Status, TimerDelay, Tpl,
     },
 };
 use core::ffi::c_void;
@@ -43,7 +43,7 @@ pub struct BootServices {
 
     // Event and Timer Services
     pub create_event: unsafe extern "efiapi" fn(
-        typ: EventType,
+        event_type: EventType,
         tpl: Tpl,
         notify_function: Option<EventNotifyFn>, /* There is no problem with calling it with
                                                 an option, just if someone was
@@ -51,11 +51,15 @@ pub struct BootServices {
         notify_context: *mut c_void,
         out_event: *mut Event,
     ) -> Status,
-    set_timer: *mut c_void,
-    wait_for_event: *mut c_void,
-    signal_event: *mut c_void,
-    close_event: *mut c_void,
-    check_event: *mut c_void,
+    set_timer: unsafe extern "efiapi" fn(event: Event, timer_delay: TimerDelay, trigger_time: u64),
+    wait_for_event: unsafe extern "efiapi" fn(
+        number_of_events: usize,
+        event: *mut Event,
+        index: *mut usize,
+    ) -> Status,
+    signal_event: unsafe extern "efiapi" fn(event: Event) -> Status,
+    close_event: unsafe extern "efiapi" fn(event: Event) -> Status,
+    check_event: unsafe extern "efiapi" fn(event: Event) -> Status,
 
     // Protocol handler services
     install_protocol_interface: *mut c_void,
@@ -105,7 +109,15 @@ pub struct BootServices {
      */
     copy_mem: *mut c_void,
     set_mem: *mut c_void,
-    create_event_ex: *mut c_void,
+    // Event services
+    pub create_event_ex: unsafe extern "efiapi" fn(
+        event_type: EventType,
+        tpl: Tpl,
+        notify_function: Option<EventNotifyFn>,
+        notify_context: *const c_void,
+        event_group: *const EfiEventGroup,
+        efi_event: *mut Event,
+    ) -> Status,
 }
 #[derive(Clone, Copy)]
 pub struct BootServicesWrapper {
