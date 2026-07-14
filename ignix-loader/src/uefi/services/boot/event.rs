@@ -1,5 +1,11 @@
+use core::ffi::c_void;
+
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::{init::SYSTEM_TABLE, table::boot::BootServicesWrapper, types::Tpl};
+use crate::uefi::{
+    init::SYSTEM_TABLE,
+    table::boot::BootServicesWrapper,
+    types::{Event, EventNotifyFn, EventType, Status, Tpl},
+};
 impl BootServicesWrapper {
     pub fn raise_tpl(&self, new_tpl: Tpl) -> Option<TplGuardian> {
         if let Some(function) = self.get_method() {
@@ -15,6 +21,44 @@ impl BootServicesWrapper {
             unsafe { (function.restore_tpl)(old_tpl) }
         }
     }
+
+    pub fn create_event(
+        &self,
+        event_type: EventType,
+        tpl: Tpl,
+        notify_function: Option<EventNotifyFn>,
+        notify_context: *mut c_void,
+    ) -> Result<Event, Status> {
+        let mut event: Event = core::ptr::null_mut();
+        if let Some(function) = self.get_method() {
+            let status = unsafe {
+                (function.create_event)(
+                    event_type,
+                    tpl,
+                    notify_function,
+                    notify_context,
+                    &mut event as *mut Event,
+                )
+            };
+            if status.is_success() {
+                return Ok(event);
+            }
+            Err(status)?
+        }
+        Err(Status::UNSUPPORTED)
+    }
+
+    pub fn create_event_ex(&self) {}
+
+    pub fn close_event(&self) {}
+
+    pub fn signal_event(&self) {}
+
+    pub fn wait_for_event(&self) {}
+
+    pub fn check_event(&self) {}
+
+    pub fn set_timer(&self) {}
 }
 
 /* NOTE FROM THE UEFI SPEC:

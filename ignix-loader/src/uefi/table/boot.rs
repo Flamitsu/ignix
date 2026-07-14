@@ -54,8 +54,8 @@ pub struct BootServices {
     set_timer: unsafe extern "efiapi" fn(event: Event, timer_delay: TimerDelay, trigger_time: u64),
     wait_for_event: unsafe extern "efiapi" fn(
         number_of_events: usize,
-        event: *mut Event,
-        index: *mut usize,
+        out_event: *mut Event,
+        out_index: *mut usize,
     ) -> Status,
     signal_event: unsafe extern "efiapi" fn(event: Event) -> Status,
     close_event: unsafe extern "efiapi" fn(event: Event) -> Status,
