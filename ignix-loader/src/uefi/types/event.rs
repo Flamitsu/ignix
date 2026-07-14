@@ -61,9 +61,9 @@ impl Tpl {
 }
 
 #[repr(transparent)]
-pub struct EfiEventGroup(pub Guid);
+pub struct EventGroup(pub Guid);
 
-impl EfiEventGroup {
+impl EventGroup {
     /// This event group is notified whenever the system calls to ExitBootservices(),
     /// after notifying EFI_EVENT_GROUP_BEFORE_EXIT_BOOT_SERVICES event group.
     /// event group is functionally equivalent to the EVT_SIGNAL_EXIT_BOOT_SERVICES

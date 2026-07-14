@@ -2,7 +2,7 @@
 use crate::uefi::{
     table::header::Header,
     types::{
-        AllocateType, EfiEventGroup, Event, EventNotifyFn, EventType, MemoryDescriptor, MemoryType,
+        AllocateType, Event, EventGroup, EventNotifyFn, EventType, MemoryDescriptor, MemoryType,
         PhysicalAddress, Status, TimerDelay, Tpl,
     },
 };
@@ -51,15 +51,15 @@ pub struct BootServices {
         notify_context: *mut c_void,
         out_event: *mut Event,
     ) -> Status,
-    set_timer: unsafe extern "efiapi" fn(event: Event, timer_delay: TimerDelay, trigger_time: u64),
-    wait_for_event: unsafe extern "efiapi" fn(
+    pub set_timer: unsafe extern "efiapi" fn(event: Event, timer_delay: TimerDelay, trigger_time: u64) -> Status,
+    pub wait_for_event: unsafe extern "efiapi" fn(
         number_of_events: usize,
-        out_event: *mut Event,
+        event: &Event,
         out_index: *mut usize,
     ) -> Status,
-    signal_event: unsafe extern "efiapi" fn(event: Event) -> Status,
-    close_event: unsafe extern "efiapi" fn(event: Event) -> Status,
-    check_event: unsafe extern "efiapi" fn(event: Event) -> Status,
+    pub signal_event: unsafe extern "efiapi" fn(event: Event) -> Status,
+    pub close_event: unsafe extern "efiapi" fn(event: Event) -> Status,
+    pub check_event: unsafe extern "efiapi" fn(event: Event) -> Status,
 
     // Protocol handler services
     install_protocol_interface: *mut c_void,
@@ -115,7 +115,7 @@ pub struct BootServices {
         tpl: Tpl,
         notify_function: Option<EventNotifyFn>,
         notify_context: *const c_void,
-        event_group: *const EfiEventGroup,
+        event_group: *const Option<EventGroup>,
         efi_event: *mut Event,
     ) -> Status,
 }

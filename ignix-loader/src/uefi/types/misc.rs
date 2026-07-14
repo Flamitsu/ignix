@@ -4,6 +4,7 @@ pub type Char16 = u16;
 pub type PhysicalAddress = u64;
 pub type VirtualAddress = u64;
 
+#[repr(C)]
 pub struct Guid {
     data1: u32,
     data2: u16,
