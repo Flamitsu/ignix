@@ -107,10 +107,10 @@ impl BootServicesWrapper {
         status
     }
 
-    pub fn set_timer(&self, event: Event, timer_delay: TimerDelay, trigger_time: Duration) -> Status {
+    pub fn set_timer(&self, event: Event, timer_delay: TimerDelay, trigger_time: u64) -> Status {
         let Some(function) = self.get_method() else { return Status::NOT_FOUND };
-        let ns: u64 = trigger_time.as_nanos().try_into().unwrap();
-        let status = unsafe { (function.set_timer)(event, timer_delay, ns) };
+        // Trigger time is in nanoseconds 
+        let status = unsafe { (function.set_timer)(event, timer_delay, trigger_time) };
         status
     }
 }
