@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
+use crate::uefi::types::Guid;
 use core::ffi::c_void;
 
 pub type Event = *mut c_void;
@@ -52,8 +53,89 @@ impl Tpl {
     pub const TPL_CALLBACK: Self = Self(8);
     /// The highest priority level
     pub const TPL_NOTIFY: Self = Self(16);
-    /// Higher than TPL_NOTIFY (I know it doesn't make sense, 
+    /// Higher than TPL_NOTIFY (I know it doesn't make sense,
     /// I'm only redacting what the UEFI spec says). Don't use it for
     /// long periods of time since it may cause inestability
     pub const TPL_HIGH_LEVEL: Self = Self(31);
+}
+
+pub struct EfiEventGroup(pub Guid);
+
+impl EfiEventGroup {
+    /// This event group is notified whenever the system calls to ExitBootservices(),
+    /// after notifying EFI_EVENT_GROUP_BEFORE_EXIT_BOOT_SERVICES event group.
+    /// event group is functionally equivalent to the EVT_SIGNAL_EXIT_BOOT_SERVICES
+    /// flag for the Type argument of CreateEvent.
+    /// Notification requirements:
+    /// - The notification function isn't allowed to use any Memory Allocation services in
+    /// any way (either itself or calling another function that uses it internally)
+    /// - The notification function must not depend on timer events
+    pub const EFI_EVENT_GROUP_EXIT_BOOT_SERVICES: Self = Self(Guid::new(
+        0x27abf055,
+        0xb1b8,
+        0x4c26,
+        [0x80, 0x48, 0x74, 0x8f, 0x37, 0xba, 0xa2, 0xdf],
+    ));
+
+    /// This event group is notified by the system ExitBootServices() is invoked right
+    /// before notifying EFI_EVENT_GROUP_EXIT_BOOT_SERVICES event group. The event
+    /// presents the last opportunity to use firmware interfaces in the boot environment.
+    /// The notification function for this event must not depend on any kind of delayed
+    /// processing (processing that happens in a timer callback beyond the time span
+    /// of the notification function)
+    pub const EFI_EVENT_GROUP_BEFORE_EXIT_BOOT_SERVICES: Self = Self(Guid::new(
+        0x8be0e274,
+        0x3970,
+        0x4b44,
+        [0x80, 0xc5, 0x1a, 0xb9, 0x50, 0x2f, 0x3b, 0xfc],
+    ));
+
+    /// This event group is notified by the system when SetVirtualAddressMap() is called.
+    /// Equivalent to EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE flag for the type argument of
+    /// CreateEvent
+    pub const EFI_EVENT_GROUP_VIRTUAL_ADDRESS_CHANGE: Self = Self(Guid::new(
+        0x13fa7698,
+        0xc831,
+        0x49c7,
+        [0x87, 0xea, 0x8f, 0x43, 0xfc, 0xc2, 0x51, 0x96],
+    ));
+
+    /// This event group is notified by the system when the memory map changes.
+    /// Notification function should not use Memory Allocate Services at all.
+    pub const EFI_EVENT_GROUP_MEMORY_MAP_CHANGE: Self = Self(Guid::new(
+        0x78bee926,
+        0x692f,
+        0x48fd,
+        [0x9e, 0xdb, 0x1, 0x42, 0x2e, 0xf0, 0xd7, 0xab],
+    ));
+
+    /// This event group is notified by the system right before notifying
+    /// EFI_EVENT_GROUP_AFTER_READY_TO_BOOT event group when the Boot Manager is about to
+    /// load and execute a boot option or a platform or OS recovery option.
+    pub const EFI_EVENT_GROUP_READY_TO_BOOT: Self = Self(Guid::new(
+        0x7ce88fb3,
+        0x4bd7,
+        0x4679,
+        [0x87, 0xa8, 0xa8, 0xd8, 0xde, 0xe5, 0xd, 0x2b],
+    ));
+
+    /// This event group is notified by the system immediately after notifying
+    /// EFI_EVENT_GROUP_READY_TO_BOOT event group when the Boot Manager is about to load
+    /// and execute a boot option or a platform or OS recovery option.
+    pub const EFI_EVENT_GROUP_AFTER_READY_TO_BOOT: Self = Self(Guid::new(
+        0x3a2a00ad,
+        0x98b9,
+        0x4cdf,
+        [0xa4, 0x78, 0x70, 0x27, 0x77, 0xf1, 0xc1, 0xb],
+    ));
+
+    /// This event group is notified by the system when ResetSystem() is invoked and the
+    /// system is about to be reset. The event group is only notified prior
+    /// to ExitBootServices() invocation.
+    pub const EFI_EVENT_GROUP_RESET_SYSTEM: Self = Self(Guid::new(
+        0x62da6a56,
+        0x13fb,
+        0x485a,
+        [0xa8, 0xda, 0xa3, 0xdd, 0x79, 0x12, 0xcb, 0x6b],
+    ));
 }

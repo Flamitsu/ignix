@@ -3,6 +3,7 @@ mod event;
 mod memory;
 mod misc;
 mod status;
+
 pub use boolean::Boolean;
 pub use event::{Event, EventNotifyFn, EventType, Tpl};
 pub use memory::{
