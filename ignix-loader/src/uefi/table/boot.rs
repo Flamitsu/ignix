@@ -17,7 +17,7 @@ pub struct BootServices {
     hdr: Header,
 
     // Task priority services (for more info refer to page 136 UEFI spec 2.11)
-    pub raise_tpl: unsafe extern "efiapi" fn(new_tlp: Tpl) -> Tpl,
+    pub raise_tpl: unsafe extern "efiapi" fn(new_tpl: Tpl) -> Tpl,
     pub restore_tpl: unsafe extern "efiapi" fn(old_tpl: Tpl),
 
     // Memory services
@@ -110,19 +110,41 @@ pub struct BootServices {
     ) -> Status,
 
     // Miscellaneous services
-    install_configuration_table: unsafe extern "efiapi" fn() -> Status,
+    install_configuration_table:
+        unsafe extern "efiapi" fn(guid: *const Guid, table: *const c_void) -> Status,
 
     // Image services
-    load_image: *mut c_void,
-    start_image: *mut c_void,
-    exit: *mut c_void,
-    unload_image: *mut c_void,
-    exit_boot_services: *mut c_void,
+    load_image: unsafe extern "efiapi" fn(
+        boot_policy: bool,
+        parent_image_handle: Handle,
+        device_path: *const DevicePathProtocol,
+        source_buffer: *const c_void,
+        source_size: usize,
+        image_handle: *mut Handle,
+    ) -> Status,
+    start_image: unsafe extern "efiapi" fn(
+        image_handle: Handle,
+        exit_data_size: *mut usize,
+        exit_data: *mut *mut u16,
+    ) -> Status,
+    exit: unsafe extern "efiapi" fn(
+        image_handle: Handle,
+        exit_status: Status,
+        exit_data_size: usize,
+        exit_data: *mut u16,
+    ) -> Status,
+    unload_image: unsafe extern "efiapi" fn(image_handle: Handle) -> Status,
+    exit_boot_services: unsafe extern "efiapi" fn(image_handle: Handle, map_key: usize) -> Status,
 
     // Miscellaneous services
-    get_next_monotonic_count: *mut c_void,
+    get_next_monotonic_count: unsafe extern "efiapi" fn(count: *mut u64) -> Status,
     pub stall: unsafe extern "efiapi" fn(microseconds: usize) -> Status,
-    set_watch_dog_timer: *mut c_void,
+    set_watch_dog_timer: unsafe extern "efiapi" fn(
+        timeout: usize,
+        watchdog_code: u64,
+        data_size: usize,
+        watchdog_data: *const u16,
+    ),
 
     // Driver support services
     connect_controller: unsafe extern "efiapi" fn(
@@ -141,7 +163,7 @@ pub struct BootServices {
     open_protocol: unsafe extern "efiapi" fn(
         handle: Handle,
         protocol: *const Guid,
-        *mut *mut c_void,
+        interface: *mut *mut c_void,
         agent_handle: Handle,
         controller_handle: Handle,
         attributes: u32,
@@ -192,11 +214,13 @@ pub struct BootServices {
     uninstall_multiple_protocol_interfaces: *mut c_void,
 
     // CRC32 services
-    calculate_crc32: *mut c_void,
+    calculate_crc32:
+        unsafe extern "efiapi" fn(data: *const c_void, data_size: usize, crc32: *mut u32) -> Status,
 
     // Miscellaneous services
-    copy_mem: *mut c_void,
-    set_mem: *mut c_void,
+    copy_mem:
+        unsafe extern "efiapi" fn(destination: *const c_void, source: *const c_void, length: usize),
+    set_mem: unsafe extern "efiapi" fn(buffer: *const c_void, size: usize, value: u8),
 
     // Event services
     pub create_event_ex: unsafe extern "efiapi" fn(
