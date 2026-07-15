@@ -1,8 +1,18 @@
 use core::ffi::c_void;
-pub type Handle = *mut c_void;
 pub type Char16 = u16;
 pub type PhysicalAddress = u64;
 pub type VirtualAddress = u64;
+
+/*
+ * Okay so I know this is a protocol in theory, but it's going to remain here until i actually
+ * reach this part reading the UEFI spec and can complete more to deserve it's own file.
+ * */
+#[repr(C)]
+pub struct DevicePathProtocol {
+    pub dp_type: u8,
+    pub sub_type: u8,
+    pub length: [u8; 2],
+}
 
 #[repr(C)]
 pub struct Guid {

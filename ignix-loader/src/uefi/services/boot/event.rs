@@ -44,7 +44,7 @@ impl BootServicesWrapper {
         if status.is_success() {
             return Ok(event);
         }
-        Err(status)?
+        Err(status)
     }
 
     pub fn create_event_ex(
@@ -53,14 +53,14 @@ impl BootServicesWrapper {
         tpl: Tpl,
         notify_function: Option<EventNotifyFn>,
         notify_context: *const c_void,
-        event_group: Option<EventGroup>,
+        event_group: Option<*const EventGroup>,
     ) -> Result<Event, Status> {
         let mut event: Event = core::ptr::null_mut();
         let Some(function) = self.get_method() else {
             Err(Status::NOT_FOUND)?
         };
-        let event_group_ptr = match &event_group {
-            Some(group) => &event_group as *const Option<EventGroup>,
+        let event_group_ptr = match event_group {
+            Some(ptr) => ptr,
             None => core::ptr::null(),
         };
         let status = unsafe {
@@ -76,14 +76,14 @@ impl BootServicesWrapper {
         if status.is_success() {
             return Ok(event);
         }
-        Err(status)?
+        Err(status)
     }
 
     pub fn close_event(&self, event: Event) -> Status {
         let Some(function) = self.get_method() else {
             return Status::NOT_FOUND;
         };
-        
+
         unsafe { (function.close_event)(event) }
     }
 
@@ -91,7 +91,7 @@ impl BootServicesWrapper {
         let Some(function) = self.get_method() else {
             return Status::NOT_FOUND;
         };
-        
+
         unsafe { (function.signal_event)(event) }
     }
 
@@ -104,14 +104,14 @@ impl BootServicesWrapper {
         if status.is_success() {
             return Ok(index);
         }
-        Err(status)?
+        Err(status)
     }
 
     pub fn check_event(&self, event: Event) -> Status {
         let Some(function) = self.get_method() else {
             return Status::NOT_FOUND;
         };
-        
+
         unsafe { (function.check_event)(event) }
     }
 
@@ -120,7 +120,7 @@ impl BootServicesWrapper {
             return Status::NOT_FOUND;
         };
         // Trigger time is in nanoseconds
-        
+
         unsafe { (function.set_timer)(event, timer_delay, trigger_time) }
     }
 }

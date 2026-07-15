@@ -2,8 +2,9 @@
 use crate::uefi::{
     table::header::Header,
     types::{
-        AllocateType, Event, EventGroup, EventNotifyFn, EventType, MemoryDescriptor, MemoryType,
-        PhysicalAddress, Status, TimerDelay, Tpl,
+        AllocateType, DevicePathProtocol, Event, EventGroup, EventNotifyFn, EventType, Guid,
+        Handle, InterfaceType, MemoryDescriptor, MemoryType, OpenProtocolInformationEntry,
+        PhysicalAddress, SearchType, Status, TimerDelay, Tpl,
     },
 };
 use core::ffi::c_void;
@@ -58,7 +59,7 @@ pub struct BootServices {
     ) -> Status,
     pub wait_for_event: unsafe extern "efiapi" fn(
         number_of_events: usize,
-        event: &Event,
+        event: *const Event,
         out_index: *mut usize,
     ) -> Status,
     pub signal_event: unsafe extern "efiapi" fn(event: Event) -> Status,
@@ -66,15 +67,50 @@ pub struct BootServices {
     pub check_event: unsafe extern "efiapi" fn(event: Event) -> Status,
 
     // Protocol handler services
-    install_protocol_interface: *mut c_void,
-    reinstall_protocol_interface: *mut c_void,
-    uninstall_protocol_interface: *mut c_void,
+    install_protocol_interface: unsafe extern "efiapi" fn(
+        handle: *mut Handle,
+        protocol: *const Guid,
+        interface_type: InterfaceType,
+        interface: *const c_void,
+    ) -> Status,
+    reinstall_protocol_interface: unsafe extern "efiapi" fn(
+        handle: Handle,
+        protocol: *const Guid,
+        old_interface: *const c_void,
+        new_interface: *const c_void,
+    ) -> Status,
+    uninstall_protocol_interface: unsafe extern "efiapi" fn(
+        handle: Handle,
+        protocol: *const Guid,
+        interface: *const c_void,
+    ) -> Status,
+    // DON'T TOUCH THIS POINTER THIS SHIT TOOK ME 13 HOURS TO REALIZE IT WAS MISALIGNED BY 8 BYTES
     reserved: *mut c_void,
-    handle_protocol: *mut c_void,
-    register_protocol_notify: *mut c_void,
-    locate_handle: *mut c_void,
-    locate_device_path: *mut c_void,
-    install_configuration_table: *mut c_void,
+    handle_protocol: unsafe extern "efiapi" fn(
+        handle: Handle,
+        protocol: *const Guid,
+        interface: *mut *mut c_void,
+    ) -> Status,
+    register_protocol_notify: unsafe extern "efiapi" fn(
+        protocol: *const Guid,
+        event: Event,
+        registration: *mut *mut c_void,
+    ) -> Status,
+    locate_handle: unsafe extern "efiapi" fn(
+        search_type: SearchType,
+        protocol: *const Guid,
+        search_key: *const c_void,
+        buffer_size: *mut usize,
+        buffer: *mut Handle,
+    ) -> Status,
+    locate_device_path: unsafe extern "efiapi" fn(
+        protocol: *const Guid,
+        device_path: *mut *const DevicePathProtocol,
+        device: *mut Handle,
+    ) -> Status,
+
+    // Miscellaneous services
+    install_configuration_table: unsafe extern "efiapi" fn() -> Status,
 
     // Image services
     load_image: *mut c_void,
@@ -89,37 +125,86 @@ pub struct BootServices {
     set_watch_dog_timer: *mut c_void,
 
     // Driver support services
-    connect_controller: *mut c_void,
-    disconnect_controller: *mut c_void,
+    connect_controller: unsafe extern "efiapi" fn(
+        controller_handle: Handle,
+        driver_image_handle: *const Handle,
+        remaining_device_path: *const DevicePathProtocol,
+        recursive: bool,
+    ) -> Status,
+    disconnect_controller: unsafe extern "efiapi" fn(
+        controller_handle: Handle,
+        driver_image_handle: Handle,
+        child_handle: Handle,
+    ) -> Status,
 
     // Open and Close protocol services
-    open_protocol: *mut c_void,
-    close_protocol: *mut c_void,
-    open_protocol_information: *mut c_void,
+    open_protocol: unsafe extern "efiapi" fn(
+        handle: Handle,
+        protocol: *const Guid,
+        *mut *mut c_void,
+        agent_handle: Handle,
+        controller_handle: Handle,
+        attributes: u32,
+    ) -> Status,
+    close_protocol: unsafe extern "efiapi" fn(
+        handle: Handle,
+        protocol: *const Guid,
+        agent_handle: Handle,
+        controller_handle: Handle,
+    ) -> Status,
+    open_protocol_information: unsafe extern "efiapi" fn(
+        handle: Handle,
+        protocol: *const Guid,
+        entry_buffer: *mut *mut OpenProtocolInformationEntry,
+        entry_count: *mut usize,
+    ) -> Status,
 
     // library services
-    protocols_per_handle: *mut c_void,
-    locate_handle_buffer: *mut c_void,
-    locate_protocol: *mut c_void,
+    protocols_per_handle: unsafe extern "efiapi" fn(
+        handle: Handle,
+        protocol_buffer: *mut *mut *const Guid,
+        protocol_buffer_count: *mut usize,
+    ) -> Status,
+    locate_handle_buffer: unsafe extern "efiapi" fn(
+        search_type: SearchType,
+        protocol: *const Guid,
+        search_key: *const c_void,
+        no_handles: *mut usize,
+        buffer: *mut *mut Handle,
+    ) -> Status,
+    locate_protocol: unsafe extern "efiapi" fn(
+        protocol: *const Guid,
+        registration: *const c_void,
+        interface: *mut *mut c_void,
+    ) -> Status,
+
+    /*
+     * Okay so let's talk about this bullshit. These two services are the worst services
+     * made by a human, in fact, I believe it was made by a psychopath.
+     * If you go to the page 194 of the UEFI spec 2.11, you will find these motherfuckers.
+     * Those monsters are literally crawling in every single fucking CPU because one
+     * Intel engineer didn't wanted to use a fucking variable size array in that moment.
+     * Now those functions have "VARIABLE ARGUMENTS", what does this mean?, you may ask. You're
+     * too innocent to be reading this... That's all I have to say and that's why it's not
+     * implemented.
+     */
     install_multiple_protocol_interfaces: *mut c_void,
     uninstall_multiple_protocol_interfaces: *mut c_void,
 
     // CRC32 services
     calculate_crc32: *mut c_void,
 
-    /* Miscellaneous services
-     * I KNOW THERE IS ALSO MISCELLANEOUS UP THERE IN THE FILE, but this
-     * is how its implemented in the UEFI spec 2.11 page 94
-     */
+    // Miscellaneous services
     copy_mem: *mut c_void,
     set_mem: *mut c_void,
+
     // Event services
     pub create_event_ex: unsafe extern "efiapi" fn(
         event_type: EventType,
         tpl: Tpl,
         notify_function: Option<EventNotifyFn>,
         notify_context: *const c_void,
-        event_group: *const Option<EventGroup>,
+        event_group: *const EventGroup,
         efi_event: *mut Event,
     ) -> Status,
 }
