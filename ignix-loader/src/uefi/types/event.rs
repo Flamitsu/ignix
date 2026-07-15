@@ -70,7 +70,7 @@ impl EventGroup {
     /// flag for the Type argument of CreateEvent.
     /// Notification requirements:
     /// - The notification function isn't allowed to use any Memory Allocation services in
-    /// any way (either itself or calling another function that uses it internally)
+    ///   any way (either itself or calling another function that uses it internally)
     /// - The notification function must not depend on timer events
     pub const EFI_EVENT_GROUP_EXIT_BOOT_SERVICES: Self = Self(Guid::new(
         0x27abf055,
@@ -144,12 +144,12 @@ impl EventGroup {
 #[repr(C)]
 pub enum TimerDelay {
     // The event's timer setting is cancelled and no time trigger is set. TriggerTime is ignored
-    TimerCancel = 0,
+    Cancel = 0,
     /* The event is signaled periodically at TriggerTime intervals from the current time.
      * This is the only timer trigger Type for which the event timer does not need to be
      * reset for each notification. All other timer trigger types are “one shot.”
      */
-    TimerPeriodic = 1,
+    Periodic = 1,
     // The event is to be signaled in TriggerTime 100ns units.
-    TimerRelative = 2,
+    Relative = 2,
 }

@@ -27,4 +27,20 @@ pub struct RuntimeServices {
     // Miscellaneous UEFI 2.0 Service
     query_variable_info: *mut c_void,
 }
-pub struct RuntimeServicesWrapper {}
+#[derive(Clone, Copy)]
+#[allow(unused)]
+pub struct RuntimeServicesWrapper {
+    function: *mut RuntimeServices,
+}
+#[allow(unused)]
+impl RuntimeServicesWrapper {
+    pub unsafe fn new(function: *mut RuntimeServices) -> Self {
+        Self { function }
+    }
+    pub fn get_method(&self) -> Option<&RuntimeServices> {
+        if self.function.is_null() {
+            return None;
+        }
+        Some(unsafe { &*self.function })
+    }
+}

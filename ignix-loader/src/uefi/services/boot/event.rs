@@ -8,12 +8,10 @@ use crate::uefi::{
 };
 impl BootServicesWrapper {
     pub fn raise_tpl(&self, new_tpl: Tpl) -> Option<TplGuardian> {
-        let Some(function) = self.get_method() else {
-            return None;
-        };
-        return Some(TplGuardian {
+        let function = self.get_method()?;
+        Some(TplGuardian {
             old_tlp: unsafe { (function.raise_tpl)(new_tpl) },
-        });
+        })
     }
 
     pub fn restore_tpl(&self, old_tpl: Tpl) {
@@ -85,16 +83,16 @@ impl BootServicesWrapper {
         let Some(function) = self.get_method() else {
             return Status::NOT_FOUND;
         };
-        let status = unsafe { (function.close_event)(event) };
-        status
+        
+        unsafe { (function.close_event)(event) }
     }
 
     pub fn signal_event(&self, event: Event) -> Status {
         let Some(function) = self.get_method() else {
             return Status::NOT_FOUND;
         };
-        let status = unsafe { (function.signal_event)(event) };
-        status
+        
+        unsafe { (function.signal_event)(event) }
     }
 
     pub fn wait_for_event(&self, event: Event) -> Result<usize, Status> {
@@ -113,8 +111,8 @@ impl BootServicesWrapper {
         let Some(function) = self.get_method() else {
             return Status::NOT_FOUND;
         };
-        let status = unsafe { (function.check_event)(event) };
-        status
+        
+        unsafe { (function.check_event)(event) }
     }
 
     pub fn set_timer(&self, event: Event, timer_delay: TimerDelay, trigger_time: u64) -> Status {
@@ -122,8 +120,8 @@ impl BootServicesWrapper {
             return Status::NOT_FOUND;
         };
         // Trigger time is in nanoseconds
-        let status = unsafe { (function.set_timer)(event, timer_delay, trigger_time) };
-        status
+        
+        unsafe { (function.set_timer)(event, timer_delay, trigger_time) }
     }
 }
 
