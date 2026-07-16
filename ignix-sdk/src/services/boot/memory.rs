@@ -2,7 +2,8 @@
 use crate::{
     table::boot::BootServicesWrapper,
     types::{
-        AllocateType, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE, PhysicalAddress, Status,
+        AllocateType, IgnixError, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE,
+        PhysicalAddress, Status,
     },
 };
 use core::ptr::NonNull;
@@ -12,9 +13,9 @@ impl BootServicesWrapper {
         allocate_type: AllocateType,
         memory_type: MemoryType,
         pages: usize,
-    ) -> Result<NonNull<u8>, Status> {
+    ) -> Result<NonNull<u8>, IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("allocate_pages"))?
         };
         let mut addr: PhysicalAddress = 0;
         let status =
@@ -26,27 +27,27 @@ impl BootServicesWrapper {
                 return Ok(not_null);
             }
 
-            Err(Status::OUT_OF_RESOURCES)?
+            Err(Status::OUT_OF_RESOURCES.context("allocate_pages"))?
         }
 
-        Err(status)?
+        Err(status.context("allocate_pages"))?
     }
 
-    pub fn free_pages(self, memory: PhysicalAddress, pages: usize) -> Result<(), Status> {
+    pub fn free_pages(self, memory: PhysicalAddress, pages: usize) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("allocate_pages"))?
         };
         let status = unsafe { (function.free_pages)(memory, pages) };
 
         if status.is_success() {
             return Ok(());
         }
-        Err(status)?
+        Err(status.context("allocate_pages"))?
     }
 
-    pub fn get_memory_map(self) -> Result<MemoryMap, Status> {
+    pub fn get_memory_map(self) -> Result<MemoryMap, IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("get_memory_map"))?
         };
 
         let mut mem_map = MemoryMap::new_empty();
@@ -63,7 +64,7 @@ impl BootServicesWrapper {
             };
 
             if first_execution != Status::BUFFER_TOO_SMALL {
-                Err(first_execution)?
+                Err(first_execution.context("get_memory_map"))?
             }
         }
 
@@ -98,12 +99,16 @@ impl BootServicesWrapper {
             return Ok(mem_map);
         }
         self.free_pages(buffer_ptr.as_ptr() as PhysicalAddress, pages_needed)?;
-        Err(status)
+        Err(status.context("get_memory_map"))
     }
     /// pool_type needs to be either OEM reserved use or UEFI OS Loaders.
-    pub fn allocate_pool(self, pool_type: MemoryType, size: usize) -> Result<NonNull<u8>, Status> {
+    pub fn allocate_pool(
+        self,
+        pool_type: MemoryType,
+        size: usize,
+    ) -> Result<NonNull<u8>, IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("allocate_pool"))?
         };
 
         let mut raw_ptr: *mut u8 = core::ptr::null_mut();
@@ -111,21 +116,21 @@ impl BootServicesWrapper {
 
         if status.is_success() {
             let Some(nn) = NonNull::new(raw_ptr) else {
-                Err(Status::OUT_OF_RESOURCES)?
+                Err(Status::OUT_OF_RESOURCES.context("allocate_pool"))?
             };
             return Ok(nn);
         }
-        Err(status)
+        Err(status.context("allocate_pool"))
     }
 
-    pub fn free_pool(self, buffer: NonNull<u8>) -> Result<(), Status> {
+    pub fn free_pool(self, buffer: NonNull<u8>) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("free_pool"))?
         };
         let status = unsafe { (function.free_pool)(buffer.as_ptr()) };
         if status.is_success() {
             return Ok(());
         }
-        Err(status)
+        Err(status.context("free_pool"))
     }
 }

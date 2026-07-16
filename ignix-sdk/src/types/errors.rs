@@ -2,10 +2,12 @@
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Status(pub usize);
-// Those comments and codes are directly extracted from the UEFI spec 2.11 page 1984 to 1986
+/* Those comments and codes are directly extracted from the UEFI spec 2.11 page 1984 to 1986
+ * There is also some custom errors made for this bootloaders */
 #[allow(unused)]
 impl Status {
-    pub const ERROR_BIT: usize = 1 << (usize::BITS - 1);
+    const ERROR_BIT: usize = 1 << (usize::BITS - 1);
+    const CUSTOM_ERROR_BIT: usize = Self::ERROR_BIT | 0x1000;
 
     /// The operation completed successfully.
     pub const SUCCESS: Self = Status(0);
@@ -91,6 +93,13 @@ impl Status {
     pub const IP_ADDRESS_CONFLICT: Self = Status(Self::ERROR_BIT | 34);
     /// A HTTP error occurred during the network operation.
     pub const HTTP_ERROR: Self = Status(Self::ERROR_BIT | 35);
+    // This is the start of the custom errors for ignix
+    /// System Table pointer missing.
+    pub const ST_POINTER_MISSING: Self = Status(Self::CUSTOM_ERROR_BIT | 1);
+    /// Boot Services table pointer missing.
+    pub const BST_POINTER_MISSING: Self = Status(Self::CUSTOM_ERROR_BIT | 2);
+    /// Runtime Services table pointer missing.
+    pub const RST_POINTER_MISSING: Self = Status(Self::CUSTOM_ERROR_BIT | 3);
 }
 #[allow(unused)]
 impl Status {
@@ -110,61 +119,81 @@ impl Status {
     pub const fn is_error(self) -> bool {
         (self.0 & Self::ERROR_BIT) != 0
     }
+
+    pub fn context(self, func: &'static str) -> IgnixError {
+        if func.is_empty() {
+            return IgnixError { status: self, func: "unknown" }
+        }
+        IgnixError { status: self, func }
+    }
 }
 
 impl core::fmt::Debug for Status {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match *self {
-            Self::SUCCESS => write!(f, "SUCCESS"),
+            Self::SUCCESS => write!(f, "FW: SUCCESS"),
 
-            Self::WARN_UNKNOWN_GLYPH => write!(f, "WARN_UNKNOWN_GLYPH"),
-            Self::WARN_DELETE_FAILURE => write!(f, "WARN_DELETE_FAILURE"),
-            Self::WARN_WRITE_FAILURE => write!(f, "WARN_WRITE_FAILURE"),
-            Self::WARN_BUFFER_TOO_SMALL => write!(f, "WARN_BUFFER_TOO_SMALL"),
-            Self::WARN_STALE_DATA => write!(f, "WARN_STALE_DATA"),
-            Self::WARN_FILE_SYSTEM => write!(f, "WARN_FILE_SYSTEM"),
-            Self::WARN_RESET_REQUIRED => write!(f, "WARN_RESET_REQUIRED"),
+            Self::WARN_UNKNOWN_GLYPH => write!(f, "FW:WARN_UNKNOWN_GLYPH"),
+            Self::WARN_DELETE_FAILURE => write!(f, "FW: WARN_DELETE_FAILURE"),
+            Self::WARN_WRITE_FAILURE => write!(f, "FW: WARN_WRITE_FAILURE"),
+            Self::WARN_BUFFER_TOO_SMALL => write!(f, "FW: WARN_BUFFER_TOO_SMALL"),
+            Self::WARN_STALE_DATA => write!(f, "FW: WARN_STALE_DATA"),
+            Self::WARN_FILE_SYSTEM => write!(f, "FW: WARN_FILE_SYSTEM"),
+            Self::WARN_RESET_REQUIRED => write!(f, "FW: WARN_RESET_REQUIRED"),
 
-            Self::LOAD_ERROR => write!(f, "LOAD_ERROR"),
-            Self::INVALID_PARAMETER => write!(f, "INVALID_PARAMETER"),
-            Self::UNSUPPORTED => write!(f, "UNSUPPORTED"),
-            Self::BAD_BUFFER_SIZE => write!(f, "BAD_BUFFER_SIZE"),
-            Self::BUFFER_TOO_SMALL => write!(f, "BUFFER_TOO_SMALL"),
-            Self::NOT_READY => write!(f, "NOT_READY"),
-            Self::DEVICE_ERROR => write!(f, "DEVICE_ERROR"),
-            Self::WRITE_PROTECTED => write!(f, "WRITE_PROTECTED"),
-            Self::OUT_OF_RESOURCES => write!(f, "OUT_OF_RESOURCES"),
-            Self::VOLUME_CORRUPTED => write!(f, "VOLUME_CORRUPTED"),
-            Self::VOLUME_FULL => write!(f, "VOLUME_FULL"),
-            Self::NO_MEDIA => write!(f, "NO_MEDIA"),
-            Self::MEDIA_CHANGED => write!(f, "MEDIA_CHANGED"),
-            Self::NOT_FOUND => write!(f, "NOT_FOUND"),
-            Self::ACCESS_DENIED => write!(f, "ACCESS_DENIED"),
-            Self::NO_RESPONSE => write!(f, "NO_RESPONSE"),
-            Self::NO_MAPPING => write!(f, "NO_MAPPING"),
-            Self::TIMEOUT => write!(f, "TIMEOUT"),
-            Self::NOT_STARTED => write!(f, "NOT_STARTED"),
-            Self::ALREADY_STARTED => write!(f, "ALREADY_STARTED"),
-            Self::ABORTED => write!(f, "ABORTED"),
-            Self::ICMP_ERROR => write!(f, "ICMP_ERROR"),
-            Self::TFTP_ERROR => write!(f, "TFTP_ERROR"),
-            Self::PROTOCOL_ERROR => write!(f, "PROTOCOL_ERROR"),
-            Self::INCOMPATIBLE_VERSION => write!(f, "INCOMPATIBLE_VERSION"),
-            Self::SECURITY_VIOLATION => write!(f, "SECURITY_VIOLATION"),
-            Self::CRC_ERROR => write!(f, "CRC_ERROR"),
-            Self::END_OF_MEDIA => write!(f, "END_OF_MEDIA"),
-            Self::END_OF_FILE => write!(f, "END_OF_FILE"),
-            Self::INVALID_LANGUAGE => write!(f, "INVALID_LANGUAGE"),
-            Self::COMPROMISED_DATA => write!(f, "COMPROMISED_DATA"),
-            Self::IP_ADDRESS_CONFLICT => write!(f, "IP_ADDRESS_CONFLICT"),
-            Self::HTTP_ERROR => write!(f, "HTTP_ERROR"),
-
-            _ => write!(f, " What the fuck did you do Status(0x{:X})", self.0),
+            Self::LOAD_ERROR => write!(f, "FW: LOAD_ERROR"),
+            Self::INVALID_PARAMETER => write!(f, "FW: INVALID_PARAMETER"),
+            Self::UNSUPPORTED => write!(f, "FW: UNSUPPORTED"),
+            Self::BAD_BUFFER_SIZE => write!(f, "FW: BAD_BUFFER_SIZE"),
+            Self::BUFFER_TOO_SMALL => write!(f, "FW: BUFFER_TOO_SMALL"),
+            Self::NOT_READY => write!(f, "FW: NOT_READY"),
+            Self::DEVICE_ERROR => write!(f, "FW: DEVICE_ERROR"),
+            Self::WRITE_PROTECTED => write!(f, "FW: WRITE_PROTECTED"),
+            Self::OUT_OF_RESOURCES => write!(f, "FW: OUT_OF_RESOURCES"),
+            Self::VOLUME_CORRUPTED => write!(f, "FW: VOLUME_CORRUPTED"),
+            Self::VOLUME_FULL => write!(f, "FW: VOLUME_FULL"),
+            Self::NO_MEDIA => write!(f, "FW: NO_MEDIA"),
+            Self::MEDIA_CHANGED => write!(f, "FW: MEDIA_CHANGED"),
+            Self::NOT_FOUND => write!(f, "FW: NOT_FOUND"),
+            Self::ACCESS_DENIED => write!(f, "FW: ACCESS_DENIED"),
+            Self::NO_RESPONSE => write!(f, "FW: NO_RESPONSE"),
+            Self::NO_MAPPING => write!(f, "FW: NO_MAPPING"),
+            Self::TIMEOUT => write!(f, "FW: TIMEOUT"),
+            Self::NOT_STARTED => write!(f, "FW: NOT_STARTED"),
+            Self::ALREADY_STARTED => write!(f, "FW: ALREADY_STARTED"),
+            Self::ABORTED => write!(f, "FW: ABORTED"),
+            Self::ICMP_ERROR => write!(f, "FW: ICMP_ERROR"),
+            Self::TFTP_ERROR => write!(f, "FW: TFTP_ERROR"),
+            Self::PROTOCOL_ERROR => write!(f, "FW: PROTOCOL_ERROR"),
+            Self::INCOMPATIBLE_VERSION => write!(f, "FW: INCOMPATIBLE_VERSION"),
+            Self::SECURITY_VIOLATION => write!(f, "FW: SECURITY_VIOLATION"),
+            Self::CRC_ERROR => write!(f, "FW: CRC_ERROR"),
+            Self::END_OF_MEDIA => write!(f, "FW: END_OF_MEDIA"),
+            Self::END_OF_FILE => write!(f, "FW: END_OF_FILE"),
+            Self::INVALID_LANGUAGE => write!(f, "FW: INVALID_LANGUAGE"),
+            Self::COMPROMISED_DATA => write!(f, "FW: COMPROMISED_DATA"),
+            Self::IP_ADDRESS_CONFLICT => write!(f, "FW: IP_ADDRESS_CONFLICT"),
+            Self::HTTP_ERROR => write!(f, "FW: HTTP_ERROR"),
+            Self::ST_POINTER_MISSING => write!(f, "IGNIX: ST_POINTER_MISSING"),
+            Self::BST_POINTER_MISSING => write!(f, "IGNIX: BST_POINTER_MISSING"),
+            Self::RST_POINTER_MISSING => write!(f, "IGNIX: RST_POINTER_MISSING"),
+            _ => write!(f, "What the fuck did you do Status(0x{:X})", self.0),
         }
     }
 }
 
-impl core::fmt::Display for Status {
+pub struct IgnixError {
+    pub status: Status,
+    pub func: &'static str,
+}
+
+impl core::fmt::Debug for IgnixError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?} in {} function.", self.status, self.func)
+    }
+}
+
+impl core::fmt::Display for IgnixError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         core::fmt::Debug::fmt(self, f)
     }

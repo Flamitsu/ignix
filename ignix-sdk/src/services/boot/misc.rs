@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
     table::{SystemTable, boot::BootServicesWrapper},
-    types::{Guid, Status, Table},
+    types::{Guid, IgnixError, Status, Table},
 };
 use core::{ffi::c_void, time::Duration};
 impl BootServicesWrapper {
@@ -15,9 +15,13 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER The supplied WatchdogCode is invalid.
     /// EFI_UNSUPPORTED The system does not have a watchdog timer.
     /// EFI_DEVICE_ERROR The watch dog timer could not be programmed due to a hardware error.
-    pub fn set_watchdog_timer(&self, timeout: Duration, watchdog_code: u64) -> Result<(), Status> {
+    pub fn set_watchdog_timer(
+        &self,
+        timeout: Duration,
+        watchdog_code: u64,
+    ) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("set_watchdog_timer"))?
         };
         let status = unsafe {
             (function.set_watch_dog_timer)(
@@ -28,21 +32,21 @@ impl BootServicesWrapper {
             )
         };
         if status.is_error() {
-            Err(status)?
+            Err(status.context("set_watchdog_timer"))?
         }
         Ok(())
     }
 
     /// Stalls the system the seconds (converted internally to microseconds)
-    pub fn stall(&self, duration: Duration) -> Result<(), Status> {
+    pub fn stall(&self, duration: Duration) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("stall"))?
         };
         let microseconds = duration.as_micros() as usize;
         let status = unsafe { (function.stall)(microseconds) };
 
         if status.is_error() {
-            Err(status)?
+            Err(status.context("stall"))?
         }
 
         Ok(())
@@ -56,12 +60,12 @@ impl BootServicesWrapper {
     ///    from the end of the buffers and working toward the beginning of the buffers.
     /// 3. Otherwise, the data should be copied from the Source buffer to the Destination buffer
     ///    starting from the beginning of the buffers and working toward the end of the buffers.
-    pub fn copy_mem(&self, dest: &mut [u8], src: &[u8]) -> Result<(), Status> {
+    pub fn copy_mem(&self, dest: &mut [u8], src: &[u8]) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("copy_mem"))?
         };
         if dest.len() > src.len() {
-            Err(Status::INVALID_PARAMETER)?
+            Err(Status::BST_POINTER_MISSING.context("copy_mem"))?
         }
         unsafe {
             (function.copy_mem)(
@@ -73,9 +77,13 @@ impl BootServicesWrapper {
         Ok(())
     }
     /// Fills a buffer with a specified value.
-    pub fn set_mem<const N: usize>(&self, mut buffer: [u8; N], value: u8) -> Result<(), Status> {
+    pub fn set_mem<const N: usize>(
+        &self,
+        mut buffer: [u8; N],
+        value: u8,
+    ) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("set_mem"))?
         };
         unsafe { (function.set_mem)(buffer.as_mut_ptr() as *const c_void, buffer.len(), value) }
         Ok(())
@@ -87,16 +95,16 @@ impl BootServicesWrapper {
     /// The low 32 bits resets to zero on every system reset.
     /// The high 32-bit value is nonvolatile and is increased by one on whenever the system resets
     /// or the low 32-bit counter overflows
-    pub fn get_next_monotonic_count(&self, count: u64) -> Result<u64, Status> {
+    pub fn get_next_monotonic_count(&self, count: u64) -> Result<u64, IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("get_next_monotonic_count"))?
         };
         // I did this so the variable itself isn't modified, it's modified value its a
         // returned value.
         let mut shadow = count;
         let status = unsafe { (function.get_next_monotonic_count)(&mut shadow) };
         if status.is_error() {
-            Err(status)?
+            Err(status.context("get_next_monotonic_count"))?
         }
         Ok(shadow)
     }
@@ -112,9 +120,9 @@ impl BootServicesWrapper {
         &self,
         guid: *const Guid,
         table: Option<*const T>,
-    ) -> Result<(), Status> {
+    ) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("install_configurtion_table"))?
         };
 
         let table_ptr = match table {
@@ -125,7 +133,7 @@ impl BootServicesWrapper {
         let status = unsafe { (function.install_configuration_table)(guid, table_ptr) };
 
         if status.is_error() {
-            Err(status)?
+            Err(status.context("install_configuration_table"))?
         }
 
         Ok(())
@@ -138,16 +146,16 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER Data is NULL.
     /// EFI_INVALID_PARAMETER Crc32 is NULL.
     /// EFI_INVALID_PARAMETER DataSize is 0
-    pub fn calculate_crc32<const N: usize>(&self, buffer: [u8; N]) -> Result<u32, Status> {
+    pub fn calculate_crc32<const N: usize>(&self, buffer: [u8; N]) -> Result<u32, IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("calculate_crc32"))?
         };
         let mut crc32: u32 = 0;
         let status = unsafe {
             (function.calculate_crc32)(buffer.as_ptr() as *const c_void, buffer.len(), &mut crc32)
         };
         if status.is_error() {
-            Err(status)?
+            Err(status.context("calculate_crc32"))?
         }
         Ok(crc32)
     }

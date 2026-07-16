@@ -2,7 +2,7 @@
 use crate::{
     init::SYSTEM_TABLE,
     table::boot::BootServicesWrapper,
-    types::{Event, EventGroup, EventNotifyFn, EventType, Status, TimerDelay, Tpl},
+    types::{Event, EventGroup, EventNotifyFn, EventType, IgnixError, Status, TimerDelay, Tpl},
 };
 use core::{ffi::c_void, time::Duration};
 impl BootServicesWrapper {
@@ -26,10 +26,10 @@ impl BootServicesWrapper {
         tpl: Tpl,
         notify_function: Option<EventNotifyFn>,
         notify_context: *mut c_void,
-    ) -> Result<Event, Status> {
+    ) -> Result<Event, IgnixError> {
         let mut event: Event = core::ptr::null_mut();
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("create_event"))?
         };
         let status = unsafe {
             (function.create_event)(
@@ -43,7 +43,7 @@ impl BootServicesWrapper {
         if status.is_success() {
             return Ok(event);
         }
-        Err(status)
+        Err(status.context("create_event"))?
     }
 
     pub fn create_event_ex(
@@ -53,10 +53,10 @@ impl BootServicesWrapper {
         notify_function: Option<EventNotifyFn>,
         notify_context: *const c_void,
         event_group: Option<*const EventGroup>,
-    ) -> Result<Event, Status> {
+    ) -> Result<Event, IgnixError> {
         let mut event: Event = core::ptr::null_mut();
         let Some(function) = self.get_method() else {
-            Err(Status::NOT_FOUND)?
+            Err(Status::BST_POINTER_MISSING.context("create_event_ex"))?
         };
         let event_group_ptr = match event_group {
             Some(ptr) => ptr,
@@ -75,53 +75,53 @@ impl BootServicesWrapper {
         if status.is_success() {
             return Ok(event);
         }
-        Err(status)
+        Err(status.context("create_event_ex"))?
     }
 
-    pub fn close_event(&self, event: Event) -> Result<(), Status> {
+    pub fn close_event(&self, event: Event) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            return Err(Status::NOT_FOUND);
+            return Err(Status::BST_POINTER_MISSING.context("close_event"));
         };
 
         let status = unsafe { (function.close_event)(event) };
         if status.is_error() {
-            Err(status)?
+            Err(status.context("close_event"))?
         }
         Ok(())
     }
 
-    pub fn signal_event(&self, event: Event) -> Result<(), Status> {
+    pub fn signal_event(&self, event: Event) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            return Err(Status::NOT_FOUND);
+            return Err(Status::BST_POINTER_MISSING.context("signal_event"));
         };
 
         let status = unsafe { (function.signal_event)(event) };
         if status.is_error() {
-            Err(status)?
+            Err(status.context("signal_event"))?
         }
         Ok(())
     }
 
-    pub fn wait_for_event(&self, event: Event) -> Result<usize, Status> {
+    pub fn wait_for_event(&self, event: Event) -> Result<usize, IgnixError> {
         let Some(function) = self.get_method() else {
-            return Err(Status::NOT_FOUND);
+            return Err(Status::BST_POINTER_MISSING.context("wait_for_event"));
         };
         let mut index = 0;
         let status = unsafe { (function.wait_for_event)(0, &event, &mut index) };
         if status.is_success() {
             return Ok(index);
         }
-        Err(status)
+        Err(status.context("wait_for_event"))
     }
 
-    pub fn check_event(&self, event: Event) -> Result<(), Status> {
+    pub fn check_event(&self, event: Event) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            return Err(Status::NOT_FOUND);
+            return Err(Status::BST_POINTER_MISSING.context("check_event"));
         };
 
         let status = unsafe { (function.check_event)(event) };
         if status.is_error() {
-            Err(status)?
+            Err(status.context("check_event"))?
         }
         Ok(())
     }
@@ -131,9 +131,9 @@ impl BootServicesWrapper {
         event: Event,
         timer_delay: TimerDelay,
         trigger_time: Duration,
-    ) -> Result<(), Status> {
+    ) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            return Err(Status::NOT_FOUND);
+            Err(Status::BST_POINTER_MISSING.context("set_timer"))?
         };
 
         let status = unsafe {
@@ -144,7 +144,7 @@ impl BootServicesWrapper {
             )
         };
         if status.is_error() {
-            Err(status)?
+            Err(status.context("set_timer"))?
         }
         Ok(())
     }

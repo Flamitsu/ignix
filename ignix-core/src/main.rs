@@ -2,8 +2,7 @@
 #![no_std]
 #![no_main]
 use core::time::Duration;
-use ignix_sdk::*;
-
+use ignix_sdk::println;
 use ignix_sdk::init::SYSTEM_TABLE;
 use ignix_sdk::table::SystemTable;
 use ignix_sdk::types::Handle;
@@ -17,7 +16,7 @@ extern "efiapi" fn efi_main(_image_handle: *mut Handle, system_table: *mut Syste
     // This will put the system table in the static variable
     SYSTEM_TABLE.set(system_table).unwrap();
     if let Err(e) = run() {
-        println!("ERROR: {}", e);
+        println!("ERROR: {}", e.context(""));
     }
     Status::SUCCESS
 }
@@ -36,11 +35,11 @@ fn run() -> Result<(), Status> {
             .unwrap();
         let status = st.free_pages(buffer.as_ptr() as PhysicalAddress, 2);
         let buff_alloc = st.allocate_pool(MemoryType::EfiLoaderData, 900);
-        let st_buf_alloc = st.free_pool(buff_alloc.unwrap());
+        let st_buf_alloc = st.free_pool(*buff_alloc.as_ref().unwrap());
 
         println!("{:?}", buffer);
         println!("{:?}", status);
-        println!("{:?}", buff_alloc);
+        println!("{:?}", buff_alloc.as_ref());
         println!("{:?}", st_buf_alloc);
         println!("{}", n);
         st.stall(Duration::from_secs(1)).unwrap();
