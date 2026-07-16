@@ -79,20 +79,28 @@ impl BootServicesWrapper {
         Err(status)
     }
 
-    pub fn close_event(&self, event: Event) -> Status {
+    pub fn close_event(&self, event: Event) -> Result<(),Status> {
         let Some(function) = self.get_method() else {
-            return Status::NOT_FOUND;
+            return Err(Status::NOT_FOUND);
         };
 
-        unsafe { (function.close_event)(event) }
+        let status = unsafe { (function.close_event)(event) };
+        if status.is_error(){
+            Err(status)?
+        }
+        Ok(())
     }
 
-    pub fn signal_event(&self, event: Event) -> Status {
+    pub fn signal_event(&self, event: Event) -> Result<(), Status> {
         let Some(function) = self.get_method() else {
-            return Status::NOT_FOUND;
+            return Err(Status::NOT_FOUND)
         };
 
-        unsafe { (function.signal_event)(event) }
+        let status = unsafe { (function.signal_event)(event) };
+        if status.is_error(){
+            Err(status)?
+        }
+        Ok(())
     }
 
     pub fn wait_for_event(&self, event: Event) -> Result<usize, Status> {
@@ -107,21 +115,30 @@ impl BootServicesWrapper {
         Err(status)
     }
 
-    pub fn check_event(&self, event: Event) -> Status {
+    pub fn check_event(&self, event: Event) -> Result<(), Status> {
         let Some(function) = self.get_method() else {
-            return Status::NOT_FOUND;
+            return Err(Status::NOT_FOUND);
         };
 
-        unsafe { (function.check_event)(event) }
+        let status = unsafe { (function.check_event)(event) };
+        if status.is_error(){
+            Err(status)?
+        }
+        Ok(())
     }
 
-    pub fn set_timer(&self, event: Event, timer_delay: TimerDelay, trigger_time: u64) -> Status {
+    pub fn set_timer(&self, event: Event, timer_delay: TimerDelay, trigger_time: u64) -> Result<(), Status> {
         let Some(function) = self.get_method() else {
-            return Status::NOT_FOUND;
+            return Err(Status::NOT_FOUND);
         };
         // Trigger time is in nanoseconds
 
-        unsafe { (function.set_timer)(event, timer_delay, trigger_time) }
+        let status = unsafe { (function.set_timer)(event, timer_delay, trigger_time) };
+        if status.is_error(){
+            Err(status)?
+        }
+        Ok(())
+        
     }
 }
 
