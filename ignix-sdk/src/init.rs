@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::table::SystemTable;
+use crate::{table::SystemTable, types::Status};
 use core::sync::atomic::{AtomicPtr, Ordering};
 
 pub struct InitSystemTable {
@@ -13,7 +13,7 @@ impl InitSystemTable {
         }
     }
 
-    pub fn set(&self, table: *const SystemTable) -> Result<(), ()> {
+    pub fn set(&self, table: *const SystemTable) -> Result<(), Status> {
         let table_mut = table as *mut SystemTable;
         self.ptr
             .compare_exchange(
@@ -23,7 +23,7 @@ impl InitSystemTable {
                 Ordering::SeqCst,
             )
             .map(|_| ())
-            .map_err(|_| ())
+            .map_err(|_| Status::NOT_FOUND)
     }
 
     pub fn get(&self) -> Option<&'static SystemTable> {

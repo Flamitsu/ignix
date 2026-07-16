@@ -7,5 +7,12 @@ name = "ignix-cli"
 version = "0.1.0"
 
 [[package]]
-name = "ignix-loader"
+name = "ignix-core"
+version = "0.1.0"
+dependencies = [
+ "ignix-sdk",
+]
+
+[[package]]
+name = "ignix-sdk"
 version = "0.1.0"

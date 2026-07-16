@@ -1,0 +1,8 @@
+[package]
+name = "ignix-sdk"
+version.workspace = true
+edition.workspace = true
+description = "A minimalist, type-safe UEFI runtime and SDK designed for modular bootloader development in Rust."
+license.workspace = true
+
+[dependencies]

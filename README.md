@@ -35,13 +35,15 @@
 - [X] Generating operating system entries
 
 - [ ] Supporting custom signatures of the binary
-### TODO (ignix-loader):
-- [ ] Secure wrapper and Boot Services working
 
-- [ ] Secure wrapper and Runtime Services working
+### TODO (ignix-sdk):
+- [ ] Secure wrapper and Boot Services (all) working
+
+- [ ] Secure wrapper and Runtime Services (all) working
 
 - [X] Secure wrapper and Console Input Protocol working
-      
+
+### TODO (ignix-core):
 - [ ] Detect user input
 
 - [ ] Booting any kernel with the initramfs
@@ -67,10 +69,10 @@ Clone the repository and compile:
 ```bash
 git clone https://github.com/Flamitsu/ignix
 cd ignix
-cargo loader # This command builds the binary for the .efi bin.
+cargo core # This command builds the binary for the .efi bin.
 cargo cli # This command builds the general binary.
 ```
-However, `cargo loader` may produce an error. If that happens, it may be that you don't have the toolchain installed. To install the proper target you need to execute this code:
+However, `cargo core` may produce an error. If that happens, it may be that you don't have the toolchain installed. To install the proper target you need to execute this code:
 ```bash
 cd scripts/
 ./install-targets.sh 

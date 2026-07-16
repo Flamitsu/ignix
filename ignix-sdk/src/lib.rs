@@ -1,3 +1,4 @@
+#![no_std]
 pub mod init;
 pub mod macros;
 pub mod panic_handler;

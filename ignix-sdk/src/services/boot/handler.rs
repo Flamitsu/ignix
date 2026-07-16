@@ -1,3 +1,3 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::table::boot::BootServicesWrapper;
+use crate::table::boot::BootServicesWrapper;
 impl BootServicesWrapper {}

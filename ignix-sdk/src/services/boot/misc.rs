@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::{
+use crate::{
     table::{SystemTable, boot::BootServicesWrapper},
     types::{Guid, Status, Table},
 };
@@ -52,10 +52,10 @@ impl BootServicesWrapper {
     /// The following rules can be used to guarantee the correct behavior:
     /// 1. If Destination and Source are identical, then no operation should be performed.
     /// 2. If Destination > Source and Destination < ( Source + Length ), then the data should be
-    /// copied from the Source buffer to the Destination buffer starting from the end of the buffers
-    /// and working toward the beginning of the buffers.
+    ///    copied from the Source buffer to the Destination buffer starting
+    ///    from the end of the buffers and working toward the beginning of the buffers.
     /// 3. Otherwise, the data should be copied from the Source buffer to the Destination buffer
-    /// starting from the beginning of the buffers and working toward the end of the buffers.
+    ///    starting from the beginning of the buffers and working toward the end of the buffers.
     pub fn copy_mem(&self, dest: &mut [u8], src: &[u8]) -> Result<(), Status> {
         let Some(function) = self.get_method() else {
             Err(Status::NOT_FOUND)?

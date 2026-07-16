@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::{
+use crate::{
     table::boot::BootServicesWrapper,
     types::{
         AllocateType, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE, PhysicalAddress, Status,

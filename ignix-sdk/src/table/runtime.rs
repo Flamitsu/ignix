@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::{table::header::Header, types::Table};
+use crate::{table::header::Header, types::Table};
 use core::ffi::c_void;
 #[allow(unused)]
 #[repr(C)]

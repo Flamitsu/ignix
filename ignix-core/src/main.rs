@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #![no_std]
 #![no_main]
-mod uefi;
 use core::time::Duration;
+use ignix_sdk::*;
 
-use uefi::init::SYSTEM_TABLE;
-use uefi::table::SystemTable;
-use uefi::types::Handle;
-use uefi::types::Status;
+use ignix_sdk::init::SYSTEM_TABLE;
+use ignix_sdk::table::SystemTable;
+use ignix_sdk::types::Handle;
+use ignix_sdk::types::Status;
 
-use crate::uefi::types::AllocateType;
-use crate::uefi::types::MemoryType;
-use crate::uefi::types::PhysicalAddress;
+use ignix_sdk::types::AllocateType;
+use ignix_sdk::types::MemoryType;
+use ignix_sdk::types::PhysicalAddress;
 #[unsafe(no_mangle)]
 extern "efiapi" fn efi_main(_image_handle: *mut Handle, system_table: *mut SystemTable) -> Status {
     // This will put the system table in the static variable

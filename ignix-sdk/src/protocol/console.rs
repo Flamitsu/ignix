@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::types::{Boolean, Guid, Status, Uuid};
+use crate::types::{Boolean, Guid, Status, Uuid};
 #[repr(C)]
 pub struct SimpleTextOutputMode {
     pub max_mode: u32,
@@ -12,7 +12,7 @@ pub struct SimpleTextOutputMode {
 
 #[repr(C)]
 #[allow(unused)]
-pub(crate) struct SimpleTextOutputProtocol {
+pub struct SimpleTextOutputProtocol {
     pub reset: unsafe extern "efiapi" fn(this: *mut Self, extended: bool) -> Status,
     pub output_string: unsafe extern "efiapi" fn(this: *mut Self, string: *const u16) -> Status,
     pub test_string: unsafe extern "efiapi" fn(this: *mut Self, string: *const u16) -> Status,
@@ -46,6 +46,9 @@ pub struct SimpleTextOutput {
 }
 
 impl SimpleTextOutput {
+    /// # Safety
+    /// The protocol pointer should always be valid and not null, point to an instance
+    /// initialized by the UEFI to 'SimpleTextOutputProtocol'
     pub unsafe fn new(protocol: *mut SimpleTextOutputProtocol) -> Self {
         Self { protocol }
     }
@@ -64,21 +67,21 @@ impl SimpleTextOutput {
         Status::NOT_FOUND
     }
 
-    pub fn output_string(&mut self, string: *const u16) -> Status {
+    pub fn output_string(&mut self, string: &[u16]) -> Status {
         if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.output_string)(self.protocol, string) };
+            return unsafe { (protocol.output_string)(self.protocol, string.as_ptr()) };
         }
         Status::NOT_FOUND
     }
 
-    pub fn test_string(&mut self, string: *const u16) -> Status {
+    pub fn test_string(&mut self, string: &[u16]) -> Status {
         if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.test_string)(self.protocol, string) };
+            return unsafe { (protocol.test_string)(self.protocol, string.as_ptr()) };
         }
         Status::INVALID_PARAMETER
     }
 
-    pub fn query_mode(&mut self, mode: usize, columns: *mut usize, rows: *mut usize) -> Status {
+    pub fn query_mode(&mut self, mode: usize, columns: &mut usize, rows: &mut usize) -> Status {
         if let Some(protocol) = self.get_protocol() {
             return unsafe { (protocol.query_mode)(self.protocol, mode, columns, rows) };
         }

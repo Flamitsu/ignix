@@ -1,8 +1,7 @@
 [workspace]
 members = [
-  "ignix-cli",
-  "ignix-loader"
-]
+  "ignix-cli","ignix-core", "ignix-sdk"
+  ]
 resolver = "2"
 
 [workspace.package]

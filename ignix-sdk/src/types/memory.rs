@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::types::{PhysicalAddress, VirtualAddress};
+use crate::types::{PhysicalAddress, VirtualAddress};
 use core::{ops::RangeInclusive, ptr::NonNull};
 
 /* Those numbers are how enums are interpreted in C.

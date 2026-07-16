@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::{
+use crate::{
     table::header::Header,
     types::{
         AllocateType, DevicePathProtocol, Event, EventGroup, EventNotifyFn, EventType, Guid,

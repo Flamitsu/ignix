@@ -1,6 +1,7 @@
 [alias]
 cli = "build -p ignix-cli"
-loader = "build -p ignix-loader --target x86_64-unknown-uefi"
+core = "build -p ignix-core --target x86_64-unknown-uefi"
+sdk = "build -p ignix-sdk"
 [target.x86_64-unknown-uefi]
 linker = "lld"
 # [target.x86_64-unknown-linux-musl]

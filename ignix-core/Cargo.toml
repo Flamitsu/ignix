@@ -1,5 +1,5 @@
 [package]
-name = "ignix-loader"
+name = "ignix-core"
 version.workspace = true
 edition.workspace = true
 description = "Boot loader core made purely in Rust to ensure stability and speed."
@@ -10,3 +10,4 @@ name = "ignixx64"
 path = "src/main.rs"
 
 [dependencies]
+ignix-sdk = { path = "../ignix-sdk/" }

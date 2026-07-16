@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::types::Guid;
+use crate::types::Guid;
 use core::ffi::c_void;
 
 pub type Event = *mut c_void;

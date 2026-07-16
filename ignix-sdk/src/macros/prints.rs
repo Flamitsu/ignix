@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use core::fmt::{self, Write};
 
-use crate::uefi::init::SYSTEM_TABLE;
+use crate::init::SYSTEM_TABLE;
 pub struct Writer;
 impl Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
@@ -17,7 +17,7 @@ impl Write for Writer {
                 i += 1;
             } else {
                 buffer[i] = 0;
-                con_out.output_string(buffer.as_ptr());
+                con_out.output_string(&buffer);
                 buffer[0] = c;
                 i = 1;
             }
@@ -25,7 +25,7 @@ impl Write for Writer {
 
         if i > 0 {
             buffer[i] = 0;
-            con_out.output_string(buffer.as_ptr());
+            con_out.output_string(&buffer);
         }
         Ok(())
     }
@@ -34,7 +34,7 @@ impl Write for Writer {
 macro_rules! print {
     ($($arg:tt)*) => {{
         use core::fmt::Write;
-        let mut writer = $crate::uefi::macros::prints::Writer;
+        let mut writer = $crate::macros::prints::Writer;
         let _ = core::write!(writer, $($arg)*);
     }};
 }

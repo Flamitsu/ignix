@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::{
+use crate::{
     init::SYSTEM_TABLE,
     table::boot::BootServicesWrapper,
     types::{Event, EventGroup, EventNotifyFn, EventType, Status, TimerDelay, Tpl},

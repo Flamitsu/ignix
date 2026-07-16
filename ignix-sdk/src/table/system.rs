@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::uefi::protocol::console::{SimpleTextOutput, SimpleTextOutputProtocol};
-use crate::uefi::table::Header;
-use crate::uefi::table::boot::{BootServices, BootServicesWrapper};
-use crate::uefi::table::runtime::RuntimeServices;
-use crate::uefi::types::Table;
+use crate::protocol::console::{SimpleTextOutput, SimpleTextOutputProtocol};
+use crate::table::Header;
+use crate::table::boot::{BootServices, BootServicesWrapper};
+use crate::table::runtime::RuntimeServices;
+use crate::types::Table;
 use core::ffi::c_void;
 // Code that is with '*mut c_void' is for structure normally. Don't even think of trying them!
 #[allow(unused)]
