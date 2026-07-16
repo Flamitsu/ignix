@@ -1,11 +1,10 @@
-use core::{ffi::c_void, time::Duration};
-
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::uefi::{
     init::SYSTEM_TABLE,
     table::boot::BootServicesWrapper,
     types::{Event, EventGroup, EventNotifyFn, EventType, Status, TimerDelay, Tpl},
 };
+use core::{ffi::c_void, time::Duration};
 impl BootServicesWrapper {
     pub fn raise_tpl(&self, new_tpl: Tpl) -> Option<TplGuardian> {
         let function = self.get_method()?;
@@ -79,13 +78,13 @@ impl BootServicesWrapper {
         Err(status)
     }
 
-    pub fn close_event(&self, event: Event) -> Result<(),Status> {
+    pub fn close_event(&self, event: Event) -> Result<(), Status> {
         let Some(function) = self.get_method() else {
             return Err(Status::NOT_FOUND);
         };
 
         let status = unsafe { (function.close_event)(event) };
-        if status.is_error(){
+        if status.is_error() {
             Err(status)?
         }
         Ok(())
@@ -93,11 +92,11 @@ impl BootServicesWrapper {
 
     pub fn signal_event(&self, event: Event) -> Result<(), Status> {
         let Some(function) = self.get_method() else {
-            return Err(Status::NOT_FOUND)
+            return Err(Status::NOT_FOUND);
         };
 
         let status = unsafe { (function.signal_event)(event) };
-        if status.is_error(){
+        if status.is_error() {
             Err(status)?
         }
         Ok(())
@@ -121,24 +120,33 @@ impl BootServicesWrapper {
         };
 
         let status = unsafe { (function.check_event)(event) };
-        if status.is_error(){
+        if status.is_error() {
             Err(status)?
         }
         Ok(())
     }
 
-    pub fn set_timer(&self, event: Event, timer_delay: TimerDelay, trigger_time: u64) -> Result<(), Status> {
+    pub fn set_timer(
+        &self,
+        event: Event,
+        timer_delay: TimerDelay,
+        trigger_time: Duration,
+    ) -> Result<(), Status> {
         let Some(function) = self.get_method() else {
             return Err(Status::NOT_FOUND);
         };
-        // Trigger time is in nanoseconds
 
-        let status = unsafe { (function.set_timer)(event, timer_delay, trigger_time) };
-        if status.is_error(){
+        let status = unsafe {
+            (function.set_timer)(
+                event,
+                timer_delay,
+                trigger_time.as_nanos().try_into().unwrap(),
+            )
+        };
+        if status.is_error() {
             Err(status)?
         }
         Ok(())
-        
     }
 }
 

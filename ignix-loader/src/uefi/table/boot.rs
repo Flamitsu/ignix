@@ -4,7 +4,7 @@ use crate::uefi::{
     types::{
         AllocateType, DevicePathProtocol, Event, EventGroup, EventNotifyFn, EventType, Guid,
         Handle, InterfaceType, MemoryDescriptor, MemoryType, OpenProtocolInformationEntry,
-        PhysicalAddress, SearchType, Status, TimerDelay, Tpl,
+        PhysicalAddress, SearchType, Status, Table, TimerDelay, Tpl,
     },
 };
 use core::ffi::c_void;
@@ -134,7 +134,8 @@ pub struct BootServices {
         exit_data: *mut u16,
     ) -> Status,
     pub unload_image: unsafe extern "efiapi" fn(image_handle: Handle) -> Status,
-    pub exit_boot_services: unsafe extern "efiapi" fn(image_handle: Handle, map_key: usize) -> Status,
+    pub exit_boot_services:
+        unsafe extern "efiapi" fn(image_handle: Handle, map_key: usize) -> Status,
 
     // Miscellaneous services
     pub get_next_monotonic_count: unsafe extern "efiapi" fn(count: *mut u64) -> Status,
@@ -144,7 +145,7 @@ pub struct BootServices {
         watchdog_code: u64,
         data_size: usize,
         watchdog_data: *const u16,
-    ),
+    ) -> Status,
 
     // Driver support services
     pub connect_controller: unsafe extern "efiapi" fn(
@@ -232,6 +233,9 @@ pub struct BootServices {
         efi_event: *mut Event,
     ) -> Status,
 }
+
+impl Table for BootServices {}
+
 #[derive(Clone, Copy)]
 pub struct BootServicesWrapper {
     function: *mut BootServices,

@@ -13,6 +13,8 @@ pub struct DevicePathProtocol {
     pub sub_type: u8,
     pub length: [u8; 2],
 }
+// This is a marker trait, to make possible use some boot services functions that depends on it.
+pub trait Table {}
 
 #[repr(C)]
 pub struct Guid {

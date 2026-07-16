@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
+use crate::uefi::{table::header::Header, types::Table};
 use core::ffi::c_void;
-
-use crate::uefi::table::header::Header;
 #[allow(unused)]
 #[repr(C)]
 pub struct RuntimeServices {
@@ -27,6 +26,9 @@ pub struct RuntimeServices {
     // Miscellaneous UEFI 2.0 Service
     query_variable_info: *mut c_void,
 }
+
+impl Table for RuntimeServices {}
+
 #[derive(Clone, Copy)]
 #[allow(unused)]
 pub struct RuntimeServicesWrapper {

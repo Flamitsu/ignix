@@ -16,6 +16,7 @@ pub use misc::Char16;
 pub use misc::DevicePathProtocol;
 pub use misc::Guid;
 pub use misc::PhysicalAddress;
+pub use misc::Table;
 pub use misc::Uuid;
 pub use misc::VirtualAddress;
 pub use status::Status;

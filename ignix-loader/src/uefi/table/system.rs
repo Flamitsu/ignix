@@ -3,6 +3,7 @@ use crate::uefi::protocol::console::{SimpleTextOutput, SimpleTextOutputProtocol}
 use crate::uefi::table::Header;
 use crate::uefi::table::boot::{BootServices, BootServicesWrapper};
 use crate::uefi::table::runtime::RuntimeServices;
+use crate::uefi::types::Table;
 use core::ffi::c_void;
 // Code that is with '*mut c_void' is for structure normally. Don't even think of trying them!
 #[allow(unused)]
@@ -23,6 +24,8 @@ pub struct SystemTable {
     number_of_table_entries: usize,
     configuration_table: *mut c_void,
 }
+
+impl Table for SystemTable {}
 
 impl SystemTable {
     pub fn get_stdout(&self) -> Option<SimpleTextOutput> {
