@@ -2,8 +2,8 @@
 #![no_std]
 #![no_main]
 use core::time::Duration;
-use ignix_sdk::println;
 use ignix_sdk::init::SYSTEM_TABLE;
+use ignix_sdk::println;
 use ignix_sdk::table::SystemTable;
 use ignix_sdk::types::Handle;
 use ignix_sdk::types::Status;
