@@ -23,7 +23,7 @@ impl InitSystemTable {
                 Ordering::SeqCst,
             )
             .map(|_| ())
-            .map_err(|_| Status::NOT_FOUND)
+            .map_err(|_| Status::ST_POINTER_MISSING)
     }
 
     pub fn get(&self) -> Option<&'static SystemTable> {

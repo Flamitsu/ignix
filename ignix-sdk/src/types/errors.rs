@@ -122,7 +122,10 @@ impl Status {
 
     pub fn context(self, func: &'static str) -> IgnixError {
         if func.is_empty() {
-            return IgnixError { status: self, func: "unknown" }
+            return IgnixError {
+                status: self,
+                func: "unknown",
+            };
         }
         IgnixError { status: self, func }
     }

@@ -8,6 +8,24 @@ use crate::{
 };
 use core::ptr::NonNull;
 impl BootServicesWrapper {
+    /// Allocate pages from the system.
+    /// In general, OS loaders should allocate memory (and pool) of type EfiLoaderData.
+    ///
+    /// AllocateAnyPages allocates any range of pages that satisfies the request. The address on
+    /// input is ignored.
+    ///
+    /// AllocateMaxAddress allocates a range of pages whose uppermost address is less
+    /// than or equal to the address pointed to by Memory on input.
+    ///
+    /// AllocateAddress allocate pages at the address pointed to by Memory on input.
+    ///
+    /// RETURN CODES
+    /// EFI_OUT_OF_RESOURCEST The pages could not be allocated.
+    /// EFI_INVALID_PARAMETER Type is not AllocateAnyPages or AllocateMaxAddress or AllocateAddress
+    /// EFI_INVALID_PARAMETER MemoryType is in the range EfiMaxMemoryType..0x6FFFFFFF.
+    /// EFI_INVALID_PARAMETER MemoryType is EfiPersistentMemoryType or EfiUnacceptedMemory.
+    /// EFI_INVALID_PARAMETER Memory is NULL.
+    /// EFI_NOT_FOUND The requested pages could not be found
     pub fn allocate_pages(
         self,
         allocate_type: AllocateType,
@@ -32,19 +50,29 @@ impl BootServicesWrapper {
 
         Err(status.context("allocate_pages"))?
     }
-
+    /// Returns the memory allocated by AllocatePages to the firmware.
+    /// RETURN CODES:
+    ///
+    /// EFI_NOT_FOUND The requested memory pages were not allocated with AllocatePages().
+    /// EFI_INVALID_PARAMETER Memory is not a page-aligned address or Pages is invalid.
     pub fn free_pages(self, memory: PhysicalAddress, pages: usize) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("allocate_pages"))?
+            Err(Status::BST_POINTER_MISSING.context("free_pages"))?
         };
         let status = unsafe { (function.free_pages)(memory, pages) };
 
         if status.is_success() {
             return Ok(());
         }
-        Err(status.context("allocate_pages"))?
+        Err(status.context("free_pages"))?
     }
-
+    /// Returns a copy of the current memory map.
+    ///
+    /// RETURN CODES:
+    /// EFI_BUFFER_TOO_SMALL The MemoryMap buffer was too small. The current buffer size needed to
+    /// hold the memory map is returned in MemoryMapSize.
+    /// EFI_INVALID_PARAMETER MemoryMapSize is NULL.
+    /// EFI_INVALID_PARAMETER The MemoryMap buffer is not too small and MemoryMap is NULL.
     pub fn get_memory_map(self) -> Result<MemoryMap, IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("get_memory_map"))?
@@ -101,7 +129,17 @@ impl BootServicesWrapper {
         self.free_pages(buffer_ptr.as_ptr() as PhysicalAddress, pages_needed)?;
         Err(status.context("get_memory_map"))
     }
+    /// Allocates pool memory.
+    /// Allocates a memory region of Size bytes from memory of type PoolType and returns the
+    /// address of the allocated memory in the location referenced by Buffer. This function
+    /// allocates pages from EfiConventionalMemory as needed to grow the requested pool type
     /// pool_type needs to be either OEM reserved use or UEFI OS Loaders.
+    ///
+    /// RETURN CODES
+    /// EFI_OUT_OF_RESOURCES The pool requested could not be allocated.
+    /// EFI_INVALID_PARAMETER PoolType is in the range EfiMaxMemoryType..0x6FFFFFFF.
+    /// EFI_INVALID_PARAMETER PoolType is EfiPersistentMemory.
+    /// EFI_INVALID_PARAMETER Buffer is NULL.
     pub fn allocate_pool(
         self,
         pool_type: MemoryType,
@@ -122,7 +160,11 @@ impl BootServicesWrapper {
         }
         Err(status.context("allocate_pool"))
     }
-
+    /// Returns pool memory to the firmware.
+    /// The FreePool() function returns the memory specified by Buffer to the system. On return,
+    /// the memory’s type is EfiConventionalMemory.
+    /// RETURN CODES:
+    /// EFI_INVALID_PARAMETER Buffer was invalid.
     pub fn free_pool(self, buffer: NonNull<u8>) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("free_pool"))?
