@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::types::Guid;
+use crate::{init::SYSTEM_TABLE, types::Guid};
 use core::ffi::c_void;
 
 pub type Event = *mut c_void;
 
 #[repr(transparent)]
+#[derive(PartialEq, Eq)]
 pub struct EventType(pub u32);
 
 impl EventType {
@@ -152,4 +153,56 @@ pub enum TimerDelay {
     Periodic = 1,
     // The event is to be signaled in TriggerTime 100ns units.
     Relative = 2,
+}
+/*
+ * This struct is extremely important.
+ * Try to call create_event() and then drop the context variable for example... congrats, you just
+ * corrupted the memory
+ */
+pub struct IgnixEvent<'a> {
+    pub raw_event: Event,
+    pub context_ptr: *mut c_void,
+    pub _m: core::marker::PhantomData<&'a c_void>, // Never in my life I though I needed to use this
+}
+
+impl<'a> Drop for IgnixEvent<'a> {
+    fn drop(&mut self) {
+        SYSTEM_TABLE
+            .get()
+            .unwrap()
+            .get_boot_services()
+            .unwrap()
+            .close_event(self.raw_event)
+            .unwrap()
+    }
+}
+
+/* NOTE FROM THE UEFI SPEC:
+ * If NewTPL is below the current TPL level, then the system behaviour is indeterminate.
+ * Executing TPLs ABOVE TPL_APPLICATION for longer periods of time may also result
+ * in unpredictable behaviour
+ * ( I was wondering how to manage this, looked to uefi-rs code in uefi/src/boot.rs
+ * and it shows this same solution. Thank you guys. )
+ * Just to clarify, this next section is licensed as:
+ * SDPX-License identifier: MIT OR Apache 2.0 */
+pub struct TplGuardian {
+    pub old_tlp: Tpl,
+}
+
+impl TplGuardian {
+    #[must_use]
+    pub const fn get_old_tpl(&self) -> Tpl {
+        self.old_tlp
+    }
+}
+
+impl Drop for TplGuardian {
+    fn drop(&mut self) {
+        SYSTEM_TABLE
+            .get()
+            .unwrap()
+            .get_boot_services()
+            .unwrap()
+            .restore_tpl(self.old_tlp);
+    }
 }
