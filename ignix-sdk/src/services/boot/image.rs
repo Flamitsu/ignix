@@ -11,9 +11,9 @@ impl BootServicesWrapper {
     ///
     /// The image can be loaded in two ways:
     /// - Memory-to-Memory: If source_buffer is not None, the function copies the image
-    /// from that buffer. device_path is optional but recommended because of security policies.
+    ///   from that buffer. device_path is optional but recommended because of security policies.
     /// - File System: If source_buffer is None, it attempts to load the image from the
-    /// provided device_path using EFI_SIMPLE_FILE_SYSTEM_PROTOCOL (or load file protocols).
+    ///   provided device_path using EFI_SIMPLE_FILE_SYSTEM_PROTOCOL (or load file protocols).
     ///
     /// RETURN CODES:
     /// EFI_NOT_FOUND Both SourceBuffer and DevicePath are NULL.

@@ -19,6 +19,7 @@ pub use misc::Char16;
 pub use misc::DevicePathProtocol;
 pub use misc::Guid;
 pub use misc::IgnixImage;
+pub use misc::IgnixProtocol;
 pub use misc::PhysicalAddress;
 pub use misc::Table;
 pub use misc::Uuid;
