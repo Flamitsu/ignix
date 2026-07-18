@@ -1,10 +1,12 @@
-use core::{ffi::c_void, marker::PhantomData};
-
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
     table::boot::BootServicesWrapper,
-    types::{Event, Guid, Handle, IgnixError, IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType, Status},
+    types::{
+        Event, FixedHandleList, Guid, Handle, IgnixError, IgnixImage, IgnixProtocol,
+        IgnixProtocolNotification, InterfaceType, SearchType, Status,
+    },
 };
+use core::{ffi::c_void, marker::PhantomData};
 impl BootServicesWrapper {
     /// Installs a protocol interface on a device handle. If the handle doesn't exist, it's created
     /// and added to the handle list in the system.
@@ -140,14 +142,70 @@ impl BootServicesWrapper {
         if status.is_error() {
             Err(status.context("register_protocol_notify"))?
         }
-        Ok(IgnixProtocolNotification{
+        Ok(IgnixProtocolNotification {
             search_key,
             event,
-            _m: PhantomData
+            _m: PhantomData,
         })
     }
 
-    pub fn locate_handle(&self) {}
+    /// Returns an array of handles that support the specified protocol and the SearchType request.
+    /// This uses a fixed array with const generics.
+    /// DO NOT try to use it ABOVE of 128. If you put above 16KB the memory will overflow and
+    /// corrupt. Please, be careful while doing this type of stuff, and please use 'AllHandles' the
+    /// minimum necessary, since it's really probably you're going to run into a
+    /// EFI_BUFFER_TOO_SMALL error, or not, that depends on the hardware plugging in to your machine
+    ///
+    /// RETURN CODES:
+    /// EFI_NOT_FOUND No handles match the search.
+    /// EFI_BUFFER_TOO_SMALL The BufferSize is too small for the result. BufferSize has been updated with the size needed to complete the request.
+    /// EFI_INVALID_PARAMETER SearchType is not a member of EFI_LOCATE_SEARCH_TYPE.
+    /// EFI_INVALID_PARAMETER SearchType is ByRegisterNotify and SearchKey is NULL.
+    /// EFI_INVALID_PARAMETER SearchType is ByProtocol and ProtocoL is NULL.
+    /// EFI_INVALID_PARAMETER One or more matches are found and BufferSize is NULL.
+    /// EFI_INVALID_PARAMETER BufferSize is large enough for the result and Buffer is NULL.
+    pub fn locate_handle<const N: usize>(
+        &self,
+        search_type: SearchType,
+        protocol: Option<&Guid>,
+        search_key: Option<&c_void>,
+    ) -> Result<FixedHandleList<N>, IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("locate_handle"))?
+        };
+
+        let protocol_ptr = match protocol {
+            None => core::ptr::null_mut(),
+            Some(ptr) => ptr as *const Guid,
+        };
+
+        let search_key_ptr = match search_key {
+            None => core::ptr::null_mut(),
+            Some(ptr) => ptr as *const c_void,
+        };
+
+        let mut result = FixedHandleList {
+            storage: [core::ptr::null_mut(); N],
+            len: 0,
+        };
+
+        let mut buffer_size = N * core::mem::size_of::<*mut c_void>();
+
+        let status = unsafe {
+            (function.locate_handle)(
+                search_type,
+                protocol_ptr,
+                search_key_ptr,
+                &mut buffer_size,
+                result.storage.as_mut_ptr(),
+            )
+        };
+        if status.is_error() {
+            Err(status.context("locate_handle"))?
+        }
+        result.len = buffer_size / core::mem::size_of::<*mut c_void>();
+        Ok(result)
+    }
 
     pub fn handle_protocol(&self) {}
 

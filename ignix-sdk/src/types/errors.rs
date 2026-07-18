@@ -1,3 +1,5 @@
+use core::ops::Not;
+
 // SPDX-License-Identifier: GPL-3.0-only
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq)]

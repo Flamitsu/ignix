@@ -12,6 +12,7 @@ pub enum InterfaceType {
 }
 
 #[repr(C)]
+#[derive(Clone)]
 pub enum SearchType {
     AllHandles = 0,
     ByRegisterNotify = 1,
@@ -64,11 +65,30 @@ impl<'p> Drop for IgnixProtocol<'p, '_> {
 pub struct IgnixProtocolNotification<'a> {
     pub search_key: *mut c_void,
     pub event: Event,
-    pub _m: PhantomData<&'a c_void>
+    pub _m: PhantomData<&'a c_void>,
 }
 
 impl<'a> Drop for IgnixProtocolNotification<'a> {
     fn drop(&mut self) {
-        let _ = SYSTEM_TABLE.get().unwrap().get_boot_services().unwrap().close_event(self.event);
+        let _ = SYSTEM_TABLE
+            .get()
+            .unwrap()
+            .get_boot_services()
+            .unwrap()
+            .close_event(self.event);
+    }
+}
+
+/* Why this struct? see, the locate_handle function wants to allocate memory but i don't.
+ * I used an static buffer, should be enough for most cases. However, the whole buffer was return.
+ * So to fix that and don't return bullshit (buffers with null pointers at the end of the data) it's
+ * better to have an struct that handles that for you*/
+pub struct FixedHandleList<const N: usize> {
+    pub storage: [*mut c_void; N],
+    pub len: usize,
+}
+impl<const N: usize> FixedHandleList<N> {
+    pub fn as_slice(&self) -> &[*mut c_void] {
+        &self.storage[..self.len]
     }
 }

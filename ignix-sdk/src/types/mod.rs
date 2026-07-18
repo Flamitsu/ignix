@@ -15,8 +15,8 @@ pub use memory::{
 
 pub use errors::{IgnixError, Status};
 pub use handler::{
-    Handle, IgnixProtocol, InterfaceType, OpenProtocol, OpenProtocolInformationEntry, SearchType,
-    IgnixProtocolNotification
+    FixedHandleList, Handle, IgnixProtocol, IgnixProtocolNotification, InterfaceType, OpenProtocol,
+    OpenProtocolInformationEntry, SearchType,
 };
 pub use misc::Char16;
 pub use misc::DevicePathProtocol;
