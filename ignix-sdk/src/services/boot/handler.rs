@@ -84,9 +84,43 @@ impl BootServicesWrapper {
         }
         Ok(())
     }
+    /// Reinstalls a protocol interface on a device handle.
+    /// The ReinstallProtocolInterface() function reinstalls a protocol interface on a device handle.
+    ///
+    /// RETURN CODES:
+    /// EFI_NOT_FOUND The OldInterface on the handle was not found.
+    /// EFI_ACCESS_DENIED The protocol interface could not be reinstalled, because OldInterface is still being used by a driver that will not release it.
+    /// EFI_INVALID_PARAMETER HandLe is NULL.
+    /// EFI_INVALID_PARAMETER ProtocoL is NULL.
+    pub fn reinstall_protocol_interface(
+        &self,
+        protocol: &mut IgnixProtocol,
+        new_interface: &c_void,
+    ) -> Result<(), IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("reinstall_protocol_interface"))?
+        };
+        let handle_ptr = match protocol.image.handle {
+            Some(ptr) => ptr,
+            None => Err(Status::HANDLE_DEVICE_IS_NULL.context("reinstall_protocol_interface"))?,
+        };
+        let status = unsafe {
+            (function.reinstall_protocol_interface)(
+                handle_ptr,
+                &protocol.guid,
+                protocol.interface,
+                new_interface as *const c_void,
+            )
+        };
+        Ok(())
+    }
 
-    pub fn reinstall_protocol_interface(&self) {}
-
+    ///
+    /// RETURN CODES:
+    /// EFI_OUT_OF_RESOURCES Space for the notification event could not be allocated.
+    /// EFI_INVALID_PARAMETER Protocol is NULL.
+    /// EFI_INVALID_PARAMETER Event is NULL.
+    /// EFI_INVALID_PARAMETER Registration is NULL.
     pub fn register_protocol_notify(&self) {}
 
     pub fn locate_handle(&self) {}
