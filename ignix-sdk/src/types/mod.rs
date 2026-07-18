@@ -18,6 +18,7 @@ pub use handler::{Handle, InterfaceType, OpenProtocol, OpenProtocolInformationEn
 pub use misc::Char16;
 pub use misc::DevicePathProtocol;
 pub use misc::Guid;
+pub use misc::IgnixImage;
 pub use misc::PhysicalAddress;
 pub use misc::Table;
 pub use misc::Uuid;

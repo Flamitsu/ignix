@@ -2,9 +2,9 @@
 use crate::{
     services::boot::memory,
     table::boot::BootServicesWrapper,
-    types::{DevicePathProtocol, Handle, IgnixError, Status},
+    types::{DevicePathProtocol, Handle, IgnixError, IgnixImage, Status},
 };
-use core::ffi::c_void;
+use core::{ffi::c_void, marker::PhantomData};
 
 impl BootServicesWrapper {
     /// Loads an EFI image into memory.
@@ -29,13 +29,13 @@ impl BootServicesWrapper {
     /// EFI_SECURITY_VIOLATION Image was loaded and an ImageHandle was created with a valid
     /// EFI_LOADED_IMAGE_PROTOCOL. However, the current platform policy specifies that the
     /// image should not be started
-    pub fn load_image(
+    pub fn load_image<'a>(
         &self,
         boot_policy: bool,
         parent_image_handle: Handle,
         device_path: Option<&DevicePathProtocol>,
         source_buffer: Option<&[u8]>,
-    ) -> Result<Handle, IgnixError> {
+    ) -> Result<IgnixImage<'a>, IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("load_image"))?
         };
@@ -67,7 +67,10 @@ impl BootServicesWrapper {
             Err(status.context("load_image"))?
         }
 
-        Ok(handle)
+        Ok(IgnixImage {
+            handle: Some(handle),
+            _m: PhantomData,
+        })
     }
 
     /// Transfer control to a loaded image's entry point.
@@ -80,15 +83,27 @@ impl BootServicesWrapper {
     /// Exit code from image Exit code from image.
     /// EFI_SECURITY_VIOLATION The current platform policy specifies that the image should not be
     /// started.
-    pub fn start_image(&self, handle: Handle) -> Result<(), IgnixError> {
+    pub fn start_image<'a>(
+        &self,
+        mut image: IgnixImage<'a>,
+    ) -> Result<(), (IgnixError, IgnixImage<'a>)> {
         let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("start_image"))?
+            return Err((Status::BST_POINTER_MISSING.context("start_image"), image));
         };
+
+        let handle: Handle = match image.handle {
+            Some(ptr) => ptr,
+            None => core::ptr::null_mut(),
+        };
+
         let status =
             unsafe { (function.start_image)(handle, core::ptr::null_mut(), core::ptr::null_mut()) };
+
         if status.is_error() {
-            Err(status.context("start_image"))?
+            image.handle = Some(handle);
+            return Err((status.context("start_image"), image));
         }
+        image.handle = None;
         Ok(())
     }
 
@@ -116,6 +131,8 @@ impl BootServicesWrapper {
     /// This function may not be called if the image has already returned from its entry point
     /// ( EFI_IMAGE_ENTRY_POINT ) or if it has loaded any child images that have not exited
     /// (all child images must exit before this image can exit).
+    /// Warning: You should not be using this function in the first place.
+    /// The firmware already exits the binary whenever its needed (end of the code)
     ///
     /// RETURN CODES:
     /// EFI_SUCCESS The image specified by ImageHandle was unloaded. This condition only

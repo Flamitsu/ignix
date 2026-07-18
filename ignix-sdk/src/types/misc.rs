@@ -1,4 +1,7 @@
-use core::ffi::c_void;
+// SPDX-License-Identifier: GPL-3.0-only
+use core::{ffi::c_void, marker::PhantomData};
+
+use crate::{init::SYSTEM_TABLE, types::Handle};
 pub type Char16 = u16;
 pub type PhysicalAddress = u64;
 pub type VirtualAddress = u64;
@@ -37,4 +40,22 @@ impl Guid {
 
 pub trait Uuid {
     const GUID: Guid;
+}
+#[repr(C)]
+pub struct IgnixImage<'a> {
+    pub handle: Option<Handle>,
+    pub _m: PhantomData<&'a c_void>,
+}
+
+impl<'a> Drop for IgnixImage<'a> {
+    fn drop(&mut self) {
+        if let Some(image_handle) = self.handle {
+            let _ = SYSTEM_TABLE
+                .get()
+                .unwrap()
+                .get_boot_services()
+                .unwrap()
+                .unload_image(image_handle);
+        }
+    }
 }
