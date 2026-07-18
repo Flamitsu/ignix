@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
+use crate::{
+    init::SYSTEM_TABLE,
+    types::{Guid, IgnixImage},
+};
 use core::ffi::c_void;
-use crate::{init::SYSTEM_TABLE, types::{Guid, IgnixImage}};
 pub type Handle = *mut c_void;
 /* Page 167 UEFI spec 2.11, it's not my fault, it's an enum just with one value.*/
 #[repr(C)]
@@ -35,13 +38,13 @@ pub struct OpenProtocolInformationEntry {
 }
 
 #[repr(C)]
-pub struct IgnixProtocol<'a> {
-    pub image: &'a mut IgnixImage<'a>,
+pub struct IgnixProtocol<'p, 'i> {
+    pub image: &'p mut IgnixImage<'i>,
     pub guid: Guid,
     pub interface: *mut c_void,
 }
 
-impl<'a> Drop for IgnixProtocol<'a> {
+impl<'p> Drop for IgnixProtocol<'p, '_> {
     fn drop(&mut self) {
         if let Some(image_handle) = self.image.handle {
             let _ = SYSTEM_TABLE
@@ -57,4 +60,3 @@ impl<'a> Drop for IgnixProtocol<'a> {
         }
     }
 }
-

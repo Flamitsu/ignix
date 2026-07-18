@@ -17,13 +17,13 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER ProtocoL is NULL.
     /// EFI_INVALID_PARAMETER InterfaceType is not EFI_NATIVE_INTERFACE.
     /// EFI_INVALID_PARAMETER ProtocoL is already installed on the handle specified by HandLe
-    pub fn install_protocol_interface<'a>(
+    pub fn install_protocol_interface<'p, 'i: 'p>(
         &self,
-        image: &'a mut IgnixImage<'a>,
+        image: &'p mut IgnixImage<'i>,
         guid: &Guid,
         interface_type: InterfaceType,
         interface: Option<*mut c_void>,
-    ) -> Result<IgnixProtocol<'a>, IgnixError> {
+    ) -> Result<IgnixProtocol<'p,'i>, IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("install_protocol_interface"))?
         };
