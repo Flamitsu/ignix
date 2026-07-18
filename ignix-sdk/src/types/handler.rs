@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
     init::SYSTEM_TABLE,
-    types::{Guid, IgnixImage},
+    types::{Event, Guid, IgnixImage},
 };
-use core::ffi::c_void;
+use core::{ffi::c_void, marker::PhantomData};
 pub type Handle = *mut c_void;
 /* Page 167 UEFI spec 2.11, it's not my fault, it's an enum just with one value.*/
 #[repr(C)]
@@ -58,5 +58,17 @@ impl<'p> Drop for IgnixProtocol<'p, '_> {
                     self.interface as *const c_void,
                 );
         }
+    }
+}
+
+pub struct IgnixProtocolNotification<'a> {
+    pub search_key: *mut c_void,
+    pub event: Event,
+    pub _m: PhantomData<&'a c_void>
+}
+
+impl<'a> Drop for IgnixProtocolNotification<'a> {
+    fn drop(&mut self) {
+        let _ = SYSTEM_TABLE.get().unwrap().get_boot_services().unwrap().close_event(self.event);
     }
 }

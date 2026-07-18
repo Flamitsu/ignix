@@ -1,9 +1,9 @@
-use core::ffi::c_void;
+use core::{ffi::c_void, marker::PhantomData};
 
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
     table::boot::BootServicesWrapper,
-    types::{Guid, Handle, IgnixError, IgnixImage, IgnixProtocol, InterfaceType, Status},
+    types::{Event, Guid, Handle, IgnixError, IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType, Status},
 };
 impl BootServicesWrapper {
     /// Installs a protocol interface on a device handle. If the handle doesn't exist, it's created
@@ -23,7 +23,7 @@ impl BootServicesWrapper {
         guid: &Guid,
         interface_type: InterfaceType,
         interface: Option<*mut c_void>,
-    ) -> Result<IgnixProtocol<'p,'i>, IgnixError> {
+    ) -> Result<IgnixProtocol<'p, 'i>, IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("install_protocol_interface"))?
         };
@@ -115,13 +115,37 @@ impl BootServicesWrapper {
         Ok(())
     }
 
+    /// Creates an event that is signaled whenever a new interface is installed for a specified
+    /// protocol.
+    /// Once the event is signaled you can call locate_handle() to identify the newly installed,
+    /// or reinstalled, handles that support Protocol.
     ///
     /// RETURN CODES:
     /// EFI_OUT_OF_RESOURCES Space for the notification event could not be allocated.
     /// EFI_INVALID_PARAMETER Protocol is NULL.
     /// EFI_INVALID_PARAMETER Event is NULL.
     /// EFI_INVALID_PARAMETER Registration is NULL.
-    pub fn register_protocol_notify(&self) {}
+    pub fn register_protocol_notify<'a>(
+        &self,
+        protocol: &Guid,
+        event: Event,
+    ) -> Result<IgnixProtocolNotification<'a>, IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("register_protocol_notify"))?
+        };
+        let mut search_key = core::ptr::null_mut();
+        let status = unsafe {
+            (function.register_protocol_notify)(protocol as *const Guid, event, &mut search_key)
+        };
+        if status.is_error() {
+            Err(status.context("register_protocol_notify"))?
+        }
+        Ok(IgnixProtocolNotification{
+            search_key,
+            event,
+            _m: PhantomData
+        })
+    }
 
     pub fn locate_handle(&self) {}
 
