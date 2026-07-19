@@ -3,8 +3,8 @@ use crate::{
     table::header::Header,
     types::{
         AllocateType, DevicePathProtocol, Event, EventGroup, EventNotifyFn, EventType, Guid,
-        Handle, InterfaceType, MemoryDescriptor, MemoryType, OpenProtocolInformationEntry,
-        PhysicalAddress, SearchType, Status, Table, TimerDelay, Tpl,
+        Handle, InterfaceType, MemoryDescriptor, MemoryType, OpenProtocolAttributes,
+        OpenProtocolInformationEntry, PhysicalAddress, SearchType, Status, Table, TimerDelay, Tpl,
     },
 };
 use core::ffi::c_void;
@@ -167,7 +167,7 @@ pub struct BootServices {
         interface: *mut *mut c_void,
         agent_handle: Handle,
         controller_handle: Handle,
-        attributes: u32,
+        attributes: OpenProtocolAttributes,
     ) -> Status,
     pub close_protocol: unsafe extern "efiapi" fn(
         handle: Handle,

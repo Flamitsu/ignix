@@ -20,8 +20,9 @@ pub enum SearchType {
 }
 
 #[repr(transparent)]
-pub struct OpenProtocol(pub u32);
-impl OpenProtocol {
+#[derive(PartialEq, Clone, Copy)]
+pub struct OpenProtocolAttributes(pub u32);
+impl OpenProtocolAttributes {
     pub const BY_HANDLE_PROTOCOL: u32 = 0x00000001;
     pub const GET_PROTOCOL: u32 = 0x00000002;
     pub const TEST_PROTOCOL: u32 = 0x00000004;
@@ -38,6 +39,11 @@ pub struct OpenProtocolInformationEntry {
     pub open_count: u32,
 }
 
+/// I'm going to be crystal clear with this, IgnixProtocol only must be used with protocols
+/// that are only and specifically made for Ignix. If you do it with another one, you're going
+/// to remove the protocol from the database of the whole motherboard, and good luck trying to
+/// figure it out, because now every single Handle will say they don't know what protocol are you
+/// referring to
 #[repr(C)]
 pub struct IgnixProtocol<'p, 'i> {
     pub image: &'p mut IgnixImage<'i>,
@@ -92,4 +98,31 @@ impl<const N: usize> FixedHandleList<N> {
 pub struct DevicePath {
     pub handle: Handle,
     pub device_path: *const DevicePathProtocol,
+}
+
+pub struct ProtocolGuard<'a, T> {
+    pub handle: Handle,
+    pub protocol: &'a Guid,
+    pub interface: *mut T,
+    pub agent_handle: Handle,
+    pub attr: OpenProtocolAttributes,
+    pub _m: PhantomData<&'a c_void>,
+}
+
+impl<'a, T> Drop for ProtocolGuard<'a, T> {
+    fn drop(&mut self) {
+        /*This is because the UEFI spec says if the attribute is get_protocol or test_protocol,
+         * you don't need to call to close protocol.*/
+        if self.attr.0 == OpenProtocolAttributes::GET_PROTOCOL
+            || self.attr.0 == OpenProtocolAttributes::TEST_PROTOCOL
+        {
+            return;
+        }
+        let _ = SYSTEM_TABLE
+            .get()
+            .unwrap()
+            .get_boot_services()
+            .unwrap()
+            .close_protocol(self.handle, self.protocol, self.agent_handle);
+    }
 }

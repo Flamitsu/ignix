@@ -3,10 +3,11 @@ use crate::{
     table::boot::BootServicesWrapper,
     types::{
         DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, IgnixError,
-        IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType, SearchType, Status,
+        IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType,
+        OpenProtocolAttributes, ProtocolGuard, SearchType, Status,
     },
 };
-use core::{ffi::c_void, marker::PhantomData};
+use core::{ffi::c_void, marker::PhantomData, str::from_utf8_unchecked_mut};
 impl BootServicesWrapper {
     /// Installs a protocol interface on a device handle. If the handle doesn't exist, it's created
     /// and added to the handle list in the system.
@@ -217,7 +218,7 @@ impl BootServicesWrapper {
         result.len = buffer_size / core::mem::size_of::<*mut c_void>();
         Ok(result)
     }
-    
+
     /// Queries a handle to determine if it supports a specified protocol
     /// Interface will be None if the protocol doesn't have any.
     /// It's recommended to use OpenProtocol function instead of this one that is for compatibility
@@ -260,7 +261,7 @@ impl BootServicesWrapper {
             interface: interface_option,
         })
     }
-    
+
     /// Locates the handle to a device on the device path provided that supports specified protocol
     /// Device path is on input, a pointer to a pointer to the device path. On output, the device
     /// path pointer is modified to point to the remaining part of the device path–that is, when the
@@ -295,9 +296,96 @@ impl BootServicesWrapper {
         })
     }
 
-    pub fn open_protocol(&self) {}
+    /// Extended version of handle_protocol.
+    ///
+    /// RETURN CODES:
+    /// EFI_INVALID_PARAMETER Protocol is NULL.
+    /// EFI_INVALID_PARAMETER Interface is NULL, and Attributes is not TEST_PROTOCOL.
+    /// EFI_INVALID_PARAMETER Handle is NULL.
+    /// EFI_UNSUPPORTED Handle does not support Protocol.
+    /// EFI_INVALID_PARAMETER Attributes is not a legal value.
+    /// EFI_INVALID_PARAMETER Attributes is BY_CHILD_CONTROLLER and AgentHandle is NULL.
+    /// EFI_INVALID_PARAMETER Attributes is BY_DRIVER and AgentHandle is NULL.
+    /// EFI_INVALID_PARAMETER Attribute is BY_DRIVEREXCLUSIVE and AgentHandle is NULL.
+    /// EFI_INVALID_PARAMETER Attributes is EXCLUSIVE and AgentHandle is NULL.
+    /// EFI_INVALID_PARAMETER Attributes is BY_CHILD_CONTROLLER and ControllerHandle is NULL.
+    /// EFI_INVALID_PARAMETER Attributes is BY_DRIVER and ControllerHandle is NULL.
+    /// EFI_INVALID_PARAMETER Attributes is BY_DRIVEREXCLUSIVE and ControllerHandle is NULL.
+    /// EFI_INVALID_PARAMETER Attributes is BY_CHILD_CONTROLLER and Handle is identical to ControllerHandle.
+    /// EFI_ACCESS_DENIED Attributes is BY_DRIVER and there is an item on the open list with an attribute of BY_DRIVEREXCLUSIVE or EXCLUSIVE.
+    /// EFI_ACCESS_DENIED Attributes is BY_DRIVEREXCLUSIVE and there is an item on the open list with an attribute of EXCLUSIVE.
+    /// EFI_ACCESS_DENIED Attributes is EXCLUSIVE and there is an item on the open list with an attribute of BY_DRIVEREXCLUSIVE or EXCLUSIVE.
+    /// EFI_ALREADY_STARTED Attributes is BY_DRIVER and there is an item on the open list with an attribute of BY_DRIVER whose agent handle is the same as AgentHandle.
+    /// EFI_ACCESS_DENIED Attributes is BY_DRIVER and there is an item on the open list with an attribute of BY_DRIVER whose agent handle is different than AgentHandle.
+    /// EFI_ALREADY_STARTED Attributes is BY_DRIVEREXCLUSIVE and there is an item on the open list with an attribute of BY_DRIVEREXCLUSIVE whose agent handle is the same as AgentHandle.
+    /// EFI_ACCESS_DENIED Attributes is BY_DRIVEREXCLUSIVE and there is an item on the open list with an attribute of BY_DRIVEREXCLUSIVE whose agent handle is different than AgentHandle.
+    /// EFI_ACCESS_DENIED Attributes is BY_DRIVEREXCLSUIVE or EXCLUSIVE and there are items in the open list with an attribute of BY_DRIVER that could not be removed when EFI_BOOT_SERVICES.DisconnectController() was called for that open item.
+    pub fn open_protocol<'a, T>(
+        &self,
+        handle: Handle,
+        protocol: &'a Guid,
+        agent_handle: Handle,
+        attr: OpenProtocolAttributes,
+    ) -> Result<ProtocolGuard<'a, T>, IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("open_protocol"))?
+        };
+        let mut interface: *mut c_void = core::ptr::null_mut();
+        let status = unsafe {
+            (function.open_protocol)(
+                handle,
+                protocol,
+                &mut interface,
+                agent_handle,
+                core::ptr::null_mut(),
+                attr,
+            )
+        };
 
-    pub fn close_protocol(self) {}
+        if status.is_error() {
+            Err(status.context("open_protocol"))?
+        }
+
+        Ok(ProtocolGuard {
+            handle,
+            protocol: &protocol,
+            agent_handle,
+            interface: interface as *mut T,
+            attr,
+            _m: PhantomData,
+        })
+    }
+    /// Closes a protocol on a handle open by open_protocol function.
+    ///
+    /// RETURN CODES:
+    /// EFI_INVALID_PARAMETER Handle is NULL.
+    /// EFI_INVALID_PARAMETER AgentHandle is NULL.
+    ///
+    /// This status code is here to complaint to the UEFI spec, but isn't needed for this usecase:
+    /// EFI_INVALID_PARAMETER ControllerHandle is not NULL and ControllerHandle is NULL.
+    ///
+    ///
+    /// EFI_INVALID_PARAMETER Protocol is NULL.
+    /// EFI_NOT_FOUND Handle does not support the protocol specified by Protocol.
+    /// EFI_NOT_FOUND The protocol interface specified by Handle and Protocol is not currently open
+    /// by AgentHandle and ControllerHandle
+    pub fn close_protocol(
+        &self,
+        handle: Handle,
+        protocol: &Guid,
+        agent_handle: Handle,
+    ) -> Result<(), IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("close_protocol"))?
+        };
+        let status = unsafe {
+            (function.close_protocol)(handle, protocol, agent_handle, core::ptr::null_mut())
+        };
+        if status.is_error() {
+            Err(status.context("close_protocol"))?
+        }
+        Ok(())
+    }
 
     pub fn open_protocol_information(&self) {}
 
