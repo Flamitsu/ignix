@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
     init::SYSTEM_TABLE,
-    types::{Event, Guid, IgnixImage},
+    types::{DevicePathProtocol, Event, Guid, IgnixImage},
 };
 use core::{ffi::c_void, marker::PhantomData};
 pub type Handle = *mut c_void;
@@ -42,7 +42,7 @@ pub struct OpenProtocolInformationEntry {
 pub struct IgnixProtocol<'p, 'i> {
     pub image: &'p mut IgnixImage<'i>,
     pub guid: Guid,
-    pub interface: *mut c_void,
+    pub interface: Option<*mut c_void>,
 }
 
 impl<'p> Drop for IgnixProtocol<'p, '_> {
@@ -53,11 +53,7 @@ impl<'p> Drop for IgnixProtocol<'p, '_> {
                 .unwrap()
                 .get_boot_services()
                 .unwrap()
-                .uninstall_protocol_interface(
-                    image_handle,
-                    &self.guid,
-                    self.interface as *const c_void,
-                );
+                .uninstall_protocol_interface(image_handle, &self.guid, self.interface);
         }
     }
 }
@@ -91,4 +87,9 @@ impl<const N: usize> FixedHandleList<N> {
     pub fn as_slice(&self) -> &[*mut c_void] {
         &self.storage[..self.len]
     }
+}
+
+pub struct DevicePath {
+    pub handle: Handle,
+    pub device_path: *const DevicePathProtocol,
 }

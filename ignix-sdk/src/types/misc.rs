@@ -60,27 +60,3 @@ impl<'a> Drop for IgnixImage<'a> {
         }
     }
 }
-
-#[repr(C)]
-pub struct IgnixProtocol<'a> {
-    pub image: &'a mut IgnixImage<'a>,
-    pub guid: Guid,
-    pub interface: *mut c_void,
-}
-
-impl<'a> Drop for IgnixProtocol<'a> {
-    fn drop(&mut self) {
-        if let Some(image_handle) = self.image.handle {
-            let _ = SYSTEM_TABLE
-                .get()
-                .unwrap()
-                .get_boot_services()
-                .unwrap()
-                .uninstall_protocol_interface(
-                    image_handle,
-                    &self.guid,
-                    self.interface as *const c_void,
-                );
-        }
-    }
-}

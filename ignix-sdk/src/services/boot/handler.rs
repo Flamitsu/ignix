@@ -2,8 +2,8 @@
 use crate::{
     table::boot::BootServicesWrapper,
     types::{
-        Event, FixedHandleList, Guid, Handle, IgnixError, IgnixImage, IgnixProtocol,
-        IgnixProtocolNotification, InterfaceType, SearchType, Status,
+        DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, IgnixError,
+        IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType, SearchType, Status,
     },
 };
 use core::{ffi::c_void, marker::PhantomData};
@@ -54,7 +54,7 @@ impl BootServicesWrapper {
         Ok(IgnixProtocol {
             image,
             guid: *guid,
-            interface: interface_ptr,
+            interface: Some(interface_ptr),
         })
     }
     /// Removes a protocol interface from a device handle.
@@ -74,13 +74,17 @@ impl BootServicesWrapper {
         &self,
         handle: Handle,
         protocol: &Guid,
-        interface: *const c_void,
+        interface: Option<*mut c_void>,
     ) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("uninstall_protocol_interface"))?
         };
+        let interface_ptr = match interface {
+            None => core::ptr::null_mut(),
+            Some(ptr) => ptr,
+        };
         let status =
-            unsafe { (function.uninstall_protocol_interface)(handle, protocol, interface) };
+            unsafe { (function.uninstall_protocol_interface)(handle, protocol, interface_ptr) };
         if status.is_error() {
             Err(status.context("uninstall_protocol_interface"))?
         }
@@ -106,11 +110,15 @@ impl BootServicesWrapper {
             Some(ptr) => ptr,
             None => Err(Status::HANDLE_DEVICE_IS_NULL.context("reinstall_protocol_interface"))?,
         };
+        let old_interface = match protocol.interface {
+            None => core::ptr::null_mut(),
+            Some(ptr) => ptr,
+        };
         let status = unsafe {
             (function.reinstall_protocol_interface)(
                 handle_ptr,
                 &protocol.guid,
-                protocol.interface,
+                old_interface,
                 new_interface as *const c_void,
             )
         };
@@ -151,9 +159,9 @@ impl BootServicesWrapper {
 
     /// Returns an array of handles that support the specified protocol and the SearchType request.
     /// This uses a fixed array with const generics.
-    /// DO NOT try to use it ABOVE of 128. If you put above 16KB the memory will overflow and
-    /// corrupt. Please, be careful while doing this type of stuff, and please use 'AllHandles' the
-    /// minimum necessary, since it's really probably you're going to run into a
+    /// DO NOT try to use it ABOVE of 128. If you put above 16KB the memory (2048) will overflow and
+    /// corrupt. Please, be careful while doing this type of stuff, and please try to use 'AllHandles
+    /// the minimum necessary, since it's really probably you're going to run into a
     /// EFI_BUFFER_TOO_SMALL error, or not, that depends on the hardware plugging in to your machine
     ///
     /// RETURN CODES:
@@ -170,6 +178,7 @@ impl BootServicesWrapper {
         protocol: Option<&Guid>,
         search_key: Option<&c_void>,
     ) -> Result<FixedHandleList<N>, IgnixError> {
+        assert!(N > 128);
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("locate_handle"))?
         };
@@ -200,16 +209,91 @@ impl BootServicesWrapper {
                 result.storage.as_mut_ptr(),
             )
         };
+
         if status.is_error() {
             Err(status.context("locate_handle"))?
         }
+
         result.len = buffer_size / core::mem::size_of::<*mut c_void>();
         Ok(result)
     }
+    
+    /// Queries a handle to determine if it supports a specified protocol
+    /// Interface will be None if the protocol doesn't have any.
+    /// It's recommended to use OpenProtocol function instead of this one that is for compatibility
+    ///
+    /// RETURN CODES:
+    /// EFI_UNSUPPORTED The device does not support the specified protocol.
+    /// EFI_INVALID_PARAMETER Handle is NULL.
+    /// EFI_INVALID_PARAMETER Protocol is NULL.
+    /// EFI_INVALID_PARAMETER Interface is NULL.
+    pub fn handle_protocol<'p, 'i: 'p>(
+        &self,
+        handle: &'p mut IgnixImage<'i>,
+        protocol: &Guid,
+    ) -> Result<IgnixProtocol<'p, 'i>, IgnixError> {
+        let Some(handle_ptr) = handle.handle else {
+            Err(Status::HANDLE_DEVICE_IS_NULL.context("handle_protocol"))?
+        };
 
-    pub fn handle_protocol(&self) {}
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("handle_protocol"))?
+        };
+        // Explicit type declaration is needed so it doesn't break IgnixProtocol interface field
+        let mut interface: *mut c_void = core::ptr::null_mut();
 
-    pub fn locate_device_path(&self) {}
+        let status = unsafe {
+            (function.handle_protocol)(handle_ptr, protocol, interface as *mut *mut c_void)
+        };
+
+        if status.is_error() {
+            Err(status.context("handle_protocol"))?
+        }
+        let interface_option = if interface.is_null() {
+            None
+        } else {
+            Some(interface)
+        };
+        Ok(IgnixProtocol {
+            image: handle,
+            guid: *protocol,
+            interface: interface_option,
+        })
+    }
+    
+    /// Locates the handle to a device on the device path provided that supports specified protocol
+    /// Device path is on input, a pointer to a pointer to the device path. On output, the device
+    /// path pointer is modified to point to the remaining part of the device path–that is, when the
+    /// function finds the closest handle, it splits the device path into two parts, stripping off
+    /// the front part, and returning the remaining portion.
+    ///
+    /// RETURN CODES:
+    /// EFI_NOT_FOUND No handles matched the search.
+    /// EFI_INVALID_PARAMETER Protocol is NULL
+    /// EFI_INVALID_PARAMETER DevicePath is NULL.
+    /// EFI_INVALID_PARAMETER A handle matched the search and Device is NULL.
+    pub fn locate_device_path(
+        &self,
+        protocol: &Guid,
+        mut device_path: DevicePathProtocol,
+    ) -> Result<DevicePath, IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("locate_device_path"))?
+        };
+        let mut handle: Handle = core::ptr::null_mut();
+        let mut dp_ptr = &device_path as *const DevicePathProtocol;
+        let status = unsafe {
+            (function.locate_device_path)(
+                protocol,
+                &mut dp_ptr as *mut *const DevicePathProtocol,
+                &mut handle,
+            )
+        };
+        Ok(DevicePath {
+            device_path: dp_ptr,
+            handle,
+        })
+    }
 
     pub fn open_protocol(&self) {}
 
