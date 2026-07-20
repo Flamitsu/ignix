@@ -3,7 +3,7 @@
  * Big disclaimer. If someone wants to do */
 use crate::{
     table::header::Header,
-    types::{Boolean, Status, Table, Time, TimeCapabilities},
+    types::{Boolean, DebugDisposition, MemoryDescriptor, Status, Table, Time, TimeCapabilities},
 };
 use core::ffi::c_void;
 #[allow(unused)]
@@ -25,8 +25,16 @@ pub struct RuntimeServices {
     pub set_wakeup_time: unsafe extern "efiapi" fn(enable: bool, time: *const Time) -> Status,
 
     // Virtual memory services
-    set_virtual_address_map: *mut c_void,
-    convert_pointer: *mut c_void,
+    pub set_virtual_address_map: unsafe extern "efiapi" fn(
+        memory_map_size: usize,
+        descriptor_size: usize,
+        descriptor_version: u32,
+        virtual_map: *mut MemoryDescriptor,
+    ) -> Status,
+    pub convert_pointer: unsafe extern "efiapi" fn(
+        debug_position: DebugDisposition,
+        addres: *mut *mut c_void,
+    ) -> Status,
 
     // Variable services
     get_variable: *mut c_void,

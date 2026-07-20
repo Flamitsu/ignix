@@ -104,9 +104,10 @@ impl RuntimeServicesWrapper {
     /// The platform should describe this runtime service as unsupported at runtime via an
     /// EFI_RT_PROPERTIES_TABLE configuration table.
     pub fn set_wakeup_time(&self, enable: bool, time: Option<&Time>) -> Result<(), IgnixError> {
-        if enable && time.is_none() {
-            Err(Status::SET_WAKEUP_TIME_PARAMETER.context("set_wakeup_time"))?
-        }
+        assert!(
+            enable == true && time.is_none(),
+            "Please, provide the time parameter (not none) in 'set_wakeup_timer' when enable == true"
+        );
         let Some(function) = self.get_method() else {
             Err(Status::RST_POINTER_MISSING.context("set_wakeup_time"))?
         };

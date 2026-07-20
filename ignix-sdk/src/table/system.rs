@@ -2,7 +2,7 @@
 use crate::protocol::console::{SimpleTextOutput, SimpleTextOutputProtocol};
 use crate::table::Header;
 use crate::table::boot::{BootServices, BootServicesWrapper};
-use crate::table::runtime::RuntimeServices;
+use crate::table::runtime::{RuntimeServices, RuntimeServicesWrapper};
 use crate::types::Table;
 use core::ffi::c_void;
 // Code that is with '*mut c_void' is for structure normally. Don't even think of trying them!
@@ -47,5 +47,12 @@ impl SystemTable {
             return None;
         }
         Some(unsafe { BootServicesWrapper::new(self.boot_services) })
+    }
+    #[allow(unused)]
+    pub fn get_runtime_services(&self) -> Option<RuntimeServicesWrapper> {
+        if self.runtime_services.is_null() {
+            return None;
+        }
+        Some(unsafe { RuntimeServicesWrapper::new(self.runtime_services) })
     }
 }

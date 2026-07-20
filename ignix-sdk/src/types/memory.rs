@@ -209,3 +209,9 @@ impl MemoryMap {
         }
     }
 }
+#[repr(C)]
+#[derive(PartialEq)]
+pub struct DebugDisposition(pub usize);
+impl DebugDisposition {
+    pub const OPTIONAL_PTR: Self = Self(0x00000001);
+}

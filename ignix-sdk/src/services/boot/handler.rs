@@ -187,7 +187,10 @@ impl BootServicesWrapper {
         protocol: Option<&Guid>,
         search_key: Option<&c_void>,
     ) -> Result<FixedHandleList<N>, IgnixError> {
-        assert!(N > 128);
+        assert!(
+            N > 128,
+            "Please try to not use more than 128 handle per protocol."
+        );
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("locate_handle"))?
         };

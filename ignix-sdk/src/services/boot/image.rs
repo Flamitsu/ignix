@@ -2,7 +2,7 @@
 use crate::{
     services::boot::memory,
     table::boot::BootServicesWrapper,
-    types::{DevicePathProtocol, Handle, IgnixError, IgnixImage, Status},
+    types::{DevicePathProtocol, Handle, IgnixError, IgnixImage, MemoryMap, Status},
 };
 use core::{ffi::c_void, marker::PhantomData};
 
@@ -155,11 +155,14 @@ impl BootServicesWrapper {
 
     /// Terminates all boot services.
     /// The handle argument is the one the UEFI gives to the binary whenever it's executed
-    pub fn exit_boot_services(&self, efi_handle: Handle) -> Result<(), IgnixError> {
+    pub fn exit_boot_services(
+        &self,
+        efi_handle: Handle,
+        memory_map: &MemoryMap,
+    ) -> Result<(), IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("exit_boot_services"))?
         };
-        let memory_map = self.get_memory_map()?;
         let status = unsafe { (function.exit_boot_services)(efi_handle, memory_map.key) };
         if status.is_error() {
             Err(status.context("exit_boot_services"))?
