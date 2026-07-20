@@ -2,13 +2,17 @@
 use crate::{
     table::boot::BootServicesWrapper,
     types::{
-        DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, IgnixError,
-        IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType,
+        DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, HandleBuffer,
+        IgnixError, IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType,
         OpenProtocolAttributes, OpenProtocolInformation, OpenProtocolInformationEntry,
-        ProtocolGuard, ProtocolsPerHandle, SearchType, Status,
+        ProtocolGuard, ProtocolsPerHandle, SearchType, Status, Uuid,
     },
 };
-use core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
+use core::{
+    ffi::c_void,
+    marker::PhantomData,
+    ptr::{NonNull, null_mut},
+};
 impl BootServicesWrapper {
     /// Installs a protocol interface on a device handle. If the handle doesn't exist, it's created
     /// and added to the handle list in the system.
@@ -481,14 +485,74 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER Buffer is NULL
     /// EFI_NOT_FOUND No handles match the search.
     /// EFI_OUT_OF_RESOURCES There is not enough pool memory to store the matching results.
-    pub fn locate_handle_buffer(&self) {}
+    pub fn locate_handle_buffer(
+        &self,
+        search_type: SearchType,
+        protocol: Option<&Guid>,
+        search_key: Option<&c_void>,
+    ) -> Result<HandleBuffer, IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("locate_handle_buffer"))?
+        };
+        let protocol_ptr = match protocol {
+            None => core::ptr::null_mut(),
+            Some(ptr) => ptr as *const Guid,
+        };
+        let search_key_ptr = match search_key {
+            None => core::ptr::null_mut(),
+            Some(ptr) => ptr as *const c_void,
+        };
+        let mut num_handles: usize = 0;
+        let mut buffer_handlers: Handle = core::ptr::null_mut();
+        let status = unsafe {
+            (function.locate_handle_buffer)(
+                search_type,
+                protocol_ptr,
+                search_key_ptr,
+                &mut num_handles,
+                &mut buffer_handlers as *mut Handle as *mut *mut Handle,
+            )
+        };
+
+        if status.is_error() {
+            Err(status.context("locate_handle_buffer"))?
+        }
+        let buffer_handlers_ptr = NonNull::new(&mut buffer_handlers).unwrap();
+        Ok(HandleBuffer {
+            buffer_handlers: buffer_handlers_ptr,
+            num_handles,
+        })
+    }
 
     /// Returns the first protocol instance that matches the given protocol.
+    ///
+    /// SAFETY: the compiler can't guarantee the interface that returns isn't null.
+    /// Please, be careful using this function and use it with Uuids and structs already registered
+    /// in this SDK (that's really the only caution you need to have).
     ///
     /// RETURN CODES:
     /// EFI_INVALID_PARAMETER Interface is NULL. Protocol is NULL.
     /// EFI_NOT_FOUND No protocol instances were found that match Protocol and Registration
-    pub fn locate_protocol(&self) {}
+    pub fn locate_protocol<T: Uuid>(
+        &self,
+        register: Option<*const c_void>,
+    ) -> Result<&'static T, IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("locate_protocol"))?
+        };
+        let mut interface: *mut c_void = core::ptr::null_mut();
+        let register_ptr = match register {
+            None => core::ptr::null_mut(),
+            Some(ptr) => ptr,
+        };
+        let status = unsafe {
+            (function.locate_protocol)(&T::GUID as *const Guid, register_ptr, &mut interface)
+        };
+        if status.is_error() {
+            Err(status.context("locate_protocol"))?
+        }
+        unsafe { Ok(&*(interface as *const T)) }
+    }
 
     /*I'm not doing those last two, the devil made them (varargs in C)
     pub fn install_multiple_protocol_interfaces(&self)

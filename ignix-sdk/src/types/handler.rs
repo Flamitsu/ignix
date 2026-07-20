@@ -159,3 +159,19 @@ impl Drop for ProtocolsPerHandle {
             .free_pool(self.protocol_buffer.cast());
     }
 }
+
+pub struct HandleBuffer {
+    pub num_handles: usize,
+    pub buffer_handlers: NonNull<Handle>,
+}
+
+impl Drop for HandleBuffer {
+    fn drop(&mut self) {
+        let _ = SYSTEM_TABLE
+            .get()
+            .unwrap()
+            .get_boot_services()
+            .unwrap()
+            .free_pool(self.buffer_handlers.cast());
+    }
+}
