@@ -445,6 +445,12 @@ impl BootServicesWrapper {
     /// Retrieves a list of protocol interface GUIDs that are installed on a handle in a buffer
     /// allocated from pool (I don't want to do another type struct with RAII but they forced me
     /// with that last one)
+    ///
+    /// RETURN CODES:
+    /// EFI_INVALID_PARAMETER Handle is NULL.
+    /// EFI_INVALID_PARAMETER ProtocolBuffer is NULL.
+    /// EFI_INVALID_PARAMETER ProtocolBufferCount is NULL.
+    /// EFI_OUT_OF_RESOURCES There is not enough pool memory to store the results.
     pub fn protocols_per_handle(&self, handle: Handle) -> Result<ProtocolsPerHandle, IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("protocols_per_handle"))?
@@ -467,8 +473,21 @@ impl BootServicesWrapper {
         })
     }
 
+    /// Returns an array of handles that support the requested protocol in a buffer
+    /// allocated from pool
+    ///
+    /// RETURN CODES:
+    /// EFI_INVALID_PARAMETER NoHandles is NULL
+    /// EFI_INVALID_PARAMETER Buffer is NULL
+    /// EFI_NOT_FOUND No handles match the search.
+    /// EFI_OUT_OF_RESOURCES There is not enough pool memory to store the matching results.
     pub fn locate_handle_buffer(&self) {}
 
+    /// Returns the first protocol instance that matches the given protocol.
+    ///
+    /// RETURN CODES:
+    /// EFI_INVALID_PARAMETER Interface is NULL. Protocol is NULL.
+    /// EFI_NOT_FOUND No protocol instances were found that match Protocol and Registration
     pub fn locate_protocol(&self) {}
 
     /*I'm not doing those last two, the devil made them (varargs in C)
