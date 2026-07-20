@@ -4,7 +4,7 @@ mod event;
 mod handler;
 mod memory;
 mod misc;
-
+mod time;
 pub use boolean::Boolean;
 
 pub use event::{
@@ -26,3 +26,5 @@ pub use handler::{
 pub use misc::{
     Char16, DevicePathProtocol, Guid, IgnixImage, PhysicalAddress, Table, Uuid, VirtualAddress,
 };
+
+pub use time::{Time, TimeCapabilities, TimeStruct, WakeupTime};

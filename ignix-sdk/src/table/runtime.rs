@@ -1,28 +1,46 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::{table::header::Header, types::Table};
+/*
+ * Big disclaimer. If someone wants to do */
+use crate::{
+    table::header::Header,
+    types::{Boolean, Status, Table, Time, TimeCapabilities},
+};
 use core::ffi::c_void;
 #[allow(unused)]
 #[repr(C)]
 pub struct RuntimeServices {
     hdr: Header,
+
     // Time services
-    get_time: *mut c_void,
-    set_time: *mut c_void,
-    get_wakeup_time: *mut c_void,
-    set_wakeup_time: *mut c_void,
+    pub get_time: unsafe extern "efiapi" fn(
+        time: *mut Time,
+        time_capabilities: *mut TimeCapabilities,
+    ) -> Status,
+    pub set_time: unsafe extern "efiapi" fn(time: *const Time) -> Status,
+    pub get_wakeup_time: unsafe extern "efiapi" fn(
+        enabled: *mut Boolean,
+        pending: *mut Boolean,
+        time: *mut Time,
+    ) -> Status,
+    pub set_wakeup_time: unsafe extern "efiapi" fn(enable: bool, time: *const Time) -> Status,
+
     // Virtual memory services
     set_virtual_address_map: *mut c_void,
     convert_pointer: *mut c_void,
+
     // Variable services
     get_variable: *mut c_void,
     get_next_variable_name: *mut c_void,
     set_variable: *mut c_void,
+
     // Miscellaneous services
     get_next_high_monotonic_count: *mut c_void,
     reset_system: *mut c_void,
+
     // UEFI 2.0 Capsule services
     update_capsule: *mut c_void,
     query_capsule_capabilities: *mut c_void,
+
     // Miscellaneous UEFI 2.0 Service
     query_variable_info: *mut c_void,
 }

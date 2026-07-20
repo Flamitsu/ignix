@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use core::{ffi::c_void, marker::PhantomData};
 
-use crate::{init::SYSTEM_TABLE, types::Handle};
+use crate::{
+    init::SYSTEM_TABLE,
+    types::{Boolean, Handle},
+};
 pub type Char16 = u16;
 pub type PhysicalAddress = u64;
 pub type VirtualAddress = u64;

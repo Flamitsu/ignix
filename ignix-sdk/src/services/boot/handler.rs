@@ -463,7 +463,11 @@ impl BootServicesWrapper {
         let mut protocol_buffer: *mut *const Guid = core::ptr::null_mut();
         let mut protocol_count: usize = 0;
         let status = unsafe {
-            (function.protocols_per_handle)(handle, protocol_buffer as *mut _ as *mut *mut *const Guid, &mut protocol_count)
+            (function.protocols_per_handle)(
+                handle,
+                protocol_buffer as *mut _ as *mut *mut *const Guid,
+                &mut protocol_count,
+            )
         };
 
         if status.is_error() {
