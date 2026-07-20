@@ -460,10 +460,10 @@ impl BootServicesWrapper {
             Err(Status::BST_POINTER_MISSING.context("protocols_per_handle"))?
         };
 
-        let protocol_buffer: *mut *mut *const Guid = core::ptr::null_mut();
+        let mut protocol_buffer: *mut *const Guid = core::ptr::null_mut();
         let mut protocol_count: usize = 0;
         let status = unsafe {
-            (function.protocols_per_handle)(handle, protocol_buffer, &mut protocol_count)
+            (function.protocols_per_handle)(handle, protocol_buffer as *mut _ as *mut *mut *const Guid, &mut protocol_count)
         };
 
         if status.is_error() {
@@ -503,14 +503,14 @@ impl BootServicesWrapper {
             Some(ptr) => ptr as *const c_void,
         };
         let mut num_handles: usize = 0;
-        let mut buffer_handlers: Handle = core::ptr::null_mut();
+        let mut buffer_handlers: *mut Handle = core::ptr::null_mut();
         let status = unsafe {
             (function.locate_handle_buffer)(
                 search_type,
                 protocol_ptr,
                 search_key_ptr,
                 &mut num_handles,
-                &mut buffer_handlers as *mut Handle as *mut *mut Handle,
+                &mut buffer_handlers,
             )
         };
 

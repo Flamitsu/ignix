@@ -162,7 +162,7 @@ impl Drop for ProtocolsPerHandle {
 
 pub struct HandleBuffer {
     pub num_handles: usize,
-    pub buffer_handlers: NonNull<Handle>,
+    pub buffer_handlers: NonNull<*mut Handle>,
 }
 
 impl Drop for HandleBuffer {
