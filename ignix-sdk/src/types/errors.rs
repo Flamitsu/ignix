@@ -195,6 +195,12 @@ pub struct IgnixError {
     pub func: &'static str,
 }
 
+impl IgnixError {
+    pub fn as_status(&self) -> Status {
+        self.status
+    }
+}
+
 impl core::fmt::Debug for IgnixError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:?} in {} function.", self.status, self.func)

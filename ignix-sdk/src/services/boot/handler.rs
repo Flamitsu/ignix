@@ -5,10 +5,10 @@ use crate::{
         DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, IgnixError,
         IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType,
         OpenProtocolAttributes, OpenProtocolInformation, OpenProtocolInformationEntry,
-        ProtocolGuard, SearchType, Status,
+        ProtocolGuard, ProtocolsPerHandle, SearchType, Status,
     },
 };
-use core::{ffi::c_void, marker::PhantomData, ptr::NonNull, str::from_utf8_unchecked_mut};
+use core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 impl BootServicesWrapper {
     /// Installs a protocol interface on a device handle. If the handle doesn't exist, it's created
     /// and added to the handle list in the system.
@@ -124,6 +124,9 @@ impl BootServicesWrapper {
                 new_interface as *const c_void,
             )
         };
+        if status.is_error() {
+            Err(status.context("reinstall_protocol_interface"))?
+        }
         Ok(())
     }
 
@@ -245,7 +248,7 @@ impl BootServicesWrapper {
         let mut interface: *mut c_void = core::ptr::null_mut();
 
         let status = unsafe {
-            (function.handle_protocol)(handle_ptr, protocol, interface as *mut *mut c_void)
+            (function.handle_protocol)(handle_ptr, protocol, &mut interface as *mut *mut c_void)
         };
 
         if status.is_error() {
@@ -349,7 +352,7 @@ impl BootServicesWrapper {
 
         Ok(ProtocolGuard {
             handle,
-            protocol: &protocol,
+            protocol,
             agent_handle,
             interface: interface as *mut T,
             attr,
@@ -409,11 +412,11 @@ impl BootServicesWrapper {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("open_protocol_information"))?
         };
-        
+
         let mut buffer: *mut OpenProtocolInformationEntry = core::ptr::null_mut();
-        
+
         let mut entry_buffer: usize = 0;
-        
+
         let status = unsafe {
             (function.open_protocol_information)(
                 protocol.handle,
@@ -426,22 +429,49 @@ impl BootServicesWrapper {
         if status.is_error() {
             Err(status.context("open_protocol_information"))?
         }
-        
-        let ptr = NonNull::new(buffer).unwrap(); 
-        
+
+        let ptr = NonNull::new(buffer).unwrap();
+
         Ok(OpenProtocolInformation {
             count: entry_buffer,
-            ptr
+            ptr,
         })
     }
-
+    /* I'm going to left those functions withouth completing for now. Because I don't see them as
+     * urgent as the others are.
     pub fn connect_controller(&self) {}
+    pub fn disconnect_controller(&self) {}*/
 
-    pub fn disconnect_controller(&self) {}
+    /// Retrieves a list of protocol interface GUIDs that are installed on a handle in a buffer
+    /// allocated from pool (I don't want to do another type struct with RAII but they forced me
+    /// with that last one)
+    pub fn protocols_per_handle(&self, handle: Handle) -> Result<ProtocolsPerHandle, IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("protocols_per_handle"))?
+        };
 
-    pub fn protocols_per_handle(&self) {}
+        let protocol_buffer: *mut *mut *const Guid = core::ptr::null_mut();
+        let mut protocol_count: usize = 0;
+        let status = unsafe {
+            (function.protocols_per_handle)(handle, protocol_buffer, &mut protocol_count)
+        };
+
+        if status.is_error() {
+            Err(status.context("protocols_per_handle"))?
+        }
+        let protocol_buff_ptr = NonNull::new(protocol_buffer.cast()).unwrap();
+        Ok(ProtocolsPerHandle {
+            handle,
+            protocol_buffer: protocol_buff_ptr,
+            buffer_size: protocol_count,
+        })
+    }
 
     pub fn locate_handle_buffer(&self) {}
 
     pub fn locate_protocol(&self) {}
+
+    /*I'm not doing those last two, the devil made them (varargs in C)
+    pub fn install_multiple_protocol_interfaces(&self)
+    pub fn uninstall_multiple_protocol_interfaces(&self) */
 }

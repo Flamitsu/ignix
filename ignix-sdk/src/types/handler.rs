@@ -142,3 +142,20 @@ impl<'a, T> Drop for ProtocolGuard<'a, T> {
             .close_protocol(self.handle, self.protocol, self.agent_handle);
     }
 }
+
+pub struct ProtocolsPerHandle {
+    pub handle: Handle,
+    pub protocol_buffer: NonNull<Guid>,
+    pub buffer_size: usize,
+}
+
+impl Drop for ProtocolsPerHandle {
+    fn drop(&mut self) {
+        let _ = SYSTEM_TABLE
+            .get()
+            .unwrap()
+            .get_boot_services()
+            .unwrap()
+            .free_pool(self.protocol_buffer.cast());
+    }
+}
