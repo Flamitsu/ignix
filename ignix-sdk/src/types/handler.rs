@@ -3,7 +3,7 @@ use crate::{
     init::SYSTEM_TABLE,
     types::{DevicePathProtocol, Event, Guid, IgnixImage},
 };
-use core::{ffi::c_void, marker::PhantomData};
+use core::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 pub type Handle = *mut c_void;
 /* Page 167 UEFI spec 2.11, it's not my fault, it's an enum just with one value.*/
 #[repr(C)]
@@ -35,8 +35,24 @@ impl OpenProtocolAttributes {
 pub struct OpenProtocolInformationEntry {
     pub agent_handle: Handle,
     pub controller_handle: Handle,
-    pub attributes: u32,
+    pub attributes: OpenProtocolAttributes,
     pub open_count: u32,
+}
+
+pub struct OpenProtocolInformation {
+    pub ptr: NonNull<OpenProtocolInformationEntry>,
+    pub count: usize,
+}
+
+impl Drop for OpenProtocolInformation {
+    fn drop(&mut self) {
+        let _ = SYSTEM_TABLE
+            .get()
+            .unwrap()
+            .get_boot_services()
+            .unwrap()
+            .free_pool(self.ptr.cast());
+    }
 }
 
 /// I'm going to be crystal clear with this, IgnixProtocol only must be used with protocols

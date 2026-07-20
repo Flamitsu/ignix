@@ -4,10 +4,11 @@ use crate::{
     types::{
         DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, IgnixError,
         IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType,
-        OpenProtocolAttributes, ProtocolGuard, SearchType, Status,
+        OpenProtocolAttributes, OpenProtocolInformation, OpenProtocolInformationEntry,
+        ProtocolGuard, SearchType, Status,
     },
 };
-use core::{ffi::c_void, marker::PhantomData, str::from_utf8_unchecked_mut};
+use core::{ffi::c_void, marker::PhantomData, ptr::NonNull, str::from_utf8_unchecked_mut};
 impl BootServicesWrapper {
     /// Installs a protocol interface on a device handle. If the handle doesn't exist, it's created
     /// and added to the handle list in the system.
@@ -387,7 +388,52 @@ impl BootServicesWrapper {
         Ok(())
     }
 
-    pub fn open_protocol_information(&self) {}
+    /// Allocates and returns a buffer of EFI_OPEN_PROTOCOL_INFORMATION_ENTRY structures.
+    /// The buffer is return in entry_buffer and the number of entries with entry_count
+    ///
+    /// If the interface specified by Protocol is supported by the handle specified by Handle, then
+    /// EntryBuffer is allocated with the boot service AllocatePool() , and EntryCount is set to the
+    /// number of entries in EntryBuffer. Each entry of EntryBuffer is filled in with the image
+    /// handle, controller handle, and attributes that were passed to OpenProtocol() when the
+    /// protocol interface was opened. The field OpenCount shows the number of times that the
+    /// protocol interface has been opened by the agent specified by ImageHandle, ControllerHandle,
+    /// and Attributes.
+    ///
+    /// RETURN CODES:
+    /// EFI_NOT_FOUND Handle does not support the protocol specified by Protocol.
+    /// EFI_OUT_OF_RESOURCES There are not enough resources available to allocate EntryBuffer.
+    pub fn open_protocol_information<T>(
+        &self,
+        protocol: ProtocolGuard<T>,
+    ) -> Result<OpenProtocolInformation, IgnixError> {
+        let Some(function) = self.get_method() else {
+            Err(Status::BST_POINTER_MISSING.context("open_protocol_information"))?
+        };
+        
+        let mut buffer: *mut OpenProtocolInformationEntry = core::ptr::null_mut();
+        
+        let mut entry_buffer: usize = 0;
+        
+        let status = unsafe {
+            (function.open_protocol_information)(
+                protocol.handle,
+                protocol.protocol as *const Guid,
+                &mut buffer as *mut *mut OpenProtocolInformationEntry,
+                &mut entry_buffer,
+            )
+        };
+
+        if status.is_error() {
+            Err(status.context("open_protocol_information"))?
+        }
+        
+        let ptr = NonNull::new(buffer).unwrap(); 
+        
+        Ok(OpenProtocolInformation {
+            count: entry_buffer,
+            ptr
+        })
+    }
 
     pub fn connect_controller(&self) {}
 

@@ -19,7 +19,8 @@ pub use errors::{IgnixError, Status};
 
 pub use handler::{
     DevicePath, FixedHandleList, Handle, IgnixProtocol, IgnixProtocolNotification, InterfaceType,
-    OpenProtocolAttributes, OpenProtocolInformationEntry, ProtocolGuard, SearchType,
+    OpenProtocolAttributes, OpenProtocolInformation, OpenProtocolInformationEntry, ProtocolGuard,
+    SearchType,
 };
 
 pub use misc::{
