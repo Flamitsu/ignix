@@ -105,7 +105,7 @@ impl RuntimeServicesWrapper {
     /// EFI_RT_PROPERTIES_TABLE configuration table.
     pub fn set_wakeup_time(&self, enable: bool, time: Option<&Time>) -> Result<(), IgnixError> {
         assert!(
-            enable == true && time.is_none(),
+            enable && time.is_none(),
             "Please, provide the time parameter (not none) in 'set_wakeup_timer' when enable == true"
         );
         let Some(function) = self.get_method() else {
@@ -115,7 +115,7 @@ impl RuntimeServicesWrapper {
             None => core::ptr::null(),
             Some(ptr) => ptr,
         };
-        let status = unsafe { (function.set_wakeup_time)(enable, time_ptr as *const Time) };
+        let status = unsafe { (function.set_wakeup_time)(enable, time_ptr) };
         if status.is_error() {
             Err(status.context("set_wakeup_time"))?
         }

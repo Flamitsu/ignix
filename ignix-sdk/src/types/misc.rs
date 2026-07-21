@@ -63,3 +63,17 @@ impl<'a> Drop for IgnixImage<'a> {
         }
     }
 }
+#[repr(C)]
+pub enum ResetType {
+    /// causes a system-wide reset. This type of reset is asynchronous to system operations.
+    /// Tantamount to a system power cycle
+    Cold = 0,
+    /// Causes a system-wide initialization. If the system doesn't support this, Cold must be used
+    Warm = 1,
+    /// Causes the system to enter a power state equivalent to the ACPI G2/S5 or G3 states.
+    /// (No clue of what the UEFI spec wanted to say with that)
+    Shutdown = 2,
+    /// Causes a system-wide reset. The exact type of the reset is defined by the EFI_GUID that
+    /// follows the Null-terminated Unicode string passed into ResetData.
+    PlatformSpecific = 3,
+}

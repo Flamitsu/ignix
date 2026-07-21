@@ -26,7 +26,10 @@ pub use handler::{
 };
 
 pub use misc::{
-    Char16, DevicePathProtocol, Guid, IgnixImage, PhysicalAddress, Table, Uuid, VirtualAddress,
+    Char16, DevicePathProtocol, Guid, IgnixImage, PhysicalAddress, ResetType, Table, Uuid,
+    VirtualAddress,
 };
 
 pub use time::{Time, TimeCapabilities, TimeStruct, WakeupTime};
+
+pub use variable::{NextVariableName, NonVolatileRamStatus, Variable, VariableAttributes};
