@@ -15,10 +15,10 @@ impl RuntimeServicesWrapper {
         if status.is_error() {
             Err(status.context("get_next_high_monotonic_count"))?
         }
-        Ok(number) 
+        Ok(number)
     }
     /// Resets the entire platform. If the platform supports See ref:EFI_RESET_NOTIFICATION_PROTOCOL,
-    /// then prior to completing the reset of the platform, all of the pending notifications must 
+    /// then prior to completing the reset of the platform, all of the pending notifications must
     /// be called
     pub fn reset_system<const N: usize>(
         &self,
