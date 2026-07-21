@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-onl
 use crate::types::Boolean;
 
 #[repr(C)]

@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-only
-/*
- * Big disclaimer. If someone wants to do */
 use crate::{
     table::header::Header,
     types::{Boolean, DebugDisposition, MemoryDescriptor, Status, Table, Time, TimeCapabilities},
@@ -37,9 +35,9 @@ pub struct RuntimeServices {
     ) -> Status,
 
     // Variable services
-    get_variable: *mut c_void,
-    get_next_variable_name: *mut c_void,
-    set_variable: *mut c_void,
+    pub get_variable: *mut c_void,
+    pub get_next_variable_name: *mut c_void,
+    pub set_variable: *mut c_void,
 
     // Miscellaneous services
     get_next_high_monotonic_count: *mut c_void,
@@ -50,7 +48,7 @@ pub struct RuntimeServices {
     query_capsule_capabilities: *mut c_void,
 
     // Miscellaneous UEFI 2.0 Service
-    query_variable_info: *mut c_void,
+    pub query_variable_info: *mut c_void,
 }
 
 impl Table for RuntimeServices {}

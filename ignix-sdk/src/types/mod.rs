@@ -5,6 +5,7 @@ mod handler;
 mod memory;
 mod misc;
 mod time;
+mod variable;
 pub use boolean::Boolean;
 
 pub use event::{
