@@ -2,47 +2,62 @@
 #![no_std]
 #![no_main]
 use core::time::Duration;
-use ignix_sdk::init::SYSTEM_TABLE;
-use ignix_sdk::println;
-use ignix_sdk::table::SystemTable;
-use ignix_sdk::types::Handle;
-use ignix_sdk::types::Status;
-
-use ignix_sdk::types::AllocateType;
-use ignix_sdk::types::MemoryType;
-use ignix_sdk::types::PhysicalAddress;
+use ignix_sdk::{
+    init::SYSTEM_TABLE,
+    println,
+    protocol::{
+        file_protocol::{FileAttributes, OpenModes},
+        loaded_image::LoadedImageProtocol,
+        simple_file_system_protocol::{SimpleFileSystemProtocol, SimpleFileSystemProtocolWrapper},
+    },
+    str_utf16,
+    table::SystemTable,
+    types::{Handle, IgnixError, OpenProtocolAttributes, Status, Uuid},
+};
 #[unsafe(no_mangle)]
-extern "efiapi" fn efi_main(_image_handle: *mut Handle, system_table: *mut SystemTable) -> Status {
+extern "efiapi" fn efi_main(image_handle: Handle, system_table: *mut SystemTable) -> Status {
     // This will put the system table in the static variable
     SYSTEM_TABLE.set(system_table).unwrap();
-    if let Err(e) = run() {
-        println!("ERROR: {}", e.context(""));
+    if let Err(e) = run(image_handle) {
+        println!("ERROR: {}", e);
+        return e.as_status();
     }
     Status::SUCCESS
 }
 
-fn run() -> Result<(), Status> {
-    let st = SYSTEM_TABLE.get().unwrap().get_boot_services().unwrap();
-    for n in 1..=100 {
-        SYSTEM_TABLE
-            .get()
-            .unwrap()
-            .get_stdout()
-            .unwrap()
-            .reset(true);
-        let buffer = st
-            .allocate_pages(AllocateType::AllocateAnyPages, MemoryType::EfiLoaderData, 2)
-            .unwrap();
-        let status = st.free_pages(buffer.as_ptr() as PhysicalAddress, 2);
-        let buff_alloc = st.allocate_pool(MemoryType::EfiLoaderData, 900);
-        let st_buf_alloc = st.free_pool(*buff_alloc.as_ref().unwrap());
+fn run(handle: Handle) -> Result<(), IgnixError> {
+    let bt = SYSTEM_TABLE.get().unwrap().get_boot_services().unwrap();
+    let loaded_image_guard = bt.open_protocol::<LoadedImageProtocol>(
+        handle,
+        &LoadedImageProtocol::GUID,
+        handle,
+        OpenProtocolAttributes::GET_PROTOCOL,
+    )?;
 
-        println!("{:?}", buffer);
-        println!("{:?}", status);
-        println!("{:?}", buff_alloc.as_ref());
-        println!("{:?}", st_buf_alloc);
-        println!("{}", n);
-        st.stall(Duration::from_secs(1)).unwrap();
+    let device_handle = unsafe { (*loaded_image_guard.interface).device_handle };
+    let guard = bt.open_protocol::<SimpleFileSystemProtocol>(
+        device_handle,
+        &SimpleFileSystemProtocol::GUID,
+        handle,
+        OpenProtocolAttributes::GET_PROTOCOL,
+    )?;
+
+    let mut sfsp = unsafe { SimpleFileSystemProtocolWrapper::new(guard.interface) };
+    let mut root_dir = sfsp.open_volume()?;
+
+    let file_name = str_utf16!("hello.txt");
+    let mut file = root_dir.open(file_name.as_slice(), OpenModes::READ, FileAttributes::NONE)?;
+    let mut buffer: [u8; 512] = [0u8; 512];
+    let bytes_read = file.read(&mut buffer)?;
+
+    println!("{}", bytes_read);
+
+    if let Ok(text) = core::str::from_utf8(&buffer[..bytes_read]) {
+        println!("{}", text);
+    } else {
+        println!("The file doesn't have utf-8 valid characters");
     }
+
+    bt.stall(Duration::from_secs(2))?;
     Ok(())
 }

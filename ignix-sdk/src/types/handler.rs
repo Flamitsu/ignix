@@ -23,12 +23,12 @@ pub enum SearchType {
 #[derive(PartialEq, Clone, Copy)]
 pub struct OpenProtocolAttributes(pub u32);
 impl OpenProtocolAttributes {
-    pub const BY_HANDLE_PROTOCOL: u32 = 0x00000001;
-    pub const GET_PROTOCOL: u32 = 0x00000002;
-    pub const TEST_PROTOCOL: u32 = 0x00000004;
-    pub const BY_CHILD_CONTROLER: u32 = 0x00000008;
-    pub const BY_DRIVER: u32 = 0x00000010;
-    pub const EXCLUSIVE: u32 = 0x00000020;
+    pub const BY_HANDLE_PROTOCOL: Self = Self(0x00000001);
+    pub const GET_PROTOCOL: Self = Self(0x00000002);
+    pub const TEST_PROTOCOL: Self = Self(0x00000004);
+    pub const BY_CHILD_CONTROLER: Self = Self(0x00000008);
+    pub const BY_DRIVER: Self = Self(0x00000010);
+    pub const EXCLUSIVE: Self = Self(0x00000020);
 }
 
 #[repr(C)]
@@ -129,8 +129,8 @@ impl<'a, T> Drop for ProtocolGuard<'a, T> {
     fn drop(&mut self) {
         /*This is because the UEFI spec says if the attribute is get_protocol or test_protocol,
          * you don't need to call to close protocol.*/
-        if self.attr.0 == OpenProtocolAttributes::GET_PROTOCOL
-            || self.attr.0 == OpenProtocolAttributes::TEST_PROTOCOL
+        if self.attr == OpenProtocolAttributes::GET_PROTOCOL
+            || self.attr == OpenProtocolAttributes::TEST_PROTOCOL
         {
             return;
         }

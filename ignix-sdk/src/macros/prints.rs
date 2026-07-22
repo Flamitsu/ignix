@@ -17,7 +17,7 @@ impl Write for Writer {
                 i += 1;
             } else {
                 buffer[i] = 0;
-                con_out.output_string(&buffer);
+                con_out.output_string(&buffer).unwrap();
                 buffer[0] = c;
                 i = 1;
             }
@@ -25,7 +25,7 @@ impl Write for Writer {
 
         if i > 0 {
             buffer[i] = 0;
-            con_out.output_string(&buffer);
+            con_out.output_string(&buffer).unwrap();
         }
         Ok(())
     }

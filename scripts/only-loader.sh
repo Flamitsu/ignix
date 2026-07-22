@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 BOOT_DIR="../boot-test"
-mkdir -p "$BOOT_DIR/esp/efi/boot"
+IMG_FILE="$BOOT_DIR/disk.img"
+ESP_DIR="$BOOT_DIR/esp"
+mkdir -p "$ESP_DIR/efi/boot"
 if [ ! -f "$BOOT_DIR/OVMF_CODE.fd" ]; then
     POSSIBLE_DIRS=(
         "/usr/share/edk2-ovmf"
@@ -23,23 +25,26 @@ if [ ! -f "$BOOT_DIR/OVMF_CODE.fd" ]; then
         cp "$FOUND_CODE" "$BOOT_DIR/OVMF_CODE.fd"
         cp "$FOUND_VARS" "$BOOT_DIR/OVMF_VARS.fd"
     else
-        echo "Error: The script didn't found OVMF_CODE or OVMF_VARS in your system."
+        echo "Error: The script didn't find OVMF_CODE or OVMF_VARS in your system."
         echo "Please, ensure that you have installed the edk2-ovmf package of your distribution."
         exit 1
     fi
 fi
 cargo core || { echo "Error while compiling"; exit 1; }
-cp ../target/x86_64-unknown-uefi/debug/ignixx64.efi "$BOOT_DIR/esp/efi/boot/bootx64.efi"
+cp ../target/x86_64-unknown-uefi/debug/ignixx64.efi "$ESP_DIR/efi/boot/bootx64.efi"
+dd if=/dev/zero of="$IMG_FILE" bs=1M count=400 status=none
+mformat -i "$IMG_FILE" -F -v IGNIX_ESP ::
+mcopy -s -o -i "$IMG_FILE" "$ESP_DIR"/* ::/
 DEBUG_FLAGS=""
 if [ "$1" == "--debug" ]; then
-    echo "QEMU waiting LLDB in port 1234..."
+    echo "QEMU waiting LLDB on port 1234..."
     DEBUG_FLAGS="-s -S"
 fi
 (
-    cd ../boot-test || { echo "Couldn't change directories"; exit 1; }
+    cd "$BOOT_DIR" || { echo "Couldn't change directories"; exit 1; }
     qemu-system-x86_64 -enable-kvm \
         -drive if=pflash,format=raw,readonly=on,file=OVMF_CODE.fd \
         -drive if=pflash,format=raw,readonly=off,file=OVMF_VARS.fd \
-        -drive format=raw,file=fat:rw:esp \
+        -drive format=raw,file=disk.img \
         $DEBUG_FLAGS || { echo ""; exit 1; }
 )
