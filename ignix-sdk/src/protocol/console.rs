@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::types::{Boolean, Guid, Status, Uuid};
+use crate::types::{Boolean, Guid, IgnixError, Status, Uuid};
 #[repr(C)]
 pub struct SimpleTextOutputMode {
     pub max_mode: u32,
@@ -60,66 +60,110 @@ impl SimpleTextOutput {
         unsafe { Some(&*self.protocol) }
     }
 
-    pub fn reset(&mut self, extended: bool) -> Status {
-        if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.reset)(self.protocol, extended) };
+    pub fn reset(&mut self, extended: bool) -> Result<(), IgnixError> {
+        let Some(protocol) = self.get_protocol() else {
+            Err(Status::PROTOCOL_POINTER_NOT_FOUND.context("SimpleTextOutputProtocol.reset"))?
+        };
+        let status = unsafe { (protocol.reset)(self.protocol, extended) };
+        if status.is_error() {
+            Err(status.context("SimpleTextOutputProtocol.reset"))?
         }
-        Status::NOT_FOUND
+        Ok(())
     }
 
-    pub fn output_string(&mut self, string: &[u16]) -> Status {
-        if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.output_string)(self.protocol, string.as_ptr()) };
+    pub fn output_string(&mut self, string: &[u16]) -> Result<(), IgnixError> {
+        let Some(protocol) = self.get_protocol() else {
+            Err(Status::PROTOCOL_POINTER_NOT_FOUND
+                .context("SimpleTextOutputProtocol.output_string"))?
+        };
+        let status = unsafe { (protocol.output_string)(self.protocol, string.as_ptr()) };
+        if status.is_error() {
+            Err(status.context("SimpleTextOutputProtocol.output_string"))?
         }
-        Status::NOT_FOUND
+        Ok(())
     }
 
-    pub fn test_string(&mut self, string: &[u16]) -> Status {
-        if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.test_string)(self.protocol, string.as_ptr()) };
+    pub fn test_string(&mut self, string: &[u16]) -> Result<(), IgnixError> {
+        let Some(protocol) = self.get_protocol() else {
+            Err(Status::PROTOCOL_POINTER_NOT_FOUND.context(""))?
+        };
+        let status = unsafe { (protocol.test_string)(self.protocol, string.as_ptr()) };
+        if status.is_error() {
+            Err(status.context("SimpleTextOutputProtocol.test_string"))?
         }
-        Status::INVALID_PARAMETER
+        Ok(())
     }
 
-    pub fn query_mode(&mut self, mode: usize, columns: &mut usize, rows: &mut usize) -> Status {
-        if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.query_mode)(self.protocol, mode, columns, rows) };
+    pub fn query_mode(
+        &mut self,
+        mode: usize,
+        columns: &mut usize,
+        rows: &mut usize,
+    ) -> Result<(), IgnixError> {
+        let Some(protocol) = self.get_protocol() else {
+            Err(Status::PROTOCOL_POINTER_NOT_FOUND.context("SimpleTextOutputProtocol.query_mode"))?
+        };
+        let status = unsafe { (protocol.query_mode)(self.protocol, mode, columns, rows) };
+        if status.is_error() {
+            Err(status.context("SimpleTextOutputProtocol.query_mode"))?
         }
-        Status::NOT_FOUND
+        Ok(())
     }
 
-    pub fn set_mode(&mut self, mode: usize) -> Status {
-        if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.set_mode)(self.protocol, mode) };
+    pub fn set_mode(&mut self, mode: usize) -> Result<(), IgnixError> {
+        let Some(protocol) = self.get_protocol() else {
+            Err(Status::PROTOCOL_POINTER_NOT_FOUND.context("SimpleTextOutputProtocol.set_mode"))?
+        };
+        let status = unsafe { (protocol.set_mode)(self.protocol, mode) };
+        if status.is_error() {
+            Err(status.context("SimpleTextOutputProtocol.set_mode"))?
         }
-        Status::NOT_FOUND
+        Ok(())
     }
 
-    pub fn set_attribute(&mut self, attribute: usize) -> Status {
-        if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.set_attribute)(self.protocol, attribute) };
+    pub fn set_attribute(&mut self, attribute: usize) -> Result<(), IgnixError> {
+        let Some(protocol) = self.get_protocol() else {
+            Err(Status::PROTOCOL_POINTER_NOT_FOUND
+                .context("SimpleTextOutputProtocol.set_attribute"))?
+        };
+        let status = unsafe { (protocol.set_attribute)(self.protocol, attribute) };
+        if status.is_error() {
+            Err(status.context("SimpleTextOutputProtocol.set_attribute"))?
         }
-        Status::NOT_FOUND
+        Ok(())
     }
 
-    pub fn clear_screen(&mut self) -> Status {
-        if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.clear_screen)(self.protocol) };
+    pub fn clear_screen(&mut self) -> Result<(), IgnixError> {
+        let Some(protocol) = self.get_protocol() else {
+            Err(Status::PROTOCOL_POINTER_NOT_FOUND.context("SimpleTextOutputProtocol.clear_screen"))?
+        };
+        let status = unsafe { (protocol.clear_screen)(self.protocol) };
+        if status.is_error() {
+            Err(status.context("SimpleTextOutputProtocol.clear_screen"))?
         }
-        Status::NOT_FOUND
+        Ok(())
+    }
+    pub fn set_cursor_position(&mut self, column: usize, row: usize) -> Result<(), IgnixError> {
+        let Some(protocol) = self.get_protocol() else {
+            Err(Status::PROTOCOL_POINTER_NOT_FOUND
+                .context("SimpleTextOutputProtocol.set_cursor_position"))?
+        };
+        let status = unsafe { (protocol.set_cursor_position)(self.protocol, column, row) };
+        if status.is_error() {
+            Err(status.context("SimpleTextOutputProtocol.set_cursor_position"))?
+        }
+        Ok(())
     }
 
-    pub fn set_cursor_position(&mut self, column: usize, row: usize) -> Status {
-        if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.set_cursor_position)(self.protocol, column, row) };
+    pub fn enable_cursor(&mut self, visible: bool) -> Result<(), IgnixError> {
+        let Some(protocol) = self.get_protocol() else {
+            Err(Status::PROTOCOL_POINTER_NOT_FOUND
+                .context("SimpleTextOutputProtocol.enable_cursor"))?
+        };
+        let status = unsafe { (protocol.enable_cursor)(self.protocol, visible) };
+        if status.is_error() {
+            Err(status.context("SimpleTextOutputProtocol.enable_cursor"))?
         }
-        Status::NOT_FOUND
-    }
-
-    pub fn enable_cursor(&mut self, visible: bool) -> Status {
-        if let Some(protocol) = self.get_protocol() {
-            return unsafe { (protocol.enable_cursor)(self.protocol, visible) };
-        }
-        Status::NOT_FOUND
+        Ok(())
     }
 }

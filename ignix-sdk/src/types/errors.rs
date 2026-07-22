@@ -104,6 +104,8 @@ impl Status {
     pub const RST_POINTER_MISSING: Self = Status(Self::CUSTOM_ERROR_BIT | 3);
     /// Handle device is null
     pub const HANDLE_DEVICE_IS_NULL: Self = Status(Self::CUSTOM_ERROR_BIT | 4);
+    /// Protocol pointer was not found.
+    pub const PROTOCOL_POINTER_NOT_FOUND: Self = Status(Self::CUSTOM_ERROR_BIT | 5);
 }
 #[allow(unused)]
 impl Status {
@@ -185,6 +187,7 @@ impl core::fmt::Debug for Status {
             Self::BST_POINTER_MISSING => write!(f, "IGNIX: BST_POINTER_MISSING"),
             Self::RST_POINTER_MISSING => write!(f, "IGNIX: RST_POINTER_MISSING"),
             Self::HANDLE_DEVICE_IS_NULL => write!(f, "IGNIX: HANDLE_DEVICE_IS_NULL"),
+            Self::PROTOCOL_POINTER_NOT_FOUND => write!(f, "IGNIX: PROTOCOL_POINTER_NOT_FOUND"),
             _ => write!(f, "What the fuck did you do Status(0x{:X})", self.0),
         }
     }
