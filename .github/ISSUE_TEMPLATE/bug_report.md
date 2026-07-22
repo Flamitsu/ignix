@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a bug report to help me to improve spark
+about: Create a bug report to help me to improve Ignix
 title: "[BUG] "
 labels: bug
 assignees: Flamitsu
