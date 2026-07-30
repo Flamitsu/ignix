@@ -2,7 +2,8 @@
 use crate::{
     table::boot::BootServicesWrapper,
     types::{
-        AllocateType, IgnixError, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE, PagesBuffer, PhysicalAddress, PoolBuffer, Status
+        AllocateType, IgnixError, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE, PagesBuffer,
+        PhysicalAddress, PoolBuffer, Status,
     },
 };
 use core::{marker::PhantomData, ptr::NonNull};
@@ -162,7 +163,7 @@ impl BootServicesWrapper {
             return Ok(PoolBuffer {
                 ptr,
                 num_bytes: size,
-                _m: PhantomData
+                _m: PhantomData,
             });
         }
         Err(status.context("allocate_pool"))

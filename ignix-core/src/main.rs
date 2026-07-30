@@ -2,17 +2,20 @@
 #![no_std]
 #![no_main]
 use core::time::Duration;
+#[allow(unused)]
+mod config;
+#[allow(unused)]
+use config::*;
 use ignix_sdk::{
     init::SYSTEM_TABLE,
     println,
     protocol::{
-        file_protocol::{FileAttributes, OpenModes},
+        file_protocol::FileProtocolWrapper,
         loaded_image::LoadedImageProtocol,
         simple_file_system_protocol::{SimpleFileSystemProtocol, SimpleFileSystemProtocolWrapper},
     },
-    str_utf16,
     table::SystemTable,
-    types::{AllocateType, Handle, IgnixError, MemoryType, OpenProtocolAttributes, Status, Uuid},
+    types::{Handle, IgnixError, OpenProtocolAttributes, Status, Uuid},
 };
 #[unsafe(no_mangle)]
 extern "efiapi" fn efi_main(image_handle: Handle, system_table: *mut SystemTable) -> Status {
@@ -28,48 +31,46 @@ extern "efiapi" fn efi_main(image_handle: Handle, system_table: *mut SystemTable
 #[allow(unused)]
 fn run(handle: Handle) -> Result<(), IgnixError> {
     let bt = SYSTEM_TABLE.get().unwrap().get_boot_services().unwrap();
-    bt.stall(Duration::from_secs(1))?;
-    let loaded_image_guard = bt.open_protocol::<LoadedImageProtocol>(
+    let fs = open_root_fs(handle)?;
+    let loader_config: LoaderConfig = read_config(&fs);
+    
+    let mut seconds: f64 = 0.0;
+    /* Since UEFI is single threaded, need to detect input, refresh entries etc at 100ms */
+    while seconds < loader_config.timeout as f64 {
+        bt.stall(Duration::from_secs_f64(0.1))?;
+        seconds += 0.1;
+    }
+
+    load_kernel()?;
+    Ok(())
+}
+
+#[allow(unused)]
+fn read_config(file_system: &FileProtocolWrapper) -> LoaderConfig {
+    let timeout: usize = 0;
+    LoaderConfig::new()
+}
+#[allow(unused)]
+fn open_file() {}
+
+fn load_kernel() -> Result<(), IgnixError> {
+    Ok(())
+}
+
+fn open_root_fs(handle: Handle) -> Result<FileProtocolWrapper, IgnixError> {
+    let bt = SYSTEM_TABLE.get().unwrap().get_boot_services().unwrap();
+    let image_guard = bt.open_protocol::<LoadedImageProtocol>(
         handle,
         &LoadedImageProtocol::GUID,
         handle,
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
-
-    let device_handle = loaded_image_guard.device_handle();
-    let guard = bt.open_protocol::<SimpleFileSystemProtocol>(
-        device_handle,
+    let fs_guard = bt.open_protocol::<SimpleFileSystemProtocol>(
+        image_guard.handle,
         &SimpleFileSystemProtocol::GUID,
         handle,
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
-
-    let mut sfsp = unsafe { SimpleFileSystemProtocolWrapper::new(guard.interface) };
-    let mut root_dir = sfsp.open_volume()?;
-    let file_name = str_utf16!("vmlinuz-linux");
-    let mut file = root_dir.open(file_name.as_slice(), OpenModes::READ, FileAttributes::NONE)?;
-
-    let file_size_bytes = file.get_info()?.file_size;
-    let num_pages = (file_size_bytes + 4095) / 4096;
-    let buffer_size = num_pages * 4096;
-    let mut source_buffer = bt.allocate_pages(
-        AllocateType::AllocateAnyPages,
-        MemoryType::EfiLoaderData,
-        num_pages.try_into().unwrap(),
-    )?;
-
-    let kernel_slice = source_buffer.as_mut_slice(buffer_size.try_into().unwrap());
-    file.read(kernel_slice)?;
-    let kernel_handle = bt.load_image(false, handle, None, Some(kernel_slice))?;
-
-    let mut loaded_kernel = bt.open_protocol::<LoadedImageProtocol>(
-        kernel_handle.handle.unwrap(),
-        &LoadedImageProtocol::GUID,
-        handle,
-        OpenProtocolAttributes::GET_PROTOCOL,
-    )?;
-    let cmdline = str_utf16!("root=/dev/sda rw");
-    loaded_kernel.set_load_options(cmdline.as_slice());
-    bt.start_image(kernel_handle).map_err(|(err, _image)| err)?;
-    Ok(())
+    let mut sfsp = unsafe { SimpleFileSystemProtocolWrapper::new(fs_guard.interface) };
+    Ok(sfsp.open_volume()?)
 }

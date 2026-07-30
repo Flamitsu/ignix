@@ -3,7 +3,12 @@ use crate::{
     init::SYSTEM_TABLE,
     types::{DevicePathProtocol, Event, Guid, IgnixImage},
 };
-use core::{ffi::c_void, marker::PhantomData, ops::{Deref, DerefMut}, ptr::NonNull};
+use core::{
+    ffi::c_void,
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+    ptr::NonNull,
+};
 pub type Handle = *mut c_void;
 /* Page 167 UEFI spec 2.11, it's not my fault, it's an enum just with one value.*/
 #[repr(C)]
@@ -150,7 +155,7 @@ impl<'a, T> Deref for ProtocolGuard<'a, T> {
     }
 }
 
-impl<'a, T> DerefMut for ProtocolGuard<'a,T> {
+impl<'a, T> DerefMut for ProtocolGuard<'a, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { &mut *self.interface }
     }

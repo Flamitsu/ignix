@@ -3,7 +3,13 @@ use crate::{
     init::SYSTEM_TABLE,
     types::{PhysicalAddress, VirtualAddress},
 };
-use core::{ffi::c_void, marker::PhantomData, ops::RangeInclusive, ptr::NonNull, slice::{from_raw_parts, from_raw_parts_mut}};
+use core::{
+    ffi::c_void,
+    marker::PhantomData,
+    ops::RangeInclusive,
+    ptr::NonNull,
+    slice::{from_raw_parts, from_raw_parts_mut},
+};
 
 /* Those numbers are how enums are interpreted in C.
  * Basically a fancy way to represent an int, but since
@@ -226,10 +232,10 @@ pub struct PagesBuffer<'a> {
 }
 impl<'a> PagesBuffer<'a> {
     pub fn as_mut_slice(&mut self, len: usize) -> &mut [u8] {
-        unsafe { from_raw_parts_mut(self.ptr.as_ptr(), len)}
+        unsafe { from_raw_parts_mut(self.ptr.as_ptr(), len) }
     }
     pub fn as_slice(&mut self, len: usize) -> &[u8] {
-        unsafe { from_raw_parts(self.ptr.as_ptr(), len)}
+        unsafe { from_raw_parts(self.ptr.as_ptr(), len) }
     }
 }
 impl<'a> Drop for PagesBuffer<'a> {
@@ -251,12 +257,11 @@ pub struct PoolBuffer<'a> {
 
 impl<'a> PoolBuffer<'a> {
     pub fn as_mut_slice(&mut self, len: usize) -> &mut [u8] {
-        unsafe { from_raw_parts_mut(self.ptr.as_ptr(), len)}
+        unsafe { from_raw_parts_mut(self.ptr.as_ptr(), len) }
     }
     pub fn as_slice(&mut self, len: usize) -> &[u8] {
-        unsafe { from_raw_parts(self.ptr.as_ptr(), len)}
+        unsafe { from_raw_parts(self.ptr.as_ptr(), len) }
     }
-
 }
 
 impl<'a> Drop for PoolBuffer<'a> {
