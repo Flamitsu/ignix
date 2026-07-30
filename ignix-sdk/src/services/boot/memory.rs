@@ -2,11 +2,10 @@
 use crate::{
     table::boot::BootServicesWrapper,
     types::{
-        AllocateType, IgnixError, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE,
-        PhysicalAddress, Status,
+        AllocateType, IgnixError, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE, PagesBuffer, PhysicalAddress, PoolBuffer, Status
     },
 };
-use core::ptr::NonNull;
+use core::{marker::PhantomData, ptr::NonNull};
 impl BootServicesWrapper {
     /// Allocate pages from the system.
     /// In general, OS loaders should allocate memory (and pool) of type EfiLoaderData.
@@ -26,12 +25,12 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER MemoryType is EfiPersistentMemoryType or EfiUnacceptedMemory.
     /// EFI_INVALID_PARAMETER Memory is NULL.
     /// EFI_NOT_FOUND The requested pages could not be found
-    pub fn allocate_pages(
+    pub fn allocate_pages<'a>(
         self,
         allocate_type: AllocateType,
         memory_type: MemoryType,
         pages: usize,
-    ) -> Result<NonNull<u8>, IgnixError> {
+    ) -> Result<PagesBuffer<'a>, IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("allocate_pages"))?
         };
@@ -42,7 +41,11 @@ impl BootServicesWrapper {
         if status.is_success() {
             let ptr = addr as *mut u8;
             if let Some(not_null) = NonNull::new(ptr) {
-                return Ok(not_null);
+                return Ok(PagesBuffer {
+                    ptr: not_null,
+                    num_pages: pages,
+                    _m: PhantomData,
+                });
             }
 
             Err(Status::OUT_OF_RESOURCES.context("allocate_pages"))?
@@ -114,7 +117,7 @@ impl BootServicesWrapper {
         let status = unsafe {
             (function.get_memory_map)(
                 &mut mem_map.map_size,
-                buffer_ptr.as_ptr() as *mut MemoryDescriptor,
+                buffer_ptr.ptr.as_ptr() as *mut MemoryDescriptor,
                 &mut mem_map.key,
                 &mut mem_map.descriptor_size,
                 &mut mem_map.descriptor_version,
@@ -123,10 +126,10 @@ impl BootServicesWrapper {
 
         if status.is_success() {
             // This converts the descriptor into NonNull<MemoryDescriptor>
-            mem_map.descriptor = Some(buffer_ptr.cast());
+            mem_map.descriptor = Some(buffer_ptr.ptr.cast());
             return Ok(mem_map);
         }
-        self.free_pages(buffer_ptr.as_ptr() as PhysicalAddress, pages_needed)?;
+        self.free_pages(buffer_ptr.ptr.as_ptr() as PhysicalAddress, pages_needed)?;
         Err(status.context("get_memory_map"))
     }
     /// Allocates pool memory.
@@ -140,11 +143,11 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER PoolType is in the range EfiMaxMemoryType..0x6FFFFFFF.
     /// EFI_INVALID_PARAMETER PoolType is EfiPersistentMemory.
     /// EFI_INVALID_PARAMETER Buffer is NULL.
-    pub fn allocate_pool(
+    pub fn allocate_pool<'a>(
         self,
         pool_type: MemoryType,
         size: usize,
-    ) -> Result<NonNull<u8>, IgnixError> {
+    ) -> Result<PoolBuffer<'a>, IgnixError> {
         let Some(function) = self.get_method() else {
             Err(Status::BST_POINTER_MISSING.context("allocate_pool"))?
         };
@@ -153,10 +156,14 @@ impl BootServicesWrapper {
         let status = unsafe { (function.allocate_pool)(pool_type, size, &mut raw_ptr) };
 
         if status.is_success() {
-            let Some(nn) = NonNull::new(raw_ptr) else {
+            let Some(ptr) = NonNull::new(raw_ptr) else {
                 Err(Status::OUT_OF_RESOURCES.context("allocate_pool"))?
             };
-            return Ok(nn);
+            return Ok(PoolBuffer {
+                ptr,
+                num_bytes: size,
+                _m: PhantomData
+            });
         }
         Err(status.context("allocate_pool"))
     }

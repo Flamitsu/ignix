@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::types::{PhysicalAddress, VirtualAddress};
-use core::{ops::RangeInclusive, ptr::NonNull};
+use crate::{
+    init::SYSTEM_TABLE,
+    types::{PhysicalAddress, VirtualAddress},
+};
+use core::{ffi::c_void, marker::PhantomData, ops::RangeInclusive, ptr::NonNull, slice::{from_raw_parts, from_raw_parts_mut}};
 
 /* Those numbers are how enums are interpreted in C.
  * Basically a fancy way to represent an int, but since
@@ -214,4 +217,55 @@ impl MemoryMap {
 pub struct DebugDisposition(pub usize);
 impl DebugDisposition {
     pub const OPTIONAL_PTR: Self = Self(0x00000001);
+}
+
+pub struct PagesBuffer<'a> {
+    pub ptr: NonNull<u8>,
+    pub num_pages: usize,
+    pub _m: PhantomData<&'a c_void>,
+}
+impl<'a> PagesBuffer<'a> {
+    pub fn as_mut_slice(&mut self, len: usize) -> &mut [u8] {
+        unsafe { from_raw_parts_mut(self.ptr.as_ptr(), len)}
+    }
+    pub fn as_slice(&mut self, len: usize) -> &[u8] {
+        unsafe { from_raw_parts(self.ptr.as_ptr(), len)}
+    }
+}
+impl<'a> Drop for PagesBuffer<'a> {
+    fn drop(&mut self) {
+        let _ = SYSTEM_TABLE
+            .get()
+            .unwrap()
+            .get_boot_services()
+            .unwrap()
+            .free_pages(self.ptr.as_ptr() as u64, self.num_pages);
+    }
+}
+
+pub struct PoolBuffer<'a> {
+    pub ptr: NonNull<u8>,
+    pub num_bytes: usize,
+    pub _m: PhantomData<&'a c_void>,
+}
+
+impl<'a> PoolBuffer<'a> {
+    pub fn as_mut_slice(&mut self, len: usize) -> &mut [u8] {
+        unsafe { from_raw_parts_mut(self.ptr.as_ptr(), len)}
+    }
+    pub fn as_slice(&mut self, len: usize) -> &[u8] {
+        unsafe { from_raw_parts(self.ptr.as_ptr(), len)}
+    }
+
+}
+
+impl<'a> Drop for PoolBuffer<'a> {
+    fn drop(&mut self) {
+        let _ = SYSTEM_TABLE
+            .get()
+            .unwrap()
+            .get_boot_services()
+            .unwrap()
+            .free_pool(self.ptr);
+    }
 }

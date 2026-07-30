@@ -14,7 +14,7 @@ pub use event::{
 
 pub use memory::{
     AllocateType, DebugDisposition, MemoryAttributes, MemoryDescriptor, MemoryMap, MemoryType,
-    PAGE_SIZE,
+    PAGE_SIZE, PagesBuffer, PoolBuffer,
 };
 
 pub use errors::{IgnixError, Status};

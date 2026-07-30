@@ -14,7 +14,7 @@ pub struct LoadedImageProtocol {
     pub system_table: *mut SystemTable,
     // Source location of the image
     pub device_handle: Handle,
-    pub file_path: DevicePathProtocol,
+    pub file_path: *mut DevicePathProtocol,
     pub reserved: *mut c_void,
 
     // Image's load options
@@ -27,6 +27,16 @@ pub struct LoadedImageProtocol {
     pub image_code_type: MemoryType,
     pub image_data_type: MemoryType,
     unload: *mut c_void, // Don't use since there is already a RAII pattern for the LoadImage function
+}
+
+impl LoadedImageProtocol {
+    pub fn device_handle(&self) -> Handle {
+        self.device_handle
+    }
+    pub fn set_load_options(&mut self, cmdline: &[u16]) {
+        self.load_options = cmdline.as_ptr() as *mut c_void;
+        self.load_options_size = core::mem::size_of_val(cmdline) as u32;
+    }
 }
 
 impl Uuid for LoadedImageProtocol {

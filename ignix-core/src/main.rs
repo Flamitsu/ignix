@@ -36,7 +36,7 @@ fn run(handle: Handle) -> Result<(), IgnixError> {
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
 
-    let device_handle = unsafe { (*loaded_image_guard.interface).device_handle };
+    let device_handle = loaded_image_guard.device_handle();
     let guard = bt.open_protocol::<SimpleFileSystemProtocol>(
         device_handle,
         &SimpleFileSystemProtocol::GUID,
@@ -57,24 +57,19 @@ fn run(handle: Handle) -> Result<(), IgnixError> {
         MemoryType::EfiLoaderData,
         num_pages.try_into().unwrap(),
     )?;
-    let kernel_slice = unsafe {
-        core::slice::from_raw_parts_mut(source_buffer.as_ptr(), buffer_size.try_into().unwrap())
-    };
+
+    let kernel_slice = source_buffer.as_mut_slice(buffer_size.try_into().unwrap());
     file.read(kernel_slice)?;
     let kernel_handle = bt.load_image(false, handle, None, Some(kernel_slice))?;
 
-    let loaded_kernel = bt.open_protocol::<LoadedImageProtocol>(
+    let mut loaded_kernel = bt.open_protocol::<LoadedImageProtocol>(
         kernel_handle.handle.unwrap(),
         &LoadedImageProtocol::GUID,
         handle,
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
     let cmdline = str_utf16!("root=/dev/sda rw");
-    unsafe {
-        let interface = loaded_kernel.interface;
-        (*interface).load_options = cmdline.as_ptr() as *mut core::ffi::c_void;
-        (*interface).load_options_size = (cmdline.len() * 2) as u32
-    }
+    loaded_kernel.set_load_options(cmdline.as_slice());
     bt.start_image(kernel_handle).map_err(|(err, _image)| err)?;
     Ok(())
 }
