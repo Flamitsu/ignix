@@ -1,6 +1,6 @@
 # Ignix
-## Pre alpha stage
-**BIG DISCLAIMER** - **Ignix** is a **PRE ALPHA STAGE boot manager** written in Rust, **IT IS NOT MEANT TO BE USED IN PRODUCTION AT THIS MOMENT**.
+## Alpha stage
+**BIG DISCLAIMER** - **Ignix** is a **ALPHA STAGE boot manager** written in Rust, **IT IS NOT MEANT TO BE USED IN PRODUCTION AT THIS MOMENT**.
 ## Table of contents
 - [Description](#description)
 - [Features](#features)
@@ -37,9 +37,9 @@
 - [ ] Supporting custom signatures of the binary
 
 ### TODO (ignix-sdk):
-- [ ] Secure wrapper and Boot Services (all) working
+- [X] Secure wrapper and Boot Services working
 
-- [ ] Secure wrapper and Runtime Services (all) working
+- [X] Secure wrapper and Runtime Services working
 
 - [X] Secure wrapper and Console Input Protocol working
 
@@ -47,6 +47,8 @@
 - [ ] Detect user input
 
 - [ ] Booting any kernel with the initramfs
+
+- [X] Boots the Linux Kernel
 
 - [ ] Supporting firmware signatures
 

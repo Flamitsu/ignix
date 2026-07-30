@@ -42,7 +42,7 @@ if [ "$1" == "--debug" ]; then
 fi
 (
     cd "$BOOT_DIR" || { echo "Couldn't change directories"; exit 1; }
-    qemu-system-x86_64 -enable-kvm \
+    qemu-system-x86_64 -enable-kvm -m 2G \
         -drive if=pflash,format=raw,readonly=on,file=OVMF_CODE.fd \
         -drive if=pflash,format=raw,readonly=off,file=OVMF_VARS.fd \
         -drive format=raw,file=disk.img \

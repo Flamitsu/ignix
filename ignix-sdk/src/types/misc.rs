@@ -77,3 +77,26 @@ pub enum ResetType {
     /// follows the Null-terminated Unicode string passed into ResetData.
     PlatformSpecific = 3,
 }
+
+// probably will change location soon
+#[repr(C, packed)]
+pub struct DevicePathHeader {
+    pub type_vendor: DevicePathType,
+    pub sub_type: u8,
+    pub length: u16,
+}
+
+#[repr(u8)]
+pub enum DevicePathType {
+    Hardware = 0x01,
+    ACPI = 0x02,
+    Messaging = 0x03,
+    Media = 0x04,
+    BIOSBootSpecification = 0x05,
+    End = 0x7F,
+}
+#[repr(C, packed)]
+pub struct VendorDevicePath {
+    pub header: DevicePathHeader,
+    pub vendor_guid: Guid,
+}

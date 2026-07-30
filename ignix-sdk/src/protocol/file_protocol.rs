@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::{
-    println,
-    types::{Char16, IgnixError, Status},
-};
+use crate::types::{Char16, Guid, IgnixError, Status, Time, Uuid};
 use core::{ffi::c_void, ptr::null_mut};
 #[repr(C)]
 pub struct FileProtocol {
@@ -30,8 +27,13 @@ pub struct FileProtocol {
     ) -> Status,
     pub get_position: unsafe extern "efiapi" fn(this: *mut Self, position: *mut u64) -> Status,
     pub set_position: unsafe extern "efiapi" fn(this: *mut Self, position: *mut u64) -> Status,
-    get_info: unsafe extern "efiapi" fn() -> Status,
-    set_info: unsafe extern "efiapi" fn() -> Status,
+    pub get_info: unsafe extern "efiapi" fn(
+        this: *mut Self,
+        information_type: *const Guid,
+        buffer_size: *mut usize,
+        buffer: *mut c_void,
+    ) -> Status,
+    pub set_info: unsafe extern "efiapi" fn() -> Status,
     pub flush: unsafe extern "efiapi" fn(this: *mut Self) -> Status,
     // Those extended protocols were added in revision 0x00020000
     open_ex: *mut c_void,
@@ -178,6 +180,33 @@ impl FileProtocolWrapper {
         let status = unsafe { (self.get_protocol().get_position)(self.protocol, &mut position) };
         Ok(position)
     }
+
+    pub fn get_info(&mut self) -> Result<FileInfo, IgnixError> {
+        let mut buffer = [0u8; 256];
+        let mut buffer_size = buffer.len();
+        let status = unsafe {
+            (self.get_protocol().get_info)(
+                self.protocol,
+                &FileInfo::GUID,
+                &mut buffer_size,
+                buffer.as_mut_ptr() as *mut c_void,
+            )
+        };
+        if status.is_error() {
+            Err(status.context("get_info"))?
+        }
+        let raw = unsafe { &*(buffer.as_ptr() as *const FileInfo) };
+        Ok(FileInfo {
+            size: raw.size,
+            file_size: raw.file_size,
+            physical_size: raw.physical_size,
+            create_time: raw.create_time,
+            last_accesed: raw.last_accesed,
+            modification_time: raw.modification_time,
+            attr: raw.attr,
+            file_name: raw.file_name,
+        })
+    }
     /// Flushes all modified data associated with a file to a device
     ///
     /// RETURN CODES:
@@ -211,6 +240,7 @@ impl OpenModes {
     pub const CREATE: Self = Self(0x8000000000000000);
 }
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct FileAttributes(u64);
 impl FileAttributes {
     pub const NONE: Self = Self(0x0000000000000000);
@@ -221,4 +251,32 @@ impl FileAttributes {
     pub const DIRECTORY: Self = Self(0x0000000000000010);
     pub const ARCHIVE: Self = Self(0x0000000000000020);
     pub const VALID_ATTR: Self = Self(0x0000000000000037);
+
+    pub fn contains(&self, other: Self) -> bool {
+        (self.0 & other.0) == other.0
+    }
+
+    pub fn has_flag(&self, other: Self) -> bool {
+        (self.0 & other.0) != 0
+    }
+}
+#[repr(C)]
+pub struct FileInfo {
+    pub size: u64,
+    pub file_size: u64,
+    pub physical_size: u64,
+    pub create_time: Time,
+    pub last_accesed: Time,
+    pub modification_time: Time,
+    pub attr: FileAttributes,
+    pub file_name: [u16; 1],
+}
+
+impl Uuid for FileInfo {
+    const GUID: Guid = Guid::new(
+        0x09576e92,
+        0x6d3f,
+        0x11d2,
+        [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
+    );
 }

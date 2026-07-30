@@ -2,6 +2,7 @@
 use crate::types::Boolean;
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct Time {
     pub year: u16,  // 1900 - 9999
     pub month: u8,  // 1 - 12
