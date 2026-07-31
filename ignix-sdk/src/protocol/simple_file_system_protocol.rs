@@ -22,6 +22,10 @@ pub struct SimpleFileSystemProtocolWrapper {
     protocol: *mut SimpleFileSystemProtocol,
 }
 impl SimpleFileSystemProtocolWrapper {
+    /// # Safety
+    /// This function is unsafe because the protocol itself is a pointer.
+    /// But it's secure to use since the interface that you will be using has an idiomatic Option
+    /// (get_protocol) and deref the pointer checking if it is null or not.
     pub unsafe fn new(protocol: *mut SimpleFileSystemProtocol) -> Self {
         Self { protocol }
     }

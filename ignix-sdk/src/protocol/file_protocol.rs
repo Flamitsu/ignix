@@ -46,6 +46,10 @@ pub struct FileProtocolWrapper {
     protocol: *mut FileProtocol,
 }
 impl FileProtocolWrapper {
+    /// # Safety
+    /// So this function is safe to use because if you don't have this protocol mapped
+    /// in your firmware you're screwd anyways so it gives a panic and reduces code smell
+    /// (Need to apply this pattern for others) so it's completely secure to use
     pub unsafe fn new(protocol: *mut FileProtocol) -> Self {
         assert!(!protocol.is_null(), "FileProtocol pointer is null.");
         Self { protocol }
@@ -98,7 +102,6 @@ impl FileProtocolWrapper {
     pub fn delete(&mut self) -> Result<(), IgnixError> {
         let status = unsafe { (self.get_protocol().delete)(self.protocol) };
         // Since it will close the File alone, don't need the RAII pattern to do it anymore.
-        self.protocol == null_mut();
         if status.is_error() {
             Err(status.context("FileProtocol.delete"))?
         }
