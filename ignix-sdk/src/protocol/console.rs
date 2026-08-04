@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::types::{Boolean, Guid, IgnixError, Status, Uuid};
+use core::ffi::c_void;
+use crate::types::{Boolean, Event, Guid, IgnixError, Status, Uuid};
 #[repr(C)]
 pub struct SimpleTextOutputMode {
     pub max_mode: u32,
@@ -166,4 +167,23 @@ impl SimpleTextOutput {
         }
         Ok(())
     }
+}
+#[repr(C)]
+pub struct SimpleTextInputProtocol {
+    pub reset: *mut c_void,
+    pub read_key_stroke: *mut c_void,
+    wait_for_key: Event,
+}
+
+impl Uuid for SimpleTextInputProtocol {
+    const GUID: Guid = Guid::new(
+        0x387477c1,
+        0x69c7,
+        0x11d2,
+        [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
+    );
+}
+
+pub struct SimpleTextInputProtocolWrapper {
+
 }

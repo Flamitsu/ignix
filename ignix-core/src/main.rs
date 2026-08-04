@@ -62,7 +62,6 @@ fn read_config(fs: &mut FileProtocolWrapper) -> Result<LoaderConfig, IgnixError>
     let mut bytes = &buffer[..valid_bytes];
 
     while !bytes.is_empty() {
-        
         if bytes[0] == b'#' {
             while !bytes.is_empty() && bytes[0] != b'\n' {
                 bytes = &bytes[1..];
@@ -85,7 +84,7 @@ fn read_config(fs: &mut FileProtocolWrapper) -> Result<LoaderConfig, IgnixError>
             let mut found_digit = false;
             while !bytes.is_empty() && bytes[0].is_ascii_digit() {
                 let digit = (bytes[0] - b'0') as usize;
-                if let Some(number) = parsed_value 
+                if let Some(number) = parsed_value
                     .checked_mul(10)
                     .and_then(|v| v.checked_add(digit))
                 {
@@ -104,9 +103,8 @@ fn read_config(fs: &mut FileProtocolWrapper) -> Result<LoaderConfig, IgnixError>
     Ok(LoaderConfig { timeout })
 }
 #[allow(unused)]
-fn load_entries<'a>(
-    // fs: &mut FileProtocolWrapper
-    ) -> Result<LoaderData<'a>, IgnixError> {
+fn load_entries<'a>(// fs: &mut FileProtocolWrapper
+) -> Result<LoaderData<'a>, IgnixError> {
     // let entries = fs.open(&str_utf16!(ENTRIES_DIR), OpenModes::READ, FileAttributes::DIRECTORY)?;
     Ok(LoaderData::new())
 }

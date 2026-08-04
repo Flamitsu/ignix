@@ -27,7 +27,10 @@ pub struct LoaderData<'a> {
 }
 impl<'a> LoaderData<'a> {
     pub fn new() -> Self {
-        Self { entries: &[0u8;1], num_entries: 1}
+        Self {
+            entries: &[0u8; 1],
+            num_entries: 1,
+        }
     }
 }
 
