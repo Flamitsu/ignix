@@ -57,7 +57,7 @@ fn read_config(fs: &mut FileProtocolWrapper) -> Result<LoaderConfig, IgnixError>
 
     let file_name = str_utf16!(CONFIG_ROUTE);
     let mut conf_file = fs.open(&file_name, OpenModes::READ, FileAttributes::NONE)?;
-    let mut buffer: [u8; 512] = [0u8; 512];
+    let mut buffer = [0u8; 1024];
     let valid_bytes = conf_file.read(&mut buffer)?;
     let mut bytes = &buffer[..valid_bytes];
 
