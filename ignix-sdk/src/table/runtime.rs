@@ -92,10 +92,10 @@ pub struct RuntimeServicesWrapper {
 impl RuntimeServicesWrapper {
     pub unsafe fn new(function: *mut RuntimeServices) -> Self {
         let non_null = NonNull::new(function).expect("Runtime Services pointer cannot be null");
-        Self { function: non_null}
+        Self { function: non_null }
     }
     #[inline(always)]
     pub fn get_method(&self) -> &RuntimeServices {
-        unsafe { self.function.as_ref()  }
+        unsafe { self.function.as_ref() }
     }
 }

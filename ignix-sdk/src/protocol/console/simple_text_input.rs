@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use core::{ffi::c_void, mem::zeroed, ptr::{NonNull, null, null_mut}};
-use crate::{init::SYSTEM_TABLE, types::{Event, Guid, Handle, IgnixError, Status, Uuid}};
-#[repr(C)]
+use crate::{
+    init::SYSTEM_TABLE,
+    types::{Event, Guid, Handle, IgnixError, Status, Uuid},
+};
+use core::{
+    ffi::c_void,
+    mem::zeroed,
+    ptr::{NonNull, null, null_mut},
+};
 /* This is the EXTENDED VERSION of the Input Protocol. Means motherboards before 2006 may not support
  * this, but anyways they also do whathever they want with the firmware so its not even granted on
  * any other */
+#[repr(C)]
 pub struct SimpleTextInputProtocol {
     pub reset:
         unsafe extern "efiapi" fn(this: *mut SimpleTextInputProtocol, extended: bool) -> Status,
@@ -62,7 +69,7 @@ impl SimpleTextInputProtocolWrapper {
     /// Resets the input device hardware
     /// RETURN CODES:
     /// EFI_DEVICE_ERROR The device is not functioning correctly and could not be reset.
-    pub fn reset(&self) -> Result<(), IgnixError>{
+    pub fn reset(&self) -> Result<(), IgnixError> {
         let status = unsafe { (self.get_protocol().reset)(self.protocol.as_ptr(), true) };
         if status.is_error() {
             Err(status.context("SimpleTextInput.reset"))?
@@ -70,25 +77,29 @@ impl SimpleTextInputProtocolWrapper {
         Ok(())
     }
     /// Reads the next key stroke from the input device
-    /// Pointer to a buffer that is filled with the keystroke info 
-    /// 
+    /// Pointer to a buffer that is filled with the keystroke info
+    ///
     /// RETURN CODES:
     /// EFI_NOT_READY There was no keystroke data available.. Current KeyData.KeyState values are exposed.
     /// EFI_DEVICE_ERROR The keystroke information was not returned due to hardware errors.
     /// EFI_UNSUPPORTED The device does not support the ability to read keystroke data.
-    pub fn read_key_stroke(&self) -> Result<KeyData, IgnixError> {
+    pub fn read_key_stroke(&self) -> Result<Option<KeyData>, IgnixError> {
         let mut key_data: KeyData = unsafe { zeroed() };
-        let status = unsafe { (self.get_protocol().read_key_stroke)(self.protocol.as_ptr(), &mut key_data)};
-        if status.is_error(){
+        let status =
+            unsafe { (self.get_protocol().read_key_stroke)(self.protocol.as_ptr(), &mut key_data) };
+        if status == Status::NOT_READY {
+            return Ok(None);
+        }
+        if status.is_error() {
             Err(status.context("read_key_stroke"))?
         }
-        Ok(key_data)
+        Ok(Some(key_data))
     }
     /// Set certain state for the input device.
-    /// Allows the input device hardware to have state settings adjusted. 
-    /// By calling this function with the EFI_KEY_STATE_EXPOSED bit active in the KeyToggleState 
-    /// parameter, this will enable the ReadKeyStrokeEx function to return incomplete keystrokes 
-    /// such as the holding down of certain keys which are expressed as a part of KeyState when 
+    /// Allows the input device hardware to have state settings adjusted.
+    /// By calling this function with the EFI_KEY_STATE_EXPOSED bit active in the KeyToggleState
+    /// parameter, this will enable the ReadKeyStrokeEx function to return incomplete keystrokes
+    /// such as the holding down of certain keys which are expressed as a part of KeyState when
     /// there is no Key data
     ///
     /// RETURN CODES:
@@ -102,9 +113,19 @@ impl SimpleTextInputProtocolWrapper {
         Ok(())
     }
     /// Register a notification function for a particular keystroke for the input device.
-    pub fn register_key_notify(&self, key_notify_function: KeyNotifyFunction) -> Result<KeyNotifyHandle, IgnixError> {
+    pub fn register_key_notify(
+        &self,
+        key_notify_function: KeyNotifyFunction,
+    ) -> Result<KeyNotifyHandle, IgnixError> {
         let mut handle: Handle = null_mut();
-        let status = unsafe { (self.get_protocol().register_key_notify)(self.protocol.as_ptr(), key_notify_function.key_data, key_notify_function, &mut handle) };
+        let status = unsafe {
+            (self.get_protocol().register_key_notify)(
+                self.protocol.as_ptr(),
+                key_notify_function.key_data,
+                key_notify_function,
+                &mut handle,
+            )
+        };
         if status.is_error() {
             Err(status.context("register_key_notify"))?
         }
@@ -112,8 +133,14 @@ impl SimpleTextInputProtocolWrapper {
     }
 }
 #[repr(C)]
-pub struct KeyData {
+pub struct InputKey {
+    pub scan_code: u16,
     pub key_unicode: u16,
+}
+
+#[repr(C)]
+pub struct KeyData {
+    pub key: InputKey,
     pub key_state: KeyState,
 }
 
@@ -155,7 +182,7 @@ impl KeyToggleState {
     pub const KEY_STATE_EXPOSED: Self = Self(0x40);
     pub const SCROLL_LOCK_ACTIVE: Self = Self(0x01);
     pub const NUM_LOCK_ACTIVE: Self = Self(0x02);
-    pub const CAPS_LOCK_ACTIVE: Self = Self(0x01);
+    pub const CAPS_LOCK_ACTIVE: Self = Self(0x04);
     pub fn contains(&self, other: Self) -> bool {
         (self.0 & other.0) == other.0
     }
@@ -169,11 +196,13 @@ pub struct KeyNotifyFunction {
 }
 #[repr(C)]
 pub struct KeyNotifyHandle {
-    handle: Handle
+    handle: Handle,
 }
 impl Drop for KeyNotifyHandle {
     fn drop(&mut self) {
         let stdin = SYSTEM_TABLE.get().unwrap().get_stdin().unwrap();
-        unsafe { (stdin.get_protocol().unregister_key_notify)(stdin.protocol.as_ptr(), &self.handle)};
+        unsafe {
+            (stdin.get_protocol().unregister_key_notify)(stdin.protocol.as_ptr(), &self.handle)
+        };
     }
 }

@@ -74,7 +74,8 @@ impl RuntimeServicesWrapper {
         let mut enabled: Boolean = Boolean(0);
         let mut pending: Boolean = Boolean(0);
         let mut time: Time = unsafe { zeroed() };
-        let status = unsafe { (self.get_method().get_wakeup_time)(&mut enabled, &mut pending, &mut time) };
+        let status =
+            unsafe { (self.get_method().get_wakeup_time)(&mut enabled, &mut pending, &mut time) };
         if status.is_error() {
             Err(status.context("get_wakeup_time"))?
         }

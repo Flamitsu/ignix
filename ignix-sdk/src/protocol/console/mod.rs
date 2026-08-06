@@ -1,4 +1,9 @@
-mod simple_text_output;
 mod simple_text_input;
-pub use simple_text_output::{SimpleTextOutputProtocol,SimpleTextOutputProtocolWrapper,SimpleTextOutputMode};
-pub use simple_text_input::{SimpleTextInputProtocol,SimpleTextInputProtocolWrapper,KeyState,KeyData,KeyNotifyFunction,KeyToggleState,KeyShiftState};
+mod simple_text_output;
+pub use simple_text_input::{
+    KeyData, KeyNotifyFunction, KeyShiftState, KeyState, KeyToggleState, SimpleTextInputProtocol,
+    SimpleTextInputProtocolWrapper,
+};
+pub use simple_text_output::{
+    SimpleTextOutputMode, SimpleTextOutputProtocol, SimpleTextOutputProtocolWrapper,
+};

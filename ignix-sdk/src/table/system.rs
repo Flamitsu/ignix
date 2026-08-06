@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::protocol::console::{SimpleTextInputProtocol, SimpleTextInputProtocolWrapper, SimpleTextOutputProtocol, SimpleTextOutputProtocolWrapper};
+use crate::protocol::console::{
+    SimpleTextInputProtocol, SimpleTextInputProtocolWrapper, SimpleTextOutputProtocol,
+    SimpleTextOutputProtocolWrapper,
+};
 use crate::table::Header;
 use crate::table::boot::{BootServices, BootServicesWrapper};
 use crate::table::runtime::{RuntimeServices, RuntimeServicesWrapper};
@@ -35,7 +38,7 @@ impl SystemTable {
         Some(unsafe { SimpleTextOutputProtocolWrapper::new(self.con_out) })
     }
     pub fn get_stdin(&self) -> Option<SimpleTextInputProtocolWrapper> {
-        if self.con_out.is_null() {
+        if self.con_in.is_null() {
             return None;
         }
         Some(unsafe { SimpleTextInputProtocolWrapper::new(self.con_in) })

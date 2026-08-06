@@ -202,7 +202,7 @@ impl FileProtocolWrapper {
     /// EFI_NO_MEDIA The device has no medium.
     /// EFI_DEVICE_ERROR The device reported an error.
     /// EFI_VOLUME_CORRUPTED The file system structures are corrupted.
-    /// EFI_BUFFER_TOO_SMALL The BufferSize is too small to read the current directory entry. 
+    /// EFI_BUFFER_TOO_SMALL The BufferSize is too small to read the current directory entry.
     /// BufferSize has been updated with the size needed to complete the request.
     pub fn get_info(&mut self) -> Result<FileInfo, IgnixError> {
         /* This buffer size is fixed to: 80 bytes header + 256 * 2 bytes that a file name can be in
