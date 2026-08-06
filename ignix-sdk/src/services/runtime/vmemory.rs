@@ -24,9 +24,6 @@ impl RuntimeServicesWrapper {
     /// The platform should describe this runtime service as unsupported at runtime via an
     /// EFI_RT_PROPERTIES_TABLE configuration table.
     pub fn set_virtual_address_map(&self) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("set_virtual_address_map"))?
-        };
         let memory_map = SYSTEM_TABLE
             .get()
             .ok_or(Status::ST_POINTER_MISSING.context("set_virtual_address_map"))?
@@ -38,7 +35,7 @@ impl RuntimeServicesWrapper {
             Some(ptr) => ptr.as_ptr(),
         };
         let status = unsafe {
-            (function.set_virtual_address_map)(
+            (self.get_method().set_virtual_address_map)(
                 memory_map.map_size,
                 memory_map.descriptor_size,
                 memory_map.descriptor_version,
@@ -76,11 +73,8 @@ impl RuntimeServicesWrapper {
             debug_disposition != DebugDisposition::OPTIONAL_PTR && address.is_null(),
             "Address cannot be NULL unless OPTIONAL_PTR is set"
         );
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("convert_pointer"))?
-        };
         let addr_ptr: *mut *mut c_void = address as *mut *mut c_void;
-        let status = unsafe { (function.convert_pointer)(debug_disposition, addr_ptr) };
+        let status = unsafe { (self.get_method().convert_pointer)(debug_disposition, addr_ptr) };
         Ok(())
     }
 }

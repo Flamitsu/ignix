@@ -33,14 +33,11 @@ impl RuntimeServicesWrapper {
         variable_name: &'a [u16],
         vendor_guid: &Guid,
     ) -> Result<Variable<'a, BUFFER_SIZE>, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("get_variable"))?
-        };
         let mut attr: VariableAttributes = unsafe { zeroed() };
         let mut data_size: usize = BUFFER_SIZE;
         let mut data = [0u8; BUFFER_SIZE];
         let status_one = unsafe {
-            (function.get_variable)(
+            (self.get_method().get_variable)(
                 variable_name.as_ptr(),
                 vendor_guid,
                 &mut attr,
@@ -50,7 +47,7 @@ impl RuntimeServicesWrapper {
         };
 
         let status = unsafe {
-            (function.get_variable)(
+            (self.get_method().get_variable)(
                 variable_name.as_ptr(),
                 vendor_guid,
                 &mut attr,
@@ -85,14 +82,11 @@ impl RuntimeServicesWrapper {
     pub fn get_next_variable_name<const N: usize>(
         &self,
     ) -> Result<NextVariableName<N>, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("get_next_variable_name"))?
-        };
         let variable_name_size = N;
         let mut variable_name = [0u16; N];
         let mut vendor_guid = Guid::new(0, 0, 0, [0u8; 8]);
         let status = unsafe {
-            (function.get_next_variable_name)(
+            (self.get_method().get_next_variable_name)(
                 variable_name_size as *mut usize,
                 variable_name.as_mut_ptr(),
                 &mut vendor_guid as *mut Guid,
@@ -123,11 +117,8 @@ impl RuntimeServicesWrapper {
         &self,
         variable: &Variable<'_, N>,
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("set_variable"))?
-        };
         let status = unsafe {
-            (function.set_variable)(
+            (self.get_method().set_variable)(
                 variable.variable_name.as_ptr(),
                 variable.vendor_guid,
                 variable.attr,
@@ -153,14 +144,11 @@ impl RuntimeServicesWrapper {
         &self,
         attr: VariableAttributes,
     ) -> Result<NonVolatileRamStatus, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("query_variable_info"))?
-        };
         let mut maximum_variable_storage_size: u64 = 0;
         let mut remaining_variable_storage_size: u64 = 0;
         let mut maximum_variable_size: u64 = 0;
         let status = unsafe {
-            (function.query_variable_info)(
+            (self.get_method().query_variable_info)(
                 attr,
                 &mut maximum_variable_storage_size,
                 &mut remaining_variable_storage_size,

@@ -7,11 +7,8 @@ use crate::{
 impl RuntimeServicesWrapper {
     /// This is just a copy from the GetNextMonotonicCount but for the runtime services
     pub fn get_next_high_monotonic_count(&self) -> Result<u32, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("get_next_high_monotonic_count"))?
-        };
         let mut number: u32 = 0;
-        let status = unsafe { (function.get_next_high_monotonic_count)(&mut number) };
+        let status = unsafe { (self.get_method().get_next_high_monotonic_count)(&mut number) };
         if status.is_error() {
             Err(status.context("get_next_high_monotonic_count"))?
         }
@@ -26,11 +23,8 @@ impl RuntimeServicesWrapper {
         reset_status: Status,
         reset_data: [u16; N],
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("reset_system"))?
-        };
         unsafe {
-            (function.reset_system)(
+            (self.get_method().reset_system)(
                 reset_type,
                 reset_status,
                 reset_data.len(),

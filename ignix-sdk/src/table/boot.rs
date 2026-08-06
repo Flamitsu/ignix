@@ -246,6 +246,7 @@ impl BootServicesWrapper {
         let non_null = NonNull::new(function).expect("BootServices function cannot be null");
         Self { function: non_null }
     }
+    #[inline(always)]
     pub fn get_method(&self) -> &BootServices {
         unsafe { self.function.as_ref() }
     }

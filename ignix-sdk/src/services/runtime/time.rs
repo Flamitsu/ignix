@@ -15,15 +15,12 @@ impl RuntimeServicesWrapper {
     /// The platform should describe this runtime service as unsupported at runtime via an
     /// EFI_RT_PROPERTIES_TABLE configuration table
     pub fn get_time(&self) -> Result<TimeStruct, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("get_time"))?
-        };
         /* SAFETY
          * This unsafe doesn't do anything wrong, just need to use it because Rust is going to fill
          * every field of the struct with 0x00 and will let the EFI API fill it by itself.*/
         let mut time: Time = unsafe { zeroed() };
         let mut time_capabilities: TimeCapabilities = unsafe { zeroed() };
-        let status = unsafe { (function.get_time)(&mut time, &mut time_capabilities) };
+        let status = unsafe { (self.get_method().get_time)(&mut time, &mut time_capabilities) };
         if status.is_error() {
             Err(status.context("get_time"))?
         }
@@ -49,10 +46,7 @@ impl RuntimeServicesWrapper {
     /// The platform should describe this runtime service as unsupported at runtime via an
     /// EFI_RT_PROPERTIES_TABLE configuration table.
     pub fn set_time(&self, time: &Time) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("set_time"))?
-        };
-        let status = unsafe { (function.set_time)(time) };
+        let status = unsafe { (self.get_method().set_time)(time) };
         if status.is_error() {
             Err(status.context("set_time"))?
         }
@@ -77,13 +71,10 @@ impl RuntimeServicesWrapper {
     /// The platform should describe this runtime service as unsupported at runtime via an
     /// EFI_RT_PROPERTIES_TABLE configuration table.
     pub fn get_wakeup_time(&self) -> Result<WakeupTime, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("get_wakeup_time"))?
-        };
         let mut enabled: Boolean = Boolean(0);
         let mut pending: Boolean = Boolean(0);
         let mut time: Time = unsafe { zeroed() };
-        let status = unsafe { (function.get_wakeup_time)(&mut enabled, &mut pending, &mut time) };
+        let status = unsafe { (self.get_method().get_wakeup_time)(&mut enabled, &mut pending, &mut time) };
         if status.is_error() {
             Err(status.context("get_wakeup_time"))?
         }
@@ -108,14 +99,11 @@ impl RuntimeServicesWrapper {
             enable && time.is_none(),
             "Please, provide the time parameter (not none) in 'set_wakeup_timer' when enable == true"
         );
-        let Some(function) = self.get_method() else {
-            Err(Status::RST_POINTER_MISSING.context("set_wakeup_time"))?
-        };
         let time_ptr = match time {
             None => core::ptr::null(),
             Some(ptr) => ptr,
         };
-        let status = unsafe { (function.set_wakeup_time)(enable, time_ptr) };
+        let status = unsafe { (self.get_method().set_wakeup_time)(enable, time_ptr) };
         if status.is_error() {
             Err(status.context("set_wakeup_time"))?
         }
