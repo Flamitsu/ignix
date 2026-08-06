@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use core::{ffi::c_void, ptr::null_mut};
 pub const CONFIG_ROUTE: &str = "\\loader\\ignix\\loader.conf";
 pub const ENTRIES_DIR: &str = "\\loader\\entries";
 
