@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::protocol::console::{
-    SimpleTextInputProtocol, SimpleTextInputProtocolWrapper, SimpleTextOutputProtocol,
-    SimpleTextOutputProtocolWrapper,
-};
+use crate::protocol::console::{SimpleTextInputProtocol, SimpleTextInputProtocolWrapper, SimpleTextOutputProtocol, SimpleTextOutputProtocolWrapper};
 use crate::table::Header;
 use crate::table::boot::{BootServices, BootServicesWrapper};
 use crate::table::runtime::{RuntimeServices, RuntimeServicesWrapper};
