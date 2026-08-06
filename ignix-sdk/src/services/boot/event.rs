@@ -11,9 +11,8 @@ use core::{ffi::c_void, time::Duration};
 impl BootServicesWrapper {
     /// Raises a task’s priority level and returns its previous level.
     pub fn raise_tpl(&self, new_tpl: Tpl) -> Option<TplGuardian> {
-        let function = self.get_method()?;
         Some(TplGuardian {
-            old_tlp: unsafe { (function.raise_tpl)(new_tpl) },
+            old_tlp: unsafe { (self.get_method().raise_tpl)(new_tpl) },
         })
     }
     /// Restores a task’s priority level to its previous value.
@@ -21,10 +20,7 @@ impl BootServicesWrapper {
     /// Since raise_tpl returns TplGuardian, that already restores the previous tpl
     /// calling this function internally on 'Drop'.
     pub fn restore_tpl(&self, old_tpl: Tpl) {
-        let Some(function) = self.get_method() else {
-            return;
-        };
-        unsafe { (function.restore_tpl)(old_tpl) }
+        unsafe { (self.get_method().restore_tpl)(old_tpl) }
     }
     /// Creates an event
     /// RETURN CODES:
@@ -46,12 +42,9 @@ impl BootServicesWrapper {
         data_context: &'a mut T,
     ) -> Result<IgnixEvent<'a>, IgnixError> {
         let mut event: Event = core::ptr::null_mut();
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("create_event"))?
-        };
         let notify_context = data_context as *mut T as *mut c_void;
         let status = unsafe {
-            (function.create_event)(
+            (self.get_method().create_event)(
                 event_type,
                 tpl,
                 notify_function,
@@ -101,9 +94,6 @@ impl BootServicesWrapper {
         event_group: Option<*const EventGroup>,
     ) -> Result<IgnixEvent<'a>, IgnixError> {
         let mut event: Event = core::ptr::null_mut();
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("create_event_ex"))?
-        };
         if event_type == EventType::EVT_SIGNAL_EXIT_BOOT_SERVICES
             || event_type == EventType::EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE
         {
@@ -122,7 +112,7 @@ impl BootServicesWrapper {
         };
         let data_context = notify_context as *const T as *const c_void;
         let status = unsafe {
-            (function.create_event_ex)(
+            (self.get_method().create_event_ex)(
                 event_type,
                 tpl,
                 notify_function,
@@ -150,11 +140,7 @@ impl BootServicesWrapper {
     /// corresponding registration. It is safe to call CloseEvent() within the corresponding notify
     /// function.
     pub fn close_event(&self, event: Event) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            return Err(Status::BST_POINTER_MISSING.context("close_event"));
-        };
-
-        let status = unsafe { (function.close_event)(event) };
+        let status = unsafe { (self.get_method().close_event)(event) };
         if status.is_error() {
             Err(status.context("close_event"))?
         }
@@ -167,11 +153,7 @@ impl BootServicesWrapper {
     /// group, then all of the events in the event group are also signaled and their notification
     /// functions are scheduled.
     pub fn signal_event(&self, event: &IgnixEvent) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            return Err(Status::BST_POINTER_MISSING.context("signal_event"));
-        };
-
-        let status = unsafe { (function.signal_event)(event.raw_event) };
+        let status = unsafe { (self.get_method().signal_event)(event.raw_event) };
         if status.is_error() {
             Err(status.context("signal_event"))?
         }
@@ -194,11 +176,9 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER The event indicated by Index is of type EVT_NOTIFY_SIGNAL.
     /// EFI_UNSUPPORTED The current TPL is not TPL_APPLICATION.
     pub fn wait_for_event<const N: usize>(&self, event: &[Event]) -> Result<usize, IgnixError> {
-        let Some(function) = self.get_method() else {
-            return Err(Status::BST_POINTER_MISSING.context("wait_for_event"));
-        };
         let mut index = 0;
-        let status = unsafe { (function.wait_for_event)(event.len(), event.as_ptr(), &mut index) };
+        let status =
+            unsafe { (self.get_method().wait_for_event)(event.len(), event.as_ptr(), &mut index) };
         if status.is_success() {
             return Ok(index);
         }
@@ -209,11 +189,7 @@ impl BootServicesWrapper {
     /// EFI_NOT_READY The event is not in the signaled state.
     /// EFI_INVALID_PARAMETER Event is of type EVT_NOTIFY_SIGNAL.
     pub fn check_event(&self, event: Event) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            return Err(Status::BST_POINTER_MISSING.context("check_event"));
-        };
-
-        let status = unsafe { (function.check_event)(event) };
+        let status = unsafe { (self.get_method().check_event)(event) };
         if status.is_error() {
             Err(status.context("check_event"))?
         }
@@ -231,12 +207,8 @@ impl BootServicesWrapper {
         timer_delay: TimerDelay,
         trigger_time: Duration,
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("set_timer"))?
-        };
-
         let status = unsafe {
-            (function.set_timer)(
+            (self.get_method().set_timer)(
                 event,
                 timer_delay,
                 trigger_time.as_nanos().try_into().unwrap(),

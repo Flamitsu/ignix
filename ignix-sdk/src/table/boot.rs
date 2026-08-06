@@ -7,7 +7,7 @@ use crate::{
         OpenProtocolInformationEntry, PhysicalAddress, SearchType, Status, Table, TimerDelay, Tpl,
     },
 };
-use core::ffi::c_void;
+use core::{ffi::c_void, ptr::NonNull};
 /*
  * This structure can be found in page 92 UEFI spec 2.11
  */
@@ -238,17 +238,15 @@ impl Table for BootServices {}
 
 #[derive(Clone, Copy)]
 pub struct BootServicesWrapper {
-    function: *mut BootServices,
+    function: NonNull<BootServices>,
 }
 
 impl BootServicesWrapper {
     pub unsafe fn new(function: *mut BootServices) -> Self {
-        Self { function }
+        let non_null = NonNull::new(function).expect("BootServices function cannot be null");
+        Self { function: non_null }
     }
-    pub fn get_method(&self) -> Option<&BootServices> {
-        if self.function.is_null() {
-            return None;
-        }
-        Some(unsafe { &*self.function })
+    pub fn get_method(&self) -> &BootServices {
+        unsafe { self.function.as_ref() }
     }
 }

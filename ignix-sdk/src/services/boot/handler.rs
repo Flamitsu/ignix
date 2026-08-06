@@ -32,10 +32,6 @@ impl BootServicesWrapper {
         interface_type: InterfaceType,
         interface: Option<*mut c_void>,
     ) -> Result<IgnixProtocol<'p, 'i>, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("install_protocol_interface"))?
-        };
-
         let Some(mut handle) = image.handle else {
             Err(Status::HANDLE_DEVICE_IS_NULL.context("install_protocol_interface"))?
         };
@@ -46,7 +42,7 @@ impl BootServicesWrapper {
         };
 
         let status = unsafe {
-            (function.install_protocol_interface)(
+            (self.get_method().install_protocol_interface)(
                 &mut handle,
                 guid as *const Guid,
                 interface_type,
@@ -82,15 +78,13 @@ impl BootServicesWrapper {
         protocol: &Guid,
         interface: Option<*mut c_void>,
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("uninstall_protocol_interface"))?
-        };
         let interface_ptr = match interface {
             None => core::ptr::null_mut(),
             Some(ptr) => ptr,
         };
-        let status =
-            unsafe { (function.uninstall_protocol_interface)(handle, protocol, interface_ptr) };
+        let status = unsafe {
+            (self.get_method().uninstall_protocol_interface)(handle, protocol, interface_ptr)
+        };
         if status.is_error() {
             Err(status.context("uninstall_protocol_interface"))?
         }
@@ -109,9 +103,6 @@ impl BootServicesWrapper {
         protocol: &mut IgnixProtocol,
         new_interface: &c_void,
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("reinstall_protocol_interface"))?
-        };
         let handle_ptr = match protocol.image.handle {
             Some(ptr) => ptr,
             None => Err(Status::HANDLE_DEVICE_IS_NULL.context("reinstall_protocol_interface"))?,
@@ -121,7 +112,7 @@ impl BootServicesWrapper {
             Some(ptr) => ptr,
         };
         let status = unsafe {
-            (function.reinstall_protocol_interface)(
+            (self.get_method().reinstall_protocol_interface)(
                 handle_ptr,
                 &protocol.guid,
                 old_interface,
@@ -149,12 +140,13 @@ impl BootServicesWrapper {
         protocol: &Guid,
         event: Event,
     ) -> Result<IgnixProtocolNotification<'a>, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("register_protocol_notify"))?
-        };
         let mut search_key = core::ptr::null_mut();
         let status = unsafe {
-            (function.register_protocol_notify)(protocol as *const Guid, event, &mut search_key)
+            (self.get_method().register_protocol_notify)(
+                protocol as *const Guid,
+                event,
+                &mut search_key,
+            )
         };
         if status.is_error() {
             Err(status.context("register_protocol_notify"))?
@@ -191,9 +183,6 @@ impl BootServicesWrapper {
             N > 128,
             "Please try to not use more than 128 handle per protocol."
         );
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("locate_handle"))?
-        };
 
         let protocol_ptr = match protocol {
             None => core::ptr::null_mut(),
@@ -213,7 +202,7 @@ impl BootServicesWrapper {
         let mut buffer_size = N * core::mem::size_of::<*mut c_void>();
 
         let status = unsafe {
-            (function.locate_handle)(
+            (self.get_method().locate_handle)(
                 search_type,
                 protocol_ptr,
                 search_key_ptr,
@@ -248,14 +237,15 @@ impl BootServicesWrapper {
             Err(Status::HANDLE_DEVICE_IS_NULL.context("handle_protocol"))?
         };
 
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("handle_protocol"))?
-        };
         // Explicit type declaration is needed so it doesn't break IgnixProtocol interface field
         let mut interface: *mut c_void = core::ptr::null_mut();
 
         let status = unsafe {
-            (function.handle_protocol)(handle_ptr, protocol, &mut interface as *mut *mut c_void)
+            (self.get_method().handle_protocol)(
+                handle_ptr,
+                protocol,
+                &mut interface as *mut *mut c_void,
+            )
         };
 
         if status.is_error() {
@@ -289,13 +279,10 @@ impl BootServicesWrapper {
         protocol: &Guid,
         mut device_path: DevicePathProtocol,
     ) -> Result<DevicePath, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("locate_device_path"))?
-        };
         let mut handle: Handle = core::ptr::null_mut();
         let mut dp_ptr = &device_path as *const DevicePathProtocol;
         let status = unsafe {
-            (function.locate_device_path)(
+            (self.get_method().locate_device_path)(
                 protocol,
                 &mut dp_ptr as *mut *const DevicePathProtocol,
                 &mut handle,
@@ -338,12 +325,9 @@ impl BootServicesWrapper {
         agent_handle: Handle,
         attr: OpenProtocolAttributes,
     ) -> Result<ProtocolGuard<'a, T>, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("open_protocol"))?
-        };
         let mut interface: *mut c_void = core::ptr::null_mut();
         let status = unsafe {
-            (function.open_protocol)(
+            (self.get_method().open_protocol)(
                 handle,
                 protocol,
                 &mut interface,
@@ -386,11 +370,13 @@ impl BootServicesWrapper {
         protocol: &Guid,
         agent_handle: Handle,
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("close_protocol"))?
-        };
         let status = unsafe {
-            (function.close_protocol)(handle, protocol, agent_handle, core::ptr::null_mut())
+            (self.get_method().close_protocol)(
+                handle,
+                protocol,
+                agent_handle,
+                core::ptr::null_mut(),
+            )
         };
         if status.is_error() {
             Err(status.context("close_protocol"))?
@@ -416,16 +402,10 @@ impl BootServicesWrapper {
         &self,
         protocol: ProtocolGuard<T>,
     ) -> Result<OpenProtocolInformation, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("open_protocol_information"))?
-        };
-
         let mut buffer: *mut OpenProtocolInformationEntry = core::ptr::null_mut();
-
         let mut entry_buffer: usize = 0;
-
         let status = unsafe {
-            (function.open_protocol_information)(
+            (self.get_method().open_protocol_information)(
                 protocol.handle,
                 protocol.protocol as *const Guid,
                 &mut buffer as *mut *mut OpenProtocolInformationEntry,
@@ -459,14 +439,10 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER ProtocolBufferCount is NULL.
     /// EFI_OUT_OF_RESOURCES There is not enough pool memory to store the results.
     pub fn protocols_per_handle(&self, handle: Handle) -> Result<ProtocolsPerHandle, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("protocols_per_handle"))?
-        };
-
         let mut protocol_buffer: *mut *const Guid = core::ptr::null_mut();
         let mut protocol_count: usize = 0;
         let status = unsafe {
-            (function.protocols_per_handle)(
+            (self.get_method().protocols_per_handle)(
                 handle,
                 protocol_buffer as *mut _ as *mut *mut *const Guid,
                 &mut protocol_count,
@@ -498,9 +474,6 @@ impl BootServicesWrapper {
         protocol: Option<&Guid>,
         search_key: Option<&c_void>,
     ) -> Result<HandleBuffer, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("locate_handle_buffer"))?
-        };
         let protocol_ptr = match protocol {
             None => core::ptr::null_mut(),
             Some(ptr) => ptr as *const Guid,
@@ -512,7 +485,7 @@ impl BootServicesWrapper {
         let mut num_handles: usize = 0;
         let mut buffer_handlers: *mut Handle = core::ptr::null_mut();
         let status = unsafe {
-            (function.locate_handle_buffer)(
+            (self.get_method().locate_handle_buffer)(
                 search_type,
                 protocol_ptr,
                 search_key_ptr,
@@ -544,16 +517,17 @@ impl BootServicesWrapper {
         &self,
         register: Option<*const c_void>,
     ) -> Result<&'static T, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("locate_protocol"))?
-        };
         let mut interface: *mut c_void = core::ptr::null_mut();
         let register_ptr = match register {
             None => core::ptr::null_mut(),
             Some(ptr) => ptr,
         };
         let status = unsafe {
-            (function.locate_protocol)(&T::GUID as *const Guid, register_ptr, &mut interface)
+            (self.get_method().locate_protocol)(
+                &T::GUID as *const Guid,
+                register_ptr,
+                &mut interface,
+            )
         };
         if status.is_error() {
             Err(status.context("locate_protocol"))?

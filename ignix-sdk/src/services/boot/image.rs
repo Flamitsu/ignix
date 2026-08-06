@@ -36,10 +36,6 @@ impl BootServicesWrapper {
         device_path: Option<&DevicePathProtocol>,
         source_buffer: Option<&[u8]>,
     ) -> Result<IgnixImage<'a>, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("load_image"))?
-        };
-
         let mut handle: Handle = core::ptr::null_mut();
 
         let device_path_ptr = match device_path {
@@ -53,7 +49,7 @@ impl BootServicesWrapper {
         };
 
         let status = unsafe {
-            (function.load_image)(
+            (self.get_method().load_image)(
                 boot_policy,
                 parent_image_handle,
                 device_path_ptr,
@@ -87,17 +83,14 @@ impl BootServicesWrapper {
         &self,
         mut image: IgnixImage<'a>,
     ) -> Result<(), (IgnixError, IgnixImage<'a>)> {
-        let Some(function) = self.get_method() else {
-            return Err((Status::BST_POINTER_MISSING.context("start_image"), image));
-        };
-
         let handle: Handle = match image.handle {
             Some(ptr) => ptr,
             None => core::ptr::null_mut(),
         };
 
-        let status =
-            unsafe { (function.start_image)(handle, core::ptr::null_mut(), core::ptr::null_mut()) };
+        let status = unsafe {
+            (self.get_method().start_image)(handle, core::ptr::null_mut(), core::ptr::null_mut())
+        };
 
         if status.is_error() {
             image.handle = Some(handle);
@@ -117,10 +110,7 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER ImageHandle is not a valid image handle.
     /// Exit code from Unload handler Exit code from the image’s unload function.
     pub fn unload_image(&self, efi_handle: Handle) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("unload_image"))?
-        };
-        let status = unsafe { (function.unload_image)(efi_handle) };
+        let status = unsafe { (self.get_method().unload_image)(efi_handle) };
         if status.is_error() {
             Err(status.context("unload_image"))?
         }
@@ -143,10 +133,8 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER The image specified by ImageHandle has been loaded and started
     /// with LoadImage() and StartImage(), but the image is not the currently executing image.
     pub fn exit(&self, efi_handle: Handle, efi_status: Status) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("exit"))?
-        };
-        let status = unsafe { (function.exit)(efi_handle, efi_status, 0, core::ptr::null_mut()) };
+        let status =
+            unsafe { (self.get_method().exit)(efi_handle, efi_status, 0, core::ptr::null_mut()) };
         if status.is_error() {
             Err(status.context("exit"))?
         }
@@ -160,10 +148,7 @@ impl BootServicesWrapper {
         efi_handle: Handle,
         memory_map: &MemoryMap,
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("exit_boot_services"))?
-        };
-        let status = unsafe { (function.exit_boot_services)(efi_handle, memory_map.key) };
+        let status = unsafe { (self.get_method().exit_boot_services)(efi_handle, memory_map.key) };
         if status.is_error() {
             Err(status.context("exit_boot_services"))?
         }

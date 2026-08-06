@@ -3,7 +3,10 @@ use crate::{
     protocol::file_protocol::{FileProtocol, FileProtocolWrapper},
     types::{Guid, IgnixError, Status, Uuid},
 };
-use core::{ffi::c_void, ptr::null_mut};
+use core::{
+    ffi::c_void,
+    ptr::{NonNull, null_mut},
+};
 #[repr(C)]
 pub struct SimpleFileSystemProtocol {
     revision: u64,
@@ -19,7 +22,7 @@ impl Uuid for SimpleFileSystemProtocol {
     );
 }
 pub struct SimpleFileSystemProtocolWrapper {
-    protocol: *mut SimpleFileSystemProtocol,
+    protocol: NonNull<SimpleFileSystemProtocol>,
 }
 impl SimpleFileSystemProtocolWrapper {
     /// # Safety
@@ -27,20 +30,17 @@ impl SimpleFileSystemProtocolWrapper {
     /// But it's secure to use since the interface that you will be using has an idiomatic Option
     /// (get_protocol) and deref the pointer checking if it is null or not.
     pub unsafe fn new(protocol: *mut SimpleFileSystemProtocol) -> Self {
-        Self { protocol }
+        let non_null =
+            NonNull::new(protocol).expect("SimpleFileSystemProtocol pointer cannot be null");
+        Self { protocol: non_null }
     }
-    fn get_protocol(&self) -> Option<&SimpleFileSystemProtocol> {
-        if self.protocol.is_null() {
-            return None;
-        }
-        unsafe { Some(&*self.protocol) }
+    fn get_protocol(&self) -> &SimpleFileSystemProtocol {
+        unsafe { self.protocol.as_ref() }
     }
     pub fn open_volume(&mut self) -> Result<FileProtocolWrapper, IgnixError> {
-        let Some(protocol) = self.get_protocol() else {
-            Err(Status::PROTOCOL_POINTER_NOT_FOUND.context("open_volume"))?
-        };
         let mut root: *mut FileProtocol = null_mut();
-        let status = unsafe { (protocol.open_volume)(self.protocol, &mut root) };
+        let status =
+            unsafe { (self.get_protocol().open_volume)(self.protocol.as_ptr(), &mut root) };
         if status.is_error() {
             Err(status.context("open_volume"))?
         }

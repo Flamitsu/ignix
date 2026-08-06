@@ -20,11 +20,8 @@ impl BootServicesWrapper {
         timeout: Duration,
         watchdog_code: u64,
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("set_watchdog_timer"))?
-        };
         let status = unsafe {
-            (function.set_watch_dog_timer)(
+            (self.get_method().set_watch_dog_timer)(
                 timeout.as_secs().try_into().unwrap(),
                 watchdog_code,
                 0,
@@ -39,11 +36,8 @@ impl BootServicesWrapper {
 
     /// Stalls the system the seconds (converted internally to microseconds)
     pub fn stall(&self, duration: Duration) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("stall"))?
-        };
         let microseconds = duration.as_micros() as usize;
-        let status = unsafe { (function.stall)(microseconds) };
+        let status = unsafe { (self.get_method().stall)(microseconds) };
 
         if status.is_error() {
             Err(status.context("stall"))?
@@ -61,14 +55,18 @@ impl BootServicesWrapper {
     /// 3. Otherwise, the data should be copied from the Source buffer to the Destination buffer
     ///    starting from the beginning of the buffers and working toward the end of the buffers.
     pub fn copy_mem(&self, dest: &mut [u8], src: &[u8]) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("copy_mem"))?
-        };
-        if dest.len() > src.len() {
-            Err(Status::BST_POINTER_MISSING.context("copy_mem"))?
+        assert!(
+            dest.len() >= src.len(),
+            "Destination buffer length ({}) is smaller than source length ({})",
+            dest.len(),
+            src.len()
+        );
+
+        if src.is_empty() || dest.as_ptr() == src.as_ptr() {
+            return Ok(());
         }
         unsafe {
-            (function.copy_mem)(
+            (self.get_method().copy_mem)(
                 dest.as_mut_ptr() as *const c_void,
                 src.as_ptr() as *const c_void,
                 src.len(),
@@ -82,10 +80,9 @@ impl BootServicesWrapper {
         mut buffer: [u8; N],
         value: u8,
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("set_mem"))?
-        };
-        unsafe { (function.set_mem)(buffer.as_mut_ptr() as *const c_void, buffer.len(), value) }
+        unsafe {
+            (self.get_method().set_mem)(buffer.as_mut_ptr() as *const c_void, buffer.len(), value)
+        }
         Ok(())
     }
 
@@ -96,13 +93,10 @@ impl BootServicesWrapper {
     /// The high 32-bit value is nonvolatile and is increased by one on whenever the system resets
     /// or the low 32-bit counter overflows
     pub fn get_next_monotonic_count(&self, count: u64) -> Result<u64, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("get_next_monotonic_count"))?
-        };
         // I did this so the variable itself isn't modified, it's modified value its a
         // returned value.
         let mut shadow = count;
-        let status = unsafe { (function.get_next_monotonic_count)(&mut shadow) };
+        let status = unsafe { (self.get_method().get_next_monotonic_count)(&mut shadow) };
         if status.is_error() {
             Err(status.context("get_next_monotonic_count"))?
         }
@@ -121,16 +115,12 @@ impl BootServicesWrapper {
         guid: *const Guid,
         table: Option<*const T>,
     ) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("install_configurtion_table"))?
-        };
-
         let table_ptr = match table {
             Some(ptr) => ptr as *const c_void,
             None => core::ptr::null(),
         };
 
-        let status = unsafe { (function.install_configuration_table)(guid, table_ptr) };
+        let status = unsafe { (self.get_method().install_configuration_table)(guid, table_ptr) };
 
         if status.is_error() {
             Err(status.context("install_configuration_table"))?
@@ -147,12 +137,13 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER Crc32 is NULL.
     /// EFI_INVALID_PARAMETER DataSize is 0
     pub fn calculate_crc32<const N: usize>(&self, buffer: [u8; N]) -> Result<u32, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("calculate_crc32"))?
-        };
         let mut crc32: u32 = 0;
         let status = unsafe {
-            (function.calculate_crc32)(buffer.as_ptr() as *const c_void, buffer.len(), &mut crc32)
+            (self.get_method().calculate_crc32)(
+                buffer.as_ptr() as *const c_void,
+                buffer.len(),
+                &mut crc32,
+            )
         };
         if status.is_error() {
             Err(status.context("calculate_crc32"))?

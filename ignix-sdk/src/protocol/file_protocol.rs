@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::types::{Char16, Guid, IgnixError, Status, Time, Uuid};
-use core::{ffi::c_void, ptr::null_mut};
+use core::{
+    ffi::c_void,
+    ptr::{NonNull, null_mut},
+};
 #[repr(C)]
 pub struct FileProtocol {
     revision: u64,
@@ -43,7 +46,7 @@ pub struct FileProtocol {
 }
 
 pub struct FileProtocolWrapper {
-    protocol: *mut FileProtocol,
+    protocol: NonNull<FileProtocol>,
 }
 impl FileProtocolWrapper {
     /// # Safety
@@ -51,15 +54,15 @@ impl FileProtocolWrapper {
     /// in your firmware you're screwd anyways so it gives a panic and reduces code smell
     /// (Need to apply this pattern for others) so it's completely secure to use
     pub unsafe fn new(protocol: *mut FileProtocol) -> Self {
-        assert!(!protocol.is_null(), "FileProtocol pointer is null.");
-        Self { protocol }
+        let non_null = NonNull::new(protocol).expect("FileProtocol pointer cannot be null");
+        Self { protocol: non_null }
     }
     // Safety:
     // The previous assert in the new function must be ALWAYS PRESENT so this unsafe code doesn't
     // blow everything up.
     #[inline(always)]
     fn get_protocol(&self) -> &FileProtocol {
-        unsafe { &*self.protocol }
+        unsafe { self.protocol.as_ref() }
     }
     /// Opens a new file relative to the source directory's location.
     ///
@@ -83,7 +86,7 @@ impl FileProtocolWrapper {
         let mut new_handle: *mut FileProtocol = null_mut();
         let status = unsafe {
             (self.get_protocol().open)(
-                self.protocol,
+                self.protocol.as_ptr(),
                 &mut new_handle,
                 filename.as_ptr(),
                 open_mode,
@@ -100,7 +103,7 @@ impl FileProtocolWrapper {
     /// RETURN CODES:
     /// EFI_WARN_DELETE_FAILURE The handle was closed, but the file was not deleted.
     pub fn delete(&mut self) -> Result<(), IgnixError> {
-        let status = unsafe { (self.get_protocol().delete)(self.protocol) };
+        let status = unsafe { (self.get_protocol().delete)(self.protocol.as_ptr()) };
         // Since it will close the File alone, don't need the RAII pattern to do it anymore.
         if status.is_error() {
             Err(status.context("FileProtocol.delete"))?
@@ -127,7 +130,11 @@ impl FileProtocolWrapper {
     pub fn read(&mut self, buffer: &mut [u8]) -> Result<usize, IgnixError> {
         let mut size = buffer.len();
         let status = unsafe {
-            (self.get_protocol().read)(self.protocol, &mut size, buffer.as_mut_ptr().cast())
+            (self.get_protocol().read)(
+                self.protocol.as_ptr(),
+                &mut size,
+                buffer.as_mut_ptr().cast(),
+            )
         };
         if status.is_error() {
             Err(status.context("FileProtocol.read"))?
@@ -147,7 +154,11 @@ impl FileProtocolWrapper {
     pub fn write(&mut self, buffer: &mut [u8]) -> Result<(), IgnixError> {
         let mut size: usize = buffer.len();
         let status = unsafe {
-            (self.get_protocol().write)(self.protocol, &mut size, buffer.as_mut_ptr().cast())
+            (self.get_protocol().write)(
+                self.protocol.as_ptr(),
+                &mut size,
+                buffer.as_mut_ptr().cast(),
+            )
         };
         if status.is_error() {
             Err(status.context("FileProtocol.write"))?
@@ -165,7 +176,8 @@ impl FileProtocolWrapper {
     /// EFI_UNSUPPORTED The seek request for nonzero is not valid on open directories.
     /// EFI_DEVICE_ERROR An attempt was made to set the position of a deleted file
     pub fn set_position(&mut self, mut position: u64) -> Result<(), IgnixError> {
-        let status = unsafe { (self.get_protocol().set_position)(self.protocol, &mut position) };
+        let status =
+            unsafe { (self.get_protocol().set_position)(self.protocol.as_ptr(), &mut position) };
         if status.is_error() {
             Err(status.context("FileProtocol.set_position"))?
         }
@@ -180,7 +192,8 @@ impl FileProtocolWrapper {
     /// EFI_DEVICE_ERROR An attempt was made to get the position from a deleted file.
     pub fn get_position(&mut self) -> Result<u64, IgnixError> {
         let mut position: u64 = 0;
-        let status = unsafe { (self.get_protocol().get_position)(self.protocol, &mut position) };
+        let status =
+            unsafe { (self.get_protocol().get_position)(self.protocol.as_ptr(), &mut position) };
         Ok(position)
     }
 
@@ -189,7 +202,7 @@ impl FileProtocolWrapper {
         let mut buffer_size = buffer.len();
         let status = unsafe {
             (self.get_protocol().get_info)(
-                self.protocol,
+                self.protocol.as_ptr(),
                 &FileInfo::GUID,
                 &mut buffer_size,
                 buffer.as_mut_ptr() as *mut c_void,
@@ -220,7 +233,7 @@ impl FileProtocolWrapper {
     /// EFI_ACCESS_DENIED The file was opened read-only.
     /// EFI_VOLUME_FULL The volume is full.
     pub fn flush(&mut self) -> Result<(), IgnixError> {
-        let status = unsafe { (self.get_protocol().flush)(self.protocol) };
+        let status = unsafe { (self.get_protocol().flush)(self.protocol.as_ptr()) };
         if status.is_error() {
             Err(status.context("FileProtocol.flush"))?
         }
@@ -230,9 +243,7 @@ impl FileProtocolWrapper {
 
 impl Drop for FileProtocolWrapper {
     fn drop(&mut self) {
-        if !self.protocol.is_null() {
-            unsafe { (self.get_protocol().close)(self.protocol) }
-        }
+        unsafe { (self.get_protocol().close)(self.protocol.as_ptr()) }
     }
 }
 #[repr(C)]

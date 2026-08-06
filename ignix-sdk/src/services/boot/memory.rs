@@ -32,12 +32,10 @@ impl BootServicesWrapper {
         memory_type: MemoryType,
         pages: usize,
     ) -> Result<PagesBuffer<'a>, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("allocate_pages"))?
-        };
         let mut addr: PhysicalAddress = 0;
-        let status =
-            unsafe { (function.allocate_pages)(allocate_type, memory_type, pages, &mut addr) };
+        let status = unsafe {
+            (self.get_method().allocate_pages)(allocate_type, memory_type, pages, &mut addr)
+        };
 
         if status.is_success() {
             let ptr = addr as *mut u8;
@@ -60,11 +58,7 @@ impl BootServicesWrapper {
     /// EFI_NOT_FOUND The requested memory pages were not allocated with AllocatePages().
     /// EFI_INVALID_PARAMETER Memory is not a page-aligned address or Pages is invalid.
     pub fn free_pages(self, memory: PhysicalAddress, pages: usize) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("free_pages"))?
-        };
-        let status = unsafe { (function.free_pages)(memory, pages) };
-
+        let status = unsafe { (self.get_method().free_pages)(memory, pages) };
         if status.is_success() {
             return Ok(());
         }
@@ -78,15 +72,10 @@ impl BootServicesWrapper {
     /// EFI_INVALID_PARAMETER MemoryMapSize is NULL.
     /// EFI_INVALID_PARAMETER The MemoryMap buffer is not too small and MemoryMap is NULL.
     pub fn get_memory_map(self) -> Result<MemoryMap, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("get_memory_map"))?
-        };
-
         let mut mem_map = MemoryMap::new_empty();
-
         {
             let first_execution = unsafe {
-                (function.get_memory_map)(
+                (self.get_method().get_memory_map)(
                     &mut mem_map.map_size,
                     core::ptr::null_mut(),
                     &mut mem_map.key,
@@ -116,7 +105,7 @@ impl BootServicesWrapper {
             pages_needed,
         )?;
         let status = unsafe {
-            (function.get_memory_map)(
+            (self.get_method().get_memory_map)(
                 &mut mem_map.map_size,
                 buffer_ptr.ptr.as_ptr() as *mut MemoryDescriptor,
                 &mut mem_map.key,
@@ -149,12 +138,8 @@ impl BootServicesWrapper {
         pool_type: MemoryType,
         size: usize,
     ) -> Result<PoolBuffer<'a>, IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("allocate_pool"))?
-        };
-
         let mut raw_ptr: *mut u8 = core::ptr::null_mut();
-        let status = unsafe { (function.allocate_pool)(pool_type, size, &mut raw_ptr) };
+        let status = unsafe { (self.get_method().allocate_pool)(pool_type, size, &mut raw_ptr) };
 
         if status.is_success() {
             let Some(ptr) = NonNull::new(raw_ptr) else {
@@ -174,10 +159,7 @@ impl BootServicesWrapper {
     /// RETURN CODES:
     /// EFI_INVALID_PARAMETER Buffer was invalid.
     pub fn free_pool(self, buffer: NonNull<u8>) -> Result<(), IgnixError> {
-        let Some(function) = self.get_method() else {
-            Err(Status::BST_POINTER_MISSING.context("free_pool"))?
-        };
-        let status = unsafe { (function.free_pool)(buffer.as_ptr()) };
+        let status = unsafe { (self.get_method().free_pool)(buffer.as_ptr()) };
         if status.is_success() {
             return Ok(());
         }
