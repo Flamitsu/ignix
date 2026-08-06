@@ -196,9 +196,18 @@ impl FileProtocolWrapper {
             unsafe { (self.get_protocol().get_position)(self.protocol.as_ptr(), &mut position) };
         Ok(position)
     }
-
+    /// Gets the info from a file
+    /// RETURN CODES:
+    /// EFI_UNSUPPORTED The InformationType is not known.
+    /// EFI_NO_MEDIA The device has no medium.
+    /// EFI_DEVICE_ERROR The device reported an error.
+    /// EFI_VOLUME_CORRUPTED The file system structures are corrupted.
+    /// EFI_BUFFER_TOO_SMALL The BufferSize is too small to read the current directory entry. 
+    /// BufferSize has been updated with the size needed to complete the request.
     pub fn get_info(&mut self) -> Result<FileInfo, IgnixError> {
-        let mut buffer = [0u8; 256];
+        /* This buffer size is fixed to: 80 bytes header + 256 * 2 bytes that a file name can be in
+         * FAT32 */
+        let mut buffer = [0u8; 592];
         let mut buffer_size = buffer.len();
         let status = unsafe {
             (self.get_protocol().get_info)(
