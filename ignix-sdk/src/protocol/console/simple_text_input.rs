@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
 use core::ptr::NonNull;
-
-use crate::types::{Event, Guid, Handle, Status, Uuid};
-
+use crate::types::{Event, Guid, Handle, IgnixError, Status, Uuid};
 #[repr(C)]
 /* This is the EXTENDED VERSION of the Input Protocol. Means motherboards before 2006 may not support
  * this, but anyways they also do whathever they want with the firmware so its not even granted on
@@ -59,6 +58,13 @@ impl SimpleTextInputProtocolWrapper {
     #[inline(always)]
     fn get_protocol(&self) -> &SimpleTextInputProtocol {
         unsafe { self.protocol.as_ref() }
+    }
+    pub fn reset(&self) -> Result<(), IgnixError>{
+        let status = unsafe { (self.get_protocol().reset)(self.protocol.as_ptr(), true) };
+        if status.is_error() {
+            Err(status.context("SimpleTextInput.reset"))?
+        }
+        Ok(())
     }
 }
 #[repr(C)]
