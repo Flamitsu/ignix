@@ -54,12 +54,11 @@ pub struct IgnixImage<'a> {
 impl<'a> Drop for IgnixImage<'a> {
     fn drop(&mut self) {
         if let Some(image_handle) = self.handle {
-            let _ = SYSTEM_TABLE
-                .get()
-                .unwrap()
-                .get_boot_services()
-                .unwrap()
-                .unload_image(image_handle);
+            if let Some(st) = SYSTEM_TABLE.get() {
+                if let Some(bs) = st.get_boot_services() {
+                    bs.unload_image(image_handle);
+                }
+            }
         }
     }
 }
