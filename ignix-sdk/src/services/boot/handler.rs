@@ -72,7 +72,7 @@ impl BootServicesWrapper {
     /// EFI_ACCESS_DENIED The interface was not removed because the interface is still being used by a driver.
     /// EFI_INVALID_PARAMETER HandLe is NULL.
     /// EFI_INVALID_PARAMETER ProtocoL is NULL.
-    pub fn uninstall_protocol_interface(
+    pub(crate) fn uninstall_protocol_interface(
         &self,
         handle: Handle,
         protocol: &Guid,
@@ -364,7 +364,7 @@ impl BootServicesWrapper {
     /// EFI_NOT_FOUND Handle does not support the protocol specified by Protocol.
     /// EFI_NOT_FOUND The protocol interface specified by Handle and Protocol is not currently open
     /// by AgentHandle and ControllerHandle
-    pub fn close_protocol(
+    pub(crate) fn close_protocol(
         &self,
         handle: Handle,
         protocol: &Guid,

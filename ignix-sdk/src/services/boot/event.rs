@@ -19,7 +19,7 @@ impl BootServicesWrapper {
     /// Should not use this manually unless you know what you're doing.
     /// Since raise_tpl returns TplGuardian, that already restores the previous tpl
     /// calling this function internally on 'Drop'.
-    pub fn restore_tpl(&self, old_tpl: Tpl) {
+    pub(crate) fn restore_tpl(&self, old_tpl: Tpl) {
         unsafe { (self.get_method().restore_tpl)(old_tpl) }
     }
     /// Creates an event
@@ -139,7 +139,7 @@ impl BootServicesWrapper {
     /// If Event was registered with RegisterProtocolNotify() then CloseEvent() will remove the
     /// corresponding registration. It is safe to call CloseEvent() within the corresponding notify
     /// function.
-    pub fn close_event(&self, event: Event) -> Result<(), IgnixError> {
+    pub(crate) fn close_event(&self, event: Event) -> Result<(), IgnixError> {
         let status = unsafe { (self.get_method().close_event)(event) };
         if status.is_error() {
             Err(status.context("close_event"))?

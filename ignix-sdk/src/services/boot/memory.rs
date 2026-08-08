@@ -57,7 +57,11 @@ impl BootServicesWrapper {
     ///
     /// EFI_NOT_FOUND The requested memory pages were not allocated with AllocatePages().
     /// EFI_INVALID_PARAMETER Memory is not a page-aligned address or Pages is invalid.
-    pub fn free_pages(self, memory: PhysicalAddress, pages: usize) -> Result<(), IgnixError> {
+    pub(crate) fn free_pages(
+        self,
+        memory: PhysicalAddress,
+        pages: usize,
+    ) -> Result<(), IgnixError> {
         let status = unsafe { (self.get_method().free_pages)(memory, pages) };
         if status.is_success() {
             return Ok(());
@@ -158,7 +162,7 @@ impl BootServicesWrapper {
     /// the memory’s type is EfiConventionalMemory.
     /// RETURN CODES:
     /// EFI_INVALID_PARAMETER Buffer was invalid.
-    pub fn free_pool(self, buffer: NonNull<u8>) -> Result<(), IgnixError> {
+    pub(crate) fn free_pool(self, buffer: NonNull<u8>) -> Result<(), IgnixError> {
         let status = unsafe { (self.get_method().free_pool)(buffer.as_ptr()) };
         if status.is_success() {
             return Ok(());

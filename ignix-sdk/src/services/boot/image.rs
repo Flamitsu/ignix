@@ -109,7 +109,7 @@ impl BootServicesWrapper {
     /// EFI_UNSUPPORTED The image has been started, and does not support unload.
     /// EFI_INVALID_PARAMETER ImageHandle is not a valid image handle.
     /// Exit code from Unload handler Exit code from the image’s unload function.
-    pub fn unload_image(&self, efi_handle: Handle) -> Result<(), IgnixError> {
+    pub(crate) fn unload_image(&self, efi_handle: Handle) -> Result<(), IgnixError> {
         let status = unsafe { (self.get_method().unload_image)(efi_handle) };
         if status.is_error() {
             Err(status.context("unload_image"))?
