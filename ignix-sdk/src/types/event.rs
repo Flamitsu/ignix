@@ -167,11 +167,10 @@ pub struct IgnixEvent<'a> {
 
 impl<'a> Drop for IgnixEvent<'a> {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get() {
-            if let Some(bt) = st.get_boot_services() {
+        if let Some(st) = SYSTEM_TABLE.get()
+            && let Some(bt) = st.get_boot_services() {
                 let _ = bt.close_event(self.raw_event);
             }
-        }
     }
 }
 
@@ -196,10 +195,9 @@ impl TplGuardian {
 
 impl Drop for TplGuardian {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get() {
-            if let Some(bt) = st.get_boot_services() {
+        if let Some(st) = SYSTEM_TABLE.get()
+            && let Some(bt) = st.get_boot_services() {
                 bt.restore_tpl(self.old_tlp);
             }
-        }
     }
 }

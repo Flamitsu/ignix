@@ -51,11 +51,10 @@ pub struct OpenProtocolInformation {
 
 impl Drop for OpenProtocolInformation {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get() {
-            if let Some(bt) = st.get_boot_services() {
+        if let Some(st) = SYSTEM_TABLE.get()
+            && let Some(bt) = st.get_boot_services() {
                 bt.free_pool(self.ptr.cast());
             }
-        }
     }
 }
 
@@ -73,14 +72,12 @@ pub struct IgnixProtocol<'p, 'i> {
 
 impl<'p> Drop for IgnixProtocol<'p, '_> {
     fn drop(&mut self) {
-        if let Some(image_handle) = self.image.handle {
-            if let Some(st) = SYSTEM_TABLE.get() {
-                if let Some(bt) = st.get_boot_services() {
+        if let Some(image_handle) = self.image.handle
+            && let Some(st) = SYSTEM_TABLE.get()
+                && let Some(bt) = st.get_boot_services() {
                     let _ =
                         bt.uninstall_protocol_interface(image_handle, &self.guid, self.interface);
                 }
-            }
-        }
     }
 }
 
@@ -92,11 +89,10 @@ pub struct IgnixProtocolNotification<'a> {
 
 impl<'a> Drop for IgnixProtocolNotification<'a> {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get() {
-            if let Some(bt) = st.get_boot_services() {
+        if let Some(st) = SYSTEM_TABLE.get()
+            && let Some(bt) = st.get_boot_services() {
                 bt.close_event(self.event);
             }
-        }
     }
 }
 
@@ -137,11 +133,10 @@ impl<'a, T> Drop for ProtocolGuard<'a, T> {
         {
             return;
         }
-        if let Some(st) = SYSTEM_TABLE.get() {
-            if let Some(bs) = st.get_boot_services() {
+        if let Some(st) = SYSTEM_TABLE.get()
+            && let Some(bs) = st.get_boot_services() {
                 let _ = bs.close_protocol(self.handle, self.protocol, self.agent_handle);
             }
-        }
     }
 }
 
@@ -166,11 +161,10 @@ pub struct ProtocolsPerHandle {
 
 impl Drop for ProtocolsPerHandle {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get() {
-            if let Some(bs) = st.get_boot_services() {
+        if let Some(st) = SYSTEM_TABLE.get()
+            && let Some(bs) = st.get_boot_services() {
                 let _ = bs.free_pool(self.protocol_buffer.cast());
             }
-        }
     }
 }
 
@@ -181,10 +175,9 @@ pub struct HandleBuffer {
 
 impl Drop for HandleBuffer {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get() {
-            if let Some(bs) = st.get_boot_services() {
+        if let Some(st) = SYSTEM_TABLE.get()
+            && let Some(bs) = st.get_boot_services() {
                 let _ = bs.free_pool(self.buffer_handlers.cast());
             }
-        }
     }
 }

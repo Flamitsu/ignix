@@ -240,11 +240,10 @@ impl<'a> PagesBuffer<'a> {
 }
 impl<'a> Drop for PagesBuffer<'a> {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get() {
-            if let Some(bs) = st.get_boot_services() {
+        if let Some(st) = SYSTEM_TABLE.get()
+            && let Some(bs) = st.get_boot_services() {
                 let _ = bs.free_pages(self.ptr.as_ptr() as u64, self.num_pages);
             }
-        }
     }
 }
 
@@ -265,10 +264,9 @@ impl<'a> PoolBuffer<'a> {
 
 impl<'a> Drop for PoolBuffer<'a> {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get() {
-            if let Some(bs) = st.get_boot_services() {
+        if let Some(st) = SYSTEM_TABLE.get()
+            && let Some(bs) = st.get_boot_services() {
                 bs.free_pool(self.ptr);
             }
-        }
     }
 }
