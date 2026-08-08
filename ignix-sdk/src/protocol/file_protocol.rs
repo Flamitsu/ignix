@@ -14,9 +14,7 @@ pub struct FileProtocol {
         open_mode: OpenModes,
         attr: FileAttributes,
     ) -> Status,
-    pub close: unsafe extern "efiapi" fn(this: *mut Self), // This also returns an status but I wont
-    // include it, since you can't call it
-    // under normal circustances
+    pub close: unsafe extern "efiapi" fn(this: *mut Self) -> Status,
     pub delete: unsafe extern "efiapi" fn(this: *mut Self) -> Status,
     pub read: unsafe extern "efiapi" fn(
         this: *mut Self,
@@ -97,6 +95,12 @@ impl FileProtocolWrapper {
             Err(status.context("FileProtocol.open"))?
         }
         Ok(unsafe { FileProtocolWrapper::new(new_handle) })
+    }
+    // Closes a file
+    // The status return isn't used here since you don't usually need to call this,
+    // that's why pub(crate) visibility and not "pub".
+    pub(crate) fn close(&mut self) {
+        unsafe { (self.get_protocol().close)(self.protocol.as_ptr()) };
     }
     /// Closes and deletes a file.
     ///
@@ -252,7 +256,7 @@ impl FileProtocolWrapper {
 
 impl Drop for FileProtocolWrapper {
     fn drop(&mut self) {
-        unsafe { (self.get_protocol().close)(self.protocol.as_ptr()) }
+        self.close();
     }
 }
 #[repr(C)]

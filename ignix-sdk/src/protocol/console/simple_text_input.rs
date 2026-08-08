@@ -87,6 +87,9 @@ impl SimpleTextInputProtocolWrapper {
         let mut key_data: KeyData = unsafe { zeroed() };
         let status =
             unsafe { (self.get_protocol().read_key_stroke)(self.protocol.as_ptr(), &mut key_data) };
+        // Whenever you call this function and there is not a key stroke in that milisecond
+        // the input handle returns not_ready. That doesn't mean its not right it's just that
+        // the data didn't changed, like the Status::NOT_READY documentation says
         if status == Status::NOT_READY {
             return Ok(None);
         }
