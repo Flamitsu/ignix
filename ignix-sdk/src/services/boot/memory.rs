@@ -1,172 +1,166 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    table::boot::BootServicesWrapper,
-    types::{
+    table::get_boot_services, types::{
         AllocateType, IgnixError, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE, PagesBuffer,
         PhysicalAddress, PoolBuffer, Status,
-    },
+    }
 };
 use core::{marker::PhantomData, ptr::NonNull};
-impl BootServicesWrapper {
-    /// Allocate pages from the system.
-    /// In general, OS loaders should allocate memory (and pool) of type EfiLoaderData.
-    ///
-    /// AllocateAnyPages allocates any range of pages that satisfies the request. The address on
-    /// input is ignored.
-    ///
-    /// AllocateMaxAddress allocates a range of pages whose uppermost address is less
-    /// than or equal to the address pointed to by Memory on input.
-    ///
-    /// AllocateAddress allocate pages at the address pointed to by Memory on input.
-    ///
-    /// RETURN CODES
-    /// EFI_OUT_OF_RESOURCEST The pages could not be allocated.
-    /// EFI_INVALID_PARAMETER Type is not AllocateAnyPages or AllocateMaxAddress or AllocateAddress
-    /// EFI_INVALID_PARAMETER MemoryType is in the range EfiMaxMemoryType..0x6FFFFFFF.
-    /// EFI_INVALID_PARAMETER MemoryType is EfiPersistentMemoryType or EfiUnacceptedMemory.
-    /// EFI_INVALID_PARAMETER Memory is NULL.
-    /// EFI_NOT_FOUND The requested pages could not be found
-    pub fn allocate_pages<'a>(
-        self,
-        allocate_type: AllocateType,
-        memory_type: MemoryType,
-        pages: usize,
-    ) -> Result<PagesBuffer<'a>, IgnixError> {
-        let mut addr: PhysicalAddress = 0;
-        let status = unsafe {
-            (self.get_method().allocate_pages)(allocate_type, memory_type, pages, &mut addr)
-        };
+/// Allocate pages from the system.
+/// In general, OS loaders should allocate memory (and pool) of type EfiLoaderData.
+///
+/// AllocateAnyPages allocates any range of pages that satisfies the request. The address on
+/// input is ignored.
+///
+/// AllocateMaxAddress allocates a range of pages whose uppermost address is less
+/// than or equal to the address pointed to by Memory on input.
+///
+/// AllocateAddress allocate pages at the address pointed to by Memory on input.
+///
+/// RETURN CODES
+/// EFI_OUT_OF_RESOURCEST The pages could not be allocated.
+/// EFI_INVALID_PARAMETER Type is not AllocateAnyPages or AllocateMaxAddress or AllocateAddress
+/// EFI_INVALID_PARAMETER MemoryType is in the range EfiMaxMemoryType..0x6FFFFFFF.
+/// EFI_INVALID_PARAMETER MemoryType is EfiPersistentMemoryType or EfiUnacceptedMemory.
+/// EFI_INVALID_PARAMETER Memory is NULL.
+/// EFI_NOT_FOUND The requested pages could not be found
+pub fn allocate_pages<'a>(
+    allocate_type: AllocateType,
+    memory_type: MemoryType,
+    pages: usize,
+) -> Result<PagesBuffer<'a>, IgnixError> {
+    let mut addr: PhysicalAddress = 0;
+    let status = unsafe {
+        (get_boot_services().allocate_pages)(allocate_type, memory_type, pages, &mut addr)
+    };
 
-        if status.is_success() {
-            let ptr = addr as *mut u8;
-            if let Some(not_null) = NonNull::new(ptr) {
-                return Ok(PagesBuffer {
-                    ptr: not_null,
-                    num_pages: pages,
-                    _m: PhantomData,
-                });
-            }
-
-            Err(Status::OUT_OF_RESOURCES.context("allocate_pages"))?
+    if status.is_success() {
+        let ptr = addr as *mut u8;
+        if let Some(not_null) = NonNull::new(ptr) {
+            return Ok(PagesBuffer {
+                ptr: not_null,
+                num_pages: pages,
+                _m: PhantomData,
+            });
         }
 
-        Err(status.context("allocate_pages"))?
+        Err(Status::OUT_OF_RESOURCES.context("allocate_pages"))?
     }
-    /// Returns the memory allocated by AllocatePages to the firmware.
-    /// RETURN CODES:
-    ///
-    /// EFI_NOT_FOUND The requested memory pages were not allocated with AllocatePages().
-    /// EFI_INVALID_PARAMETER Memory is not a page-aligned address or Pages is invalid.
-    pub(crate) fn free_pages(
-        self,
-        memory: PhysicalAddress,
-        pages: usize,
-    ) -> Result<(), IgnixError> {
-        let status = unsafe { (self.get_method().free_pages)(memory, pages) };
-        if status.is_success() {
-            return Ok(());
-        }
-        Err(status.context("free_pages"))?
+
+    Err(status.context("allocate_pages"))?
+}
+/// Returns the memory allocated by AllocatePages to the firmware.
+/// RETURN CODES:
+///
+/// EFI_NOT_FOUND The requested memory pages were not allocated with AllocatePages().
+/// EFI_INVALID_PARAMETER Memory is not a page-aligned address or Pages is invalid.
+pub(crate) fn free_pages(
+    memory: PhysicalAddress,
+    pages: usize,
+) -> Result<(), IgnixError> {
+    let status = unsafe { (get_boot_services().free_pages)(memory, pages) };
+    if status.is_success() {
+        return Ok(());
     }
-    /// Returns a copy of the current memory map.
-    ///
-    /// RETURN CODES:
-    /// EFI_BUFFER_TOO_SMALL The MemoryMap buffer was too small. The current buffer size needed to
-    /// hold the memory map is returned in MemoryMapSize.
-    /// EFI_INVALID_PARAMETER MemoryMapSize is NULL.
-    /// EFI_INVALID_PARAMETER The MemoryMap buffer is not too small and MemoryMap is NULL.
-    pub fn get_memory_map(self) -> Result<MemoryMap, IgnixError> {
-        let mut mem_map = MemoryMap::new_empty();
-        {
-            let first_execution = unsafe {
-                (self.get_method().get_memory_map)(
-                    &mut mem_map.map_size,
-                    core::ptr::null_mut(),
-                    &mut mem_map.key,
-                    &mut mem_map.descriptor_size,
-                    &mut mem_map.descriptor_version,
-                )
-            };
-
-            if first_execution != Status::BUFFER_TOO_SMALL {
-                Err(first_execution.context("get_memory_map"))?
-            }
-        }
-
-        /* This is mandatory. Whenever you need to allocate more memory,
-         * the map size since the last call will increase.
-         * Sometimes some bullshit implementations do too much
-         * fragmentation so 8 is a good margin for me I think */
-        mem_map.map_size += (mem_map.descriptor_size * 8);
-        /* I know this is a war crime, but rust forced me to do this fix as that function.
-         * However since this is a cleaner method, I prefer to keep it.
-         * old: let pages_needed = (mem_map.map_size + PAGE_SIZE - 1) / PAGE_SIZE*/
-        let pages_needed = mem_map.map_size.div_ceil(PAGE_SIZE);
-
-        let buffer_ptr = self.allocate_pages(
-            AllocateType::AllocateAnyPages,
-            MemoryType::EfiLoaderData,
-            pages_needed,
-        )?;
-        let status = unsafe {
-            (self.get_method().get_memory_map)(
-                &mut mem_map.map_size,
-                buffer_ptr.ptr.as_ptr() as *mut MemoryDescriptor,
+    Err(status.context("free_pages"))?
+}
+/// Returns a copy of the current memory map.
+///
+/// RETURN CODES:
+/// EFI_BUFFER_TOO_SMALL The MemoryMap buffer was too small. The current buffer size needed to
+/// hold the memory map is returned in MemoryMapSize.
+/// EFI_INVALID_PARAMETER MemoryMapSize is NULL.
+/// EFI_INVALID_PARAMETER The MemoryMap buffer is not too small and MemoryMap is NULL.
+pub fn get_memory_map() -> Result<MemoryMap, IgnixError> {
+    let mut mem_map = MemoryMap::new_empty();
+    {
+        let first_execution = unsafe {
+            (get_boot_services().get_memory_map)(
+                &mut mem_map.map_size,                    
+                core::ptr::null_mut(),
                 &mut mem_map.key,
                 &mut mem_map.descriptor_size,
                 &mut mem_map.descriptor_version,
             )
         };
 
-        if status.is_success() {
-            // This converts the descriptor into NonNull<MemoryDescriptor>
-            mem_map.descriptor = Some(buffer_ptr.ptr.cast());
-            return Ok(mem_map);
+        if first_execution != Status::BUFFER_TOO_SMALL {
+            Err(first_execution.context("get_memory_map"))?
         }
-        self.free_pages(buffer_ptr.ptr.as_ptr() as PhysicalAddress, pages_needed)?;
-        Err(status.context("get_memory_map"))
     }
-    /// Allocates pool memory.
-    /// Allocates a memory region of Size bytes from memory of type PoolType and returns the
-    /// address of the allocated memory in the location referenced by Buffer. This function
-    /// allocates pages from EfiConventionalMemory as needed to grow the requested pool type
-    /// pool_type needs to be either OEM reserved use or UEFI OS Loaders.
-    ///
-    /// RETURN CODES
-    /// EFI_OUT_OF_RESOURCES The pool requested could not be allocated.
-    /// EFI_INVALID_PARAMETER PoolType is in the range EfiMaxMemoryType..0x6FFFFFFF.
-    /// EFI_INVALID_PARAMETER PoolType is EfiPersistentMemory.
-    /// EFI_INVALID_PARAMETER Buffer is NULL.
-    pub fn allocate_pool<'a>(
-        self,
-        pool_type: MemoryType,
-        size: usize,
-    ) -> Result<PoolBuffer<'a>, IgnixError> {
-        let mut raw_ptr: *mut u8 = core::ptr::null_mut();
-        let status = unsafe { (self.get_method().allocate_pool)(pool_type, size, &mut raw_ptr) };
 
-        if status.is_success() {
-            let Some(ptr) = NonNull::new(raw_ptr) else {
-                Err(Status::OUT_OF_RESOURCES.context("allocate_pool"))?
-            };
-            return Ok(PoolBuffer {
-                ptr,
-                num_bytes: size,
-                _m: PhantomData,
-            });
-        }
-        Err(status.context("allocate_pool"))
+    /* This is mandatory. Whenever you need to allocate more memory,
+     * the map size since the last call will increase.
+     * Sometimes some bullshit implementations do too much
+     * fragmentation so 8 is a good margin for me I think */
+    mem_map.map_size += (mem_map.descriptor_size * 8);
+    /* I know this is a war crime, but rust forced me to do this fix as that function.
+     * However since this is a cleaner method, I prefer to keep it.
+     * old: let pages_needed = (mem_map.map_size + PAGE_SIZE - 1) / PAGE_SIZE*/
+    let pages_needed = mem_map.map_size.div_ceil(PAGE_SIZE);
+
+    let buffer_ptr = allocate_pages(
+        AllocateType::AllocateAnyPages,
+        MemoryType::EfiLoaderData,
+        pages_needed,
+    )?;
+    let status = unsafe {
+        (get_boot_services().get_memory_map)(
+            &mut mem_map.map_size,
+            buffer_ptr.ptr.as_ptr() as *mut MemoryDescriptor,
+            &mut mem_map.key,
+            &mut mem_map.descriptor_size,
+            &mut mem_map.descriptor_version,
+        )
+    };
+
+    if status.is_success() {
+        // This converts the descriptor into NonNull<MemoryDescriptor>
+        mem_map.descriptor = Some(buffer_ptr.ptr.cast());
+        return Ok(mem_map);
     }
-    /// Returns pool memory to the firmware.
-    /// The FreePool() function returns the memory specified by Buffer to the system. On return,
-    /// the memory’s type is EfiConventionalMemory.
-    /// RETURN CODES:
-    /// EFI_INVALID_PARAMETER Buffer was invalid.
-    pub(crate) fn free_pool(self, buffer: NonNull<u8>) -> Result<(), IgnixError> {
-        let status = unsafe { (self.get_method().free_pool)(buffer.as_ptr()) };
-        if status.is_success() {
-            return Ok(());
-        }
-        Err(status.context("free_pool"))
+    free_pages(buffer_ptr.ptr.as_ptr() as PhysicalAddress, pages_needed)?;
+    Err(status.context("get_memory_map"))
+}
+/// Allocates pool memory.
+/// Allocates a memory region of Size bytes from memory of type PoolType and returns the
+/// address of the allocated memory in the location referenced by Buffer. This function
+/// allocates pages from EfiConventionalMemory as needed to grow the requested pool type
+/// pool_type needs to be either OEM reserved use or UEFI OS Loaders.
+///
+/// RETURN CODES
+/// EFI_OUT_OF_RESOURCES The pool requested could not be allocated.
+/// EFI_INVALID_PARAMETER PoolType is in the range EfiMaxMemoryType..0x6FFFFFFF.
+/// EFI_INVALID_PARAMETER PoolType is EfiPersistentMemory.
+/// EFI_INVALID_PARAMETER Buffer is NULL.
+pub fn allocate_pool<'a>(
+    pool_type: MemoryType,        
+    size: usize,
+) -> Result<PoolBuffer<'a>, IgnixError> {
+    let mut raw_ptr: *mut u8 = core::ptr::null_mut();
+    let status = unsafe { (get_boot_services().allocate_pool)(pool_type, size, &mut raw_ptr) };
+
+    if status.is_success() {
+        let Some(ptr) = NonNull::new(raw_ptr) else {
+            Err(Status::OUT_OF_RESOURCES.context("allocate_pool"))?
+        };
+        return Ok(PoolBuffer {
+            ptr,
+            num_bytes: size,
+            _m: PhantomData,
+        });
     }
+    Err(status.context("allocate_pool"))
+}
+/// Returns pool memory to the firmware.
+/// The FreePool() function returns the memory specified by Buffer to the system. On return,
+/// the memory’s type is EfiConventionalMemory.
+/// RETURN CODES:
+/// EFI_INVALID_PARAMETER Buffer was invalid.
+pub(crate) fn free_pool(buffer: NonNull<u8>) -> Result<(), IgnixError> {
+    let status = unsafe { (get_boot_services().free_pool)(buffer.as_ptr()) };
+    if status.is_success() {
+        return Ok(());
+    }
+    Err(status.context("free_pool"))
 }

@@ -2,8 +2,7 @@
 use core::{ffi::c_void, marker::PhantomData};
 
 use crate::{
-    init::SYSTEM_TABLE,
-    types::{Boolean, Handle},
+    init::SYSTEM_TABLE, services::boot::image::unload_image, types::{Boolean, Handle}
 };
 pub type Char16 = u16;
 pub type PhysicalAddress = u64;
@@ -53,13 +52,12 @@ pub struct IgnixImage<'a> {
 
 impl<'a> Drop for IgnixImage<'a> {
     fn drop(&mut self) {
-        if let Some(image_handle) = self.handle
-            && let Some(st) = SYSTEM_TABLE.get()
-                && let Some(bs) = st.get_boot_services() {
-                    bs.unload_image(image_handle);
-                }
+        if let Some(image_handle) = self.handle {
+            unload_image(image_handle);
+        }
     }
 }
+
 #[repr(C)]
 pub enum ResetType {
     /// causes a system-wide reset. This type of reset is asynchronous to system operations.

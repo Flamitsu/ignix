@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    init::SYSTEM_TABLE,
-    types::{PhysicalAddress, VirtualAddress},
+    init::SYSTEM_TABLE, services::boot::memory::{free_pages, free_pool}, types::{PhysicalAddress, VirtualAddress}
 };
 use core::{
     ffi::c_void,
@@ -240,10 +239,7 @@ impl<'a> PagesBuffer<'a> {
 }
 impl<'a> Drop for PagesBuffer<'a> {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get()
-            && let Some(bs) = st.get_boot_services() {
-                let _ = bs.free_pages(self.ptr.as_ptr() as u64, self.num_pages);
-            }
+        free_pages(self.ptr.as_ptr() as u64, self.num_pages);
     }
 }
 
@@ -264,9 +260,6 @@ impl<'a> PoolBuffer<'a> {
 
 impl<'a> Drop for PoolBuffer<'a> {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get()
-            && let Some(bs) = st.get_boot_services() {
-                bs.free_pool(self.ptr);
-            }
+        free_pool(self.ptr);
     }
 }

@@ -203,7 +203,7 @@ pub struct KeyNotifyHandle {
 }
 impl Drop for KeyNotifyHandle {
     fn drop(&mut self) {
-        let stdin = SYSTEM_TABLE.get().unwrap().get_stdin().unwrap();
+        let stdin = SYSTEM_TABLE.get().get_stdin().unwrap();
         unsafe {
             (stdin.get_protocol().unregister_key_notify)(stdin.protocol.as_ptr(), &self.handle)
         };
