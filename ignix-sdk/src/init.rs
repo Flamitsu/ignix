@@ -12,7 +12,8 @@ impl InitSystemTable {
             ptr: AtomicPtr::new(core::ptr::null_mut()),
         }
     }
-
+    /* Just a big disclaimer, UEFI is single-threaded. I'm doing this so its safe for rust and
+     * lets me use this withouth using unsafe keyword.*/
     pub fn set(&self, table: *const SystemTable) -> Result<(), Status> {
         let table_mut = table as *mut SystemTable;
         self.ptr
@@ -26,12 +27,12 @@ impl InitSystemTable {
             .map_err(|_| Status::ST_POINTER_MISSING)
     }
 
-    pub fn get(&self) -> Option<&'static SystemTable> {
+    pub fn get(&self) -> &'static SystemTable {
         let p = self.ptr.load(Ordering::SeqCst);
         if p.is_null() {
-            return None;
+            panic!("System table pointer is null.");
         }
-        Some(unsafe { &*p })
+        unsafe { &*p }
     }
 }
 

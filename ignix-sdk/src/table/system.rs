@@ -49,11 +49,11 @@ impl SystemTable {
         }
         Some(unsafe { SimpleTextOutputProtocolWrapper::new(self.std_err) })
     }
-    pub fn get_boot_services(&self) -> Option<BootServicesWrapper> {
+    pub fn get_boot_services(&self) -> Option<BootServices> {
         if self.boot_services.is_null() {
             return None;
         }
-        Some(unsafe { BootServicesWrapper::new(self.boot_services) })
+        Some(unsafe { self.boot_services })
     }
     pub fn get_runtime_services(&self) -> Option<RuntimeServicesWrapper> {
         if self.runtime_services.is_null() {
