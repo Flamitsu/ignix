@@ -56,6 +56,7 @@ impl SystemTable {
 * 
 * Safety
 * the pointer has already been check if it is null or not. */
+#[inline(always)]
 pub fn get_boot_services() -> &'static BootServices {
     let st = SYSTEM_TABLE.get();
     if st.boot_services.is_null() {
@@ -65,6 +66,7 @@ pub fn get_boot_services() -> &'static BootServices {
 }
 /* Safety
 * the pointer has already been check if it is null or not*/
+#[inline(always)]
 pub fn get_runtime_services() -> &'static RuntimeServices {
     let st = SYSTEM_TABLE.get();
     if st.runtime_services.is_null() {

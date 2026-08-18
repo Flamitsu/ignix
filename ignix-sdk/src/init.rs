@@ -7,6 +7,7 @@ pub(crate) struct InitSystemTable {
 }
 
 impl InitSystemTable {
+    #[inline(always)]
     pub const fn empty() -> Self {
         Self {
             ptr: AtomicPtr::new(core::ptr::null_mut()),
@@ -14,6 +15,7 @@ impl InitSystemTable {
     }
     /* Just a big disclaimer, UEFI is single-threaded. I'm doing this so its safe for rust and
      * lets me use this withouth using unsafe keyword.*/
+    #[inline(always)]
     pub fn set(&self, table: *const SystemTable) -> Result<(), Status> {
         let table_mut = table as *mut SystemTable;
         self.ptr
@@ -26,7 +28,7 @@ impl InitSystemTable {
             .map(|_| ())
             .map_err(|_| Status::ST_POINTER_MISSING)
     }
-
+    #[inline(always)]
     pub(crate) fn get(&self) -> &'static SystemTable {
         let p = self.ptr.load(Ordering::SeqCst);
         if p.is_null() {
