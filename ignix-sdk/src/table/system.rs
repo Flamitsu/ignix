@@ -56,7 +56,7 @@ impl SystemTable {
 * 
 * Safety
 * the pointer has already been check if it is null or not. */
-pub(crate) fn get_boot_services() -> &'static BootServices {
+pub fn get_boot_services() -> &'static BootServices {
     let st = SYSTEM_TABLE.get();
     if st.boot_services.is_null() {
         panic!("Boot services pointer is null.")
@@ -65,7 +65,7 @@ pub(crate) fn get_boot_services() -> &'static BootServices {
 }
 /* Safety
 * the pointer has already been check if it is null or not*/
-pub(crate) fn get_runtime_services() -> &'static RuntimeServices {
+pub fn get_runtime_services() -> &'static RuntimeServices {
     let st = SYSTEM_TABLE.get();
     if st.runtime_services.is_null() {
         panic!("Runtime services pointer is null.")
