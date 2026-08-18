@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    table::get_boot_services, types::{
+    table::get_boot_services,
+    types::{
         AllocateType, IgnixError, MemoryDescriptor, MemoryMap, MemoryType, PAGE_SIZE, PagesBuffer,
         PhysicalAddress, PoolBuffer, Status,
-    }
+    },
 };
 use core::{marker::PhantomData, ptr::NonNull};
 /// Allocate pages from the system.
@@ -54,10 +55,7 @@ pub fn allocate_pages<'a>(
 ///
 /// EFI_NOT_FOUND The requested memory pages were not allocated with AllocatePages().
 /// EFI_INVALID_PARAMETER Memory is not a page-aligned address or Pages is invalid.
-pub(crate) fn free_pages(
-    memory: PhysicalAddress,
-    pages: usize,
-) -> Result<(), IgnixError> {
+pub(crate) fn free_pages(memory: PhysicalAddress, pages: usize) -> Result<(), IgnixError> {
     let status = unsafe { (get_boot_services().free_pages)(memory, pages) };
     if status.is_success() {
         return Ok(());
@@ -76,7 +74,7 @@ pub fn get_memory_map() -> Result<MemoryMap, IgnixError> {
     {
         let first_execution = unsafe {
             (get_boot_services().get_memory_map)(
-                &mut mem_map.map_size,                    
+                &mut mem_map.map_size,
                 core::ptr::null_mut(),
                 &mut mem_map.key,
                 &mut mem_map.descriptor_size,
@@ -133,10 +131,7 @@ pub fn get_memory_map() -> Result<MemoryMap, IgnixError> {
 /// EFI_INVALID_PARAMETER PoolType is in the range EfiMaxMemoryType..0x6FFFFFFF.
 /// EFI_INVALID_PARAMETER PoolType is EfiPersistentMemory.
 /// EFI_INVALID_PARAMETER Buffer is NULL.
-pub fn allocate_pool<'a>(
-    pool_type: MemoryType,        
-    size: usize,
-) -> Result<PoolBuffer<'a>, IgnixError> {
+pub fn allocate_pool<'a>(pool_type: MemoryType, size: usize) -> Result<PoolBuffer<'a>, IgnixError> {
     let mut raw_ptr: *mut u8 = core::ptr::null_mut();
     let status = unsafe { (get_boot_services().allocate_pool)(pool_type, size, &mut raw_ptr) };
 

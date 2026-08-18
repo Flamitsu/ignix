@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    init::SYSTEM_TABLE, services::boot::memory::{free_pages, free_pool}, types::{PhysicalAddress, VirtualAddress}
+    init::SYSTEM_TABLE,
+    services::boot::memory::{free_pages, free_pool},
+    types::{PhysicalAddress, VirtualAddress},
 };
 use core::{
     ffi::c_void,

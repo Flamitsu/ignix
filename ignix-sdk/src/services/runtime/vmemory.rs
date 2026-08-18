@@ -1,7 +1,10 @@
 use core::{ffi::c_void, ptr::null_mut};
 
 use crate::{
-    init::SYSTEM_TABLE, services::boot::memory::get_memory_map, table::get_runtime_services, types::{DebugDisposition, IgnixError, MemoryDescriptor, MemoryMap, Status}
+    init::SYSTEM_TABLE,
+    services::boot::memory::get_memory_map,
+    table::get_runtime_services,
+    types::{DebugDisposition, IgnixError, MemoryDescriptor, MemoryMap, Status},
 };
 /// Changes the runtime addressing mode of EFI firmware from physical to virtual.
 ///
@@ -57,7 +60,7 @@ pub fn set_virtual_address_map() -> Result<(), IgnixError> {
 /// The platform should describe this runtime service as unsupported at runtime via an
 /// EFI_RT_PROPERTIES_TABLE configuration table.
 pub fn convert_pointer(
-    debug_disposition: DebugDisposition,        
+    debug_disposition: DebugDisposition,
     address: &mut *mut c_void,
 ) -> Result<(), IgnixError> {
     assert!(

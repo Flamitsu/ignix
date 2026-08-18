@@ -1,5 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::{init::SYSTEM_TABLE, println, services::boot::event::{close_event, restore_tpl}, types::Guid};
+use crate::{
+    init::SYSTEM_TABLE,
+    println,
+    services::boot::event::{close_event, restore_tpl},
+    types::Guid,
+};
 use core::ffi::c_void;
 
 pub type Event = *mut c_void;

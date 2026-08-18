@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    table::{SystemTable, get_boot_services} ,
+    table::{SystemTable, get_boot_services},
     types::{Guid, IgnixError, Status, Table},
 };
 use core::{ffi::c_void, time::Duration};
@@ -14,10 +14,7 @@ use core::{ffi::c_void, time::Duration};
 /// EFI_INVALID_PARAMETER The supplied WatchdogCode is invalid.
 /// EFI_UNSUPPORTED The system does not have a watchdog timer.
 /// EFI_DEVICE_ERROR The watch dog timer could not be programmed due to a hardware error.
-pub fn set_watchdog_timer(
-    timeout: Duration,
-    watchdog_code: u64,
-) -> Result<(), IgnixError> {
+pub fn set_watchdog_timer(timeout: Duration, watchdog_code: u64) -> Result<(), IgnixError> {
     let status = unsafe {
         (get_boot_services().set_watch_dog_timer)(
             timeout.as_secs().try_into().unwrap(),
@@ -65,17 +62,14 @@ pub fn copy_mem(dest: &mut [u8], src: &[u8]) -> Result<(), IgnixError> {
     unsafe {
         (get_boot_services().copy_mem)(
             dest.as_mut_ptr() as *const c_void,
-            src.as_ptr() as *const c_void,                
+            src.as_ptr() as *const c_void,
             src.len(),
         )
     }
     Ok(())
 }
 /// Fills a buffer with a specified value.
-pub fn set_mem<const N: usize>(
-    mut buffer: [u8; N],
-    value: u8,
-) -> Result<(), IgnixError> {
+pub fn set_mem<const N: usize>(mut buffer: [u8; N], value: u8) -> Result<(), IgnixError> {
     unsafe {
         (get_boot_services().set_mem)(buffer.as_mut_ptr() as *const c_void, buffer.len(), value)
     }

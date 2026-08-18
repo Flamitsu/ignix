@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    table::get_boot_services, types::{
+    table::get_boot_services,
+    types::{
         DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, HandleBuffer,
         IgnixError, IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType,
         OpenProtocolAttributes, OpenProtocolInformation, OpenProtocolInformationEntry,
         ProtocolGuard, ProtocolsPerHandle, SearchType, Status, Uuid,
-    }
+    },
 };
 use core::{
     ffi::c_void,
@@ -53,7 +54,7 @@ pub fn install_protocol_interface<'p, 'i: 'p>(
     Ok(IgnixProtocol {
         image,
         guid: *guid,
-        interface: Some(interface_ptr),        
+        interface: Some(interface_ptr),
     })
 }
 /// Removes a protocol interface from a device handle.
@@ -84,7 +85,7 @@ pub(crate) fn uninstall_protocol_interface(
     if status.is_error() {
         Err(status.context("uninstall_protocol_interface"))?
     }
-    Ok(())    
+    Ok(())
 }
 /// Reinstalls a protocol interface on a device handle.
 /// The ReinstallProtocolInterface() function reinstalls a protocol interface on a device handle.
@@ -108,7 +109,7 @@ pub fn reinstall_protocol_interface(
     };
     let status = unsafe {
         (get_boot_services().reinstall_protocol_interface)(
-            handle_ptr,                
+            handle_ptr,
             &protocol.guid,
             old_interface,
             new_interface as *const c_void,
@@ -201,7 +202,7 @@ pub fn locate_handle<const N: usize>(
             search_key_ptr,
             &mut buffer_size,
             result.storage.as_mut_ptr(),
-        )        
+        )
     };
 
     if status.is_error() {
@@ -241,7 +242,7 @@ pub fn handle_protocol<'p, 'i: 'p>(
     };
 
     if status.is_error() {
-        Err(status.context("handle_protocol"))?        
+        Err(status.context("handle_protocol"))?
     }
     let interface_option = if interface.is_null() {
         None
@@ -360,12 +361,7 @@ pub(crate) fn close_protocol(
     agent_handle: Handle,
 ) -> Result<(), IgnixError> {
     let status = unsafe {
-        (get_boot_services().close_protocol)(
-            handle,
-            protocol,
-            agent_handle,
-            core::ptr::null_mut(),
-        )
+        (get_boot_services().close_protocol)(handle, protocol, agent_handle, core::ptr::null_mut())
     };
     if status.is_error() {
         Err(status.context("close_protocol"))?
@@ -448,16 +444,16 @@ pub fn protocols_per_handle(handle: Handle) -> Result<ProtocolsPerHandle, IgnixE
     })
 }
 
-    /// Returns an array of handles that support the requested protocol in a buffer
-    /// allocated from pool
-    ///
-    /// RETURN CODES:
-    /// EFI_INVALID_PARAMETER NoHandles is NULL
-    /// EFI_INVALID_PARAMETER Buffer is NULL
-    /// EFI_NOT_FOUND No handles match the search.
-    /// EFI_OUT_OF_RESOURCES There is not enough pool memory to store the matching results.
+/// Returns an array of handles that support the requested protocol in a buffer
+/// allocated from pool
+///
+/// RETURN CODES:
+/// EFI_INVALID_PARAMETER NoHandles is NULL
+/// EFI_INVALID_PARAMETER Buffer is NULL
+/// EFI_NOT_FOUND No handles match the search.
+/// EFI_OUT_OF_RESOURCES There is not enough pool memory to store the matching results.
 pub fn locate_handle_buffer(
-    search_type: SearchType,        
+    search_type: SearchType,
     protocol: Option<&Guid>,
     search_key: Option<&c_void>,
 ) -> Result<HandleBuffer, IgnixError> {
@@ -500,20 +496,14 @@ pub fn locate_handle_buffer(
 /// RETURN CODES:
 /// EFI_INVALID_PARAMETER Interface is NULL. Protocol is NULL.
 /// EFI_NOT_FOUND No protocol instances were found that match Protocol and Registration
-pub fn locate_protocol<T: Uuid>(
-    register: Option<*const c_void>,
-) -> Result<&'static T, IgnixError> {
+pub fn locate_protocol<T: Uuid>(register: Option<*const c_void>) -> Result<&'static T, IgnixError> {
     let mut interface: *mut c_void = core::ptr::null_mut();
     let register_ptr = match register {
         None => core::ptr::null_mut(),
         Some(ptr) => ptr,
     };
     let status = unsafe {
-        (get_boot_services().locate_protocol)(
-            &T::GUID as *const Guid,
-            register_ptr,
-            &mut interface,
-        )
+        (get_boot_services().locate_protocol)(&T::GUID as *const Guid, register_ptr, &mut interface)
     };
     if status.is_error() {
         Err(status.context("locate_protocol"))?

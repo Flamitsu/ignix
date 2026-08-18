@@ -53,7 +53,7 @@ impl SystemTable {
 }
 /* The panic in get_boot_services & get_runtime_services its because it can't do anything to
 * try to solve it. Its an architecture violation and its unrecoverable
-* 
+*
 * Safety
 * the pointer has already been check if it is null or not. */
 #[inline(always)]

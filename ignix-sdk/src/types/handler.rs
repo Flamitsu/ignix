@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    init::SYSTEM_TABLE, services::boot::{event::close_event, handler::{close_protocol, uninstall_protocol_interface}, memory::free_pool}, types::{DevicePathProtocol, Event, Guid, IgnixImage}
+    init::SYSTEM_TABLE,
+    services::boot::{
+        event::close_event,
+        handler::{close_protocol, uninstall_protocol_interface},
+        memory::free_pool,
+    },
+    types::{DevicePathProtocol, Event, Guid, IgnixImage},
 };
 use core::{
     ffi::c_void,
@@ -68,7 +74,7 @@ pub struct IgnixProtocol<'p, 'i> {
 
 impl<'p> Drop for IgnixProtocol<'p, '_> {
     fn drop(&mut self) {
-        if let Some(image_handle) = self.image.handle{
+        if let Some(image_handle) = self.image.handle {
             uninstall_protocol_interface(image_handle, &self.guid, self.interface);
         }
     }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    services::boot::memory, table::get_boot_services, types::{DevicePathProtocol, Handle, IgnixError, IgnixImage, MemoryMap, Status}
+    services::boot::memory,
+    table::get_boot_services,
+    types::{DevicePathProtocol, Handle, IgnixError, IgnixImage, MemoryMap, Status},
 };
 use core::{ffi::c_void, marker::PhantomData};
 
@@ -75,14 +77,12 @@ pub fn load_image<'a>(
 /// Exit code from image Exit code from image.
 /// EFI_SECURITY_VIOLATION The current platform policy specifies that the image should not be
 /// started.
-pub fn start_image<'a>(
-    mut image: IgnixImage<'a>,
-) -> Result<(), (IgnixError, IgnixImage<'a>)> {
+pub fn start_image<'a>(mut image: IgnixImage<'a>) -> Result<(), (IgnixError, IgnixImage<'a>)> {
     let handle: Handle = match image.handle {
         Some(ptr) => ptr,
         None => core::ptr::null_mut(),
     };
-    
+
     let status = unsafe {
         (get_boot_services().start_image)(handle, core::ptr::null_mut(), core::ptr::null_mut())
     };
@@ -138,10 +138,7 @@ pub fn exit(efi_handle: Handle, efi_status: Status) -> Result<(), IgnixError> {
 
 /// Terminates all boot services.
 /// The handle argument is the one the UEFI gives to the binary whenever it's executed
-pub fn exit_boot_services(
-    efi_handle: Handle,
-    memory_map: &MemoryMap,
-) -> Result<(), IgnixError> {
+pub fn exit_boot_services(efi_handle: Handle, memory_map: &MemoryMap) -> Result<(), IgnixError> {
     let status = unsafe { (get_boot_services().exit_boot_services)(efi_handle, memory_map.key) };
     if status.is_error() {
         Err(status.context("exit_boot_services"))?

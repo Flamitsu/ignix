@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    init::SYSTEM_TABLE, table::get_boot_services, types::{
+    init::SYSTEM_TABLE,
+    table::get_boot_services,
+    types::{
         Event, EventGroup, EventNotifyFn, EventType, IgnixError, IgnixEvent, Status, TimerDelay,
         Tpl, TplGuardian,
-    }
+    },
 };
 use core::{ffi::c_void, time::Duration};
 /// Raises a task’s priority level and returns its previous level.

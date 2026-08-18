@@ -2,7 +2,7 @@
 use crate::{table::SystemTable, types::Status};
 use core::sync::atomic::{AtomicPtr, Ordering};
 
-pub(crate) struct InitSystemTable {
+pub struct InitSystemTable {
     ptr: AtomicPtr<SystemTable>,
 }
 
@@ -29,7 +29,7 @@ impl InitSystemTable {
             .map_err(|_| Status::ST_POINTER_MISSING)
     }
     #[inline(always)]
-    pub(crate) fn get(&self) -> &'static SystemTable {
+    pub fn get(&self) -> &'static SystemTable {
         let p = self.ptr.load(Ordering::SeqCst);
         if p.is_null() {
             panic!("System table pointer is null.");

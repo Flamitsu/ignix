@@ -1,7 +1,8 @@
 use core::{ffi::c_void, mem::zeroed, ptr::null};
 
 use crate::{
-    table::get_runtime_services, types::{Boolean, IgnixError, Status, Time, TimeCapabilities, TimeStruct, WakeupTime}
+    table::get_runtime_services,
+    types::{Boolean, IgnixError, Status, Time, TimeCapabilities, TimeStruct, WakeupTime},
 };
 /// Returns the current date and time information, with the time-keeping capabilities of the hw
 /// platform
@@ -108,4 +109,3 @@ pub fn set_wakeup_time(enable: bool, time: Option<&Time>) -> Result<(), IgnixErr
     }
     Ok(())
 }
-

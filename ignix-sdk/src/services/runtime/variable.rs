@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    table::get_runtime_services, types::{
+    table::get_runtime_services,
+    types::{
         Guid, IgnixError, NextVariableName, NonVolatileRamStatus, Status, Variable,
         VariableAttributes,
-    }
+    },
 };
 use core::{
     ffi::c_void,
@@ -53,7 +54,7 @@ pub fn get_variable<'a, const BUFFER_SIZE: usize>(
         )
     };
     if status.is_error() {
-        Err(status.context("get_variable"))?        
+        Err(status.context("get_variable"))?
     }
     Ok(Variable {
         variable_name,
@@ -61,7 +62,7 @@ pub fn get_variable<'a, const BUFFER_SIZE: usize>(
         attr,
         data_size,
         data,
-    })    
+    })
 }
 /// Enumerates the current variable names.
 ///
@@ -108,7 +109,7 @@ pub fn get_next_variable_name<const N: usize>() -> Result<NextVariableName<N>, I
 /// EFI_UNSUPPORTED This call is not supported by this platform at the time the call is made. The
 /// platform should describe this runtime service as unsupported at runtime via
 /// an EFI_RT_PROPERTIES_TABLE configuration table.
-pub fn set_variable<const N: usize>( variable: &Variable<'_, N> ) -> Result<(), IgnixError> {
+pub fn set_variable<const N: usize>(variable: &Variable<'_, N>) -> Result<(), IgnixError> {
     let status = unsafe {
         (get_runtime_services().set_variable)(
             variable.variable_name.as_ptr(),
@@ -132,9 +133,7 @@ pub fn set_variable<const N: usize>( variable: &Variable<'_, N> ) -> Result<(), 
 /// MaximumVariableStorageSize,
 /// RemainingVariableStorageSize,
 /// MaximumVariableSize are undefined.
-pub fn query_variable_info(
-    attr: VariableAttributes,
-) -> Result<NonVolatileRamStatus, IgnixError> {
+pub fn query_variable_info(attr: VariableAttributes) -> Result<NonVolatileRamStatus, IgnixError> {
     let mut maximum_variable_storage_size: u64 = 0;
     let mut remaining_variable_storage_size: u64 = 0;
     let mut maximum_variable_size: u64 = 0;

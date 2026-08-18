@@ -2,7 +2,9 @@
 use core::{ffi::c_void, marker::PhantomData};
 
 use crate::{
-    init::SYSTEM_TABLE, services::boot::image::unload_image, types::{Boolean, Handle}
+    init::SYSTEM_TABLE,
+    services::boot::image::unload_image,
+    types::{Boolean, Handle},
 };
 pub type Char16 = u16;
 pub type PhysicalAddress = u64;

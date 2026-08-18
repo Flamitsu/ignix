@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    table::get_runtime_services, types::{IgnixError, ResetType, Status}
+    table::get_runtime_services,
+    types::{IgnixError, ResetType, Status},
 };
 
 /// This is just a copy from the GetNextMonotonicCount but for the runtime services
