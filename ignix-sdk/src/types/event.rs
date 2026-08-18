@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use crate::{init::SYSTEM_TABLE, println, types::Guid};
+use crate::{init::SYSTEM_TABLE, println, services::boot::event::{close_event, restore_tpl}, types::Guid};
 use core::ffi::c_void;
 
 pub type Event = *mut c_void;
@@ -167,10 +167,7 @@ pub struct IgnixEvent<'a> {
 
 impl<'a> Drop for IgnixEvent<'a> {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get()
-            && let Some(bt) = st.get_boot_services() {
-                let _ = bt.close_event(self.raw_event);
-            }
+        let _ = close_event(self.raw_event);
     }
 }
 
@@ -195,9 +192,6 @@ impl TplGuardian {
 
 impl Drop for TplGuardian {
     fn drop(&mut self) {
-        if let Some(st) = SYSTEM_TABLE.get()
-            && let Some(bt) = st.get_boot_services() {
-                bt.restore_tpl(self.old_tlp);
-            }
+        restore_tpl(self.old_tlp);
     }
 }
