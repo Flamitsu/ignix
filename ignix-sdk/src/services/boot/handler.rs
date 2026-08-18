@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    table::get_boot_services,
-    types::{
-        DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, HandleBuffer,
-        IgnixError, IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType,
-        OpenProtocolAttributes, OpenProtocolInformation, OpenProtocolInformationEntry,
-        ProtocolGuard, ProtocolsPerHandle, SearchType, Status, Uuid,
-    },
+    init::HANDLE, table::get_boot_services, types::{
+        DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, HandleBuffer, IgnixError, IgnixEvent, IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType, OpenProtocolAttributes, OpenProtocolInformation, OpenProtocolInformationEntry, ProtocolGuard, ProtocolsPerHandle, SearchType, Status, Uuid
+    }
 };
 use core::{
     ffi::c_void,
@@ -133,13 +129,13 @@ pub fn reinstall_protocol_interface(
 /// EFI_INVALID_PARAMETER Registration is NULL.
 pub fn register_protocol_notify<'a>(
     protocol: &Guid,
-    event: Event,
+    event: &IgnixEvent,
 ) -> Result<IgnixProtocolNotification<'a>, IgnixError> {
     let mut search_key = core::ptr::null_mut();
     let status = unsafe {
         (get_boot_services().register_protocol_notify)(
             protocol as *const Guid,
-            event,
+            event.raw_event,
             &mut search_key,
         )
     };
@@ -148,7 +144,7 @@ pub fn register_protocol_notify<'a>(
     }
     Ok(IgnixProtocolNotification {
         search_key,
-        event,
+        event: event.raw_event,
         _m: PhantomData,
     })
 }
@@ -311,7 +307,7 @@ pub fn locate_device_path(
 /// EFI_ACCESS_DENIED Attributes is BY_DRIVEREXCLUSIVE and there is an item on the open list with an attribute of BY_DRIVEREXCLUSIVE whose agent handle is different than AgentHandle.
 /// EFI_ACCESS_DENIED Attributes is BY_DRIVEREXCLSUIVE or EXCLUSIVE and there are items in the open list with an attribute of BY_DRIVER that could not be removed when EFI_BOOT_SERVICES.DisconnectController() was called for that open item.
 pub fn open_protocol<'a, T>(
-    handle: Handle,
+    handle: &Handle,
     protocol: &'a Guid,
     agent_handle: Handle,
     attr: OpenProtocolAttributes,
@@ -319,7 +315,7 @@ pub fn open_protocol<'a, T>(
     let mut interface: *mut c_void = core::ptr::null_mut();
     let status = unsafe {
         (get_boot_services().open_protocol)(
-            handle,
+            *handle,
             protocol,
             &mut interface,
             agent_handle,
@@ -333,7 +329,7 @@ pub fn open_protocol<'a, T>(
     }
 
     Ok(ProtocolGuard {
-        handle,
+        handle: handle.clone(),
         protocol,
         agent_handle,
         interface: interface as *mut T,

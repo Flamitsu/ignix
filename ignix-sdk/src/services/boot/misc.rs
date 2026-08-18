@@ -101,11 +101,11 @@ pub fn get_next_monotonic_count(count: u64) -> Result<u64, IgnixError> {
 /// EFI_NOT_FOUND An attempt was made to delete a nonexistent entry.
 /// EFI_OUT_OF_RESOURCES There is not enough memory available to complete the operation
 pub fn install_configuration_table<T: Table>(
-    guid: *const Guid,
-    table: Option<*const T>,
+    guid: &Guid,
+    table: Option<&T>,
 ) -> Result<(), IgnixError> {
     let table_ptr = match table {
-        Some(ptr) => ptr as *const c_void,
+        Some(ptr) => ptr as *const T as *const c_void,
         None => core::ptr::null(),
     };
 

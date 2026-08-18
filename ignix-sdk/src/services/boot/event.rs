@@ -185,8 +185,8 @@ pub fn wait_for_event<const N: usize>(event: &[Event]) -> Result<usize, IgnixErr
 /// RETURN CODES:
 /// EFI_NOT_READY The event is not in the signaled state.
 /// EFI_INVALID_PARAMETER Event is of type EVT_NOTIFY_SIGNAL.
-pub fn check_event(event: Event) -> Result<(), IgnixError> {
-    let status = unsafe { (get_boot_services().check_event)(event) };
+pub fn check_event(event: &IgnixEvent) -> Result<(), IgnixError> {
+    let status = unsafe { (get_boot_services().check_event)(event.raw_event) };
     if status.is_error() {
         Err(status.context("check_event"))?
     }
@@ -199,13 +199,13 @@ pub fn check_event(event: Event) -> Result<(), IgnixError> {
 /// RETURN CODES:
 /// EFI_INVALID_PARAMETER Event or Type is not valid.
 pub fn set_timer(
-    event: Event,
+    event: &IgnixEvent,
     timer_delay: TimerDelay,
     trigger_time: Duration,
 ) -> Result<(), IgnixError> {
     let status = unsafe {
         (get_boot_services().set_timer)(
-            event,
+            event.raw_event,
             timer_delay,
             trigger_time.as_nanos().try_into().unwrap(),
         )
