@@ -6,7 +6,7 @@ use crate::{
         TimeCapabilities, VariableAttributes,
     },
 };
-use core::{ffi::c_void, ptr::NonNull};
+use core::ffi::c_void;
 #[allow(unused)]
 #[repr(C)]
 pub struct RuntimeServices {
@@ -82,20 +82,3 @@ pub struct RuntimeServices {
 }
 
 impl Table for RuntimeServices {}
-
-#[derive(Clone, Copy)]
-#[allow(unused)]
-pub struct RuntimeServicesWrapper {
-    function: NonNull<RuntimeServices>,
-}
-#[allow(unused)]
-impl RuntimeServicesWrapper {
-    pub unsafe fn new(function: *mut RuntimeServices) -> Self {
-        let non_null = NonNull::new(function).expect("Runtime Services pointer cannot be null");
-        Self { function: non_null }
-    }
-    #[inline(always)]
-    pub fn get_method(&self) -> &RuntimeServices {
-        unsafe { self.function.as_ref() }
-    }
-}

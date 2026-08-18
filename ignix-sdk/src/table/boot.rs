@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    init::SYSTEM_TABLE, table::header::Header, types::{
+    table::header::Header, types::{
         AllocateType, DevicePathProtocol, Event, EventGroup, EventNotifyFn, EventType, Guid,
         Handle, InterfaceType, MemoryDescriptor, MemoryType, OpenProtocolAttributes,
         OpenProtocolInformationEntry, PhysicalAddress, SearchType, Status, Table, TimerDelay, Tpl,
     }
 };
-use core::{ffi::c_void, ptr::NonNull};
+use core::ffi::c_void;
 /*
  * This structure can be found in page 92 UEFI spec 2.11
  */
@@ -234,25 +234,3 @@ pub struct BootServices {
 }
 
 impl Table for BootServices {}
-
-#[derive(Clone, Copy)]
-pub struct BootServicesWrapper {
-    function: NonNull<BootServices>,
-}
-
-impl BootServicesWrapper {
-    pub unsafe fn new(function: *mut BootServices) -> Self {
-        let non_null = NonNull::new(function).expect("BootServices function cannot be null");
-        Self { function: non_null }
-    }
-    #[inline(always)]
-    pub fn get_method(&self) -> &BootServices {
-        unsafe { self.function.as_ref() }
-    }
-}
-pub(crate) fn boot_services_wrapper() -> BootServices {
-    if let Some(st) = SYSTEM_TABLE.get() {
-    
-    }
-    SYSTEM_TABLE.get().unwrap().get_boot_services().unwrap()
-}
