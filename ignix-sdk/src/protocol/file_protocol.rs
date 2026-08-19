@@ -5,11 +5,11 @@ use core::{
     ptr::{NonNull, null_mut},
 };
 #[repr(C)]
-pub struct FileProtocol {
+pub struct FileProtocolFFI {
     revision: u64,
     pub open: unsafe extern "efiapi" fn(
         this: *mut Self,
-        new_handle: *mut *mut FileProtocol,
+        new_handle: *mut *mut FileProtocolFFI,
         file_name: *const u16,
         open_mode: OpenModes,
         attr: FileAttributes,
@@ -43,23 +43,23 @@ pub struct FileProtocol {
     file_ex: *mut c_void,
 }
 
-pub struct FileProtocolWrapper {
-    protocol: NonNull<FileProtocol>,
+pub struct FileProtocol {
+    protocol: NonNull<FileProtocolFFI>,
 }
-impl FileProtocolWrapper {
+impl FileProtocol {
     /// # Safety
     /// So this function is safe to use because if you don't have this protocol mapped
     /// in your firmware you're screwd anyways so it gives a panic and reduces code smell
     /// (Need to apply this pattern for others) so it's completely secure to use
-    pub unsafe fn new(protocol: *mut FileProtocol) -> Self {
-        let non_null = NonNull::new(protocol).expect("FileProtocol pointer cannot be null");
+    pub unsafe fn new(protocol: *mut FileProtocolFFI) -> Self {
+        let non_null = NonNull::new(protocol).expect("FileProtocolFFI pointer cannot be null");
         Self { protocol: non_null }
     }
     // Safety:
     // The previous assert in the new function must be ALWAYS PRESENT so this unsafe code doesn't
     // blow everything up.
     #[inline(always)]
-    fn get_protocol(&self) -> &FileProtocol {
+    fn get_protocol(&self) -> &FileProtocolFFI {
         unsafe { self.protocol.as_ref() }
     }
     /// Opens a new file relative to the source directory's location.
@@ -80,8 +80,8 @@ impl FileProtocolWrapper {
         filename: &[Char16],
         open_mode: OpenModes,
         attr: FileAttributes,
-    ) -> Result<FileProtocolWrapper, IgnixError> {
-        let mut new_handle: *mut FileProtocol = null_mut();
+    ) -> Result<FileProtocol, IgnixError> {
+        let mut new_handle: *mut FileProtocolFFI = null_mut();
         let status = unsafe {
             (self.get_protocol().open)(
                 self.protocol.as_ptr(),
@@ -92,9 +92,9 @@ impl FileProtocolWrapper {
             )
         };
         if status.is_error() {
-            Err(status.context("FileProtocol.open"))?
+            Err(status.context("FileProtocolFFI.open"))?
         }
-        Ok(unsafe { FileProtocolWrapper::new(new_handle) })
+        Ok(unsafe { FileProtocol::new(new_handle) })
     }
     // Closes a file
     // The status return isn't used here since you don't usually need to call this,
@@ -110,7 +110,7 @@ impl FileProtocolWrapper {
         let status = unsafe { (self.get_protocol().delete)(self.protocol.as_ptr()) };
         // Since it will close the File alone, don't need the RAII pattern to do it anymore.
         if status.is_error() {
-            Err(status.context("FileProtocol.delete"))?
+            Err(status.context("FileProtocolFFI.delete"))?
         }
         Ok(())
     }
@@ -141,7 +141,7 @@ impl FileProtocolWrapper {
             )
         };
         if status.is_error() {
-            Err(status.context("FileProtocol.read"))?
+            Err(status.context("FileProtocolFFI.read"))?
         }
         Ok(size)
     }
@@ -165,7 +165,7 @@ impl FileProtocolWrapper {
             )
         };
         if status.is_error() {
-            Err(status.context("FileProtocol.write"))?
+            Err(status.context("FileProtocolFFI.write"))?
         }
         Ok(())
     }
@@ -183,7 +183,7 @@ impl FileProtocolWrapper {
         let status =
             unsafe { (self.get_protocol().set_position)(self.protocol.as_ptr(), &mut position) };
         if status.is_error() {
-            Err(status.context("FileProtocol.set_position"))?
+            Err(status.context("FileProtocolFFI.set_position"))?
         }
         Ok(())
     }
@@ -248,13 +248,13 @@ impl FileProtocolWrapper {
     pub fn flush(&mut self) -> Result<(), IgnixError> {
         let status = unsafe { (self.get_protocol().flush)(self.protocol.as_ptr()) };
         if status.is_error() {
-            Err(status.context("FileProtocol.flush"))?
+            Err(status.context("FileProtocolFFI.flush"))?
         }
         Ok(())
     }
 }
 
-impl Drop for FileProtocolWrapper {
+impl Drop for FileProtocol {
     fn drop(&mut self) {
         self.close();
     }

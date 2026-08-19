@@ -12,58 +12,49 @@ use core::{
  * this, but anyways they also do whathever they want with the firmware so its not even granted on
  * any other */
 #[repr(C)]
-pub struct SimpleTextInputProtocol {
+pub struct SimpleTextInputProtocolFFI {
     pub reset:
-        unsafe extern "efiapi" fn(this: *mut SimpleTextInputProtocol, extended: bool) -> Status,
+        unsafe extern "efiapi" fn(this: *mut SimpleTextInputProtocolFFI, extended: bool) -> Status,
     pub read_key_stroke: unsafe extern "efiapi" fn(
-        this: *mut SimpleTextInputProtocol,
+        this: *mut SimpleTextInputProtocolFFI,
         keydata: *mut KeyData,
     ) -> Status,
     pub wait_for_key: Event,
     pub set_state: unsafe extern "efiapi" fn(
-        this: *mut SimpleTextInputProtocol,
+        this: *mut SimpleTextInputProtocolFFI,
         key_toggle_state: *const KeyToggleState,
     ) -> Status,
     pub register_key_notify: unsafe extern "efiapi" fn(
-        this: *mut SimpleTextInputProtocol,
+        this: *mut SimpleTextInputProtocolFFI,
         key_data: *const KeyData,
         key_notification_function: KeyNotifyFunction,
         notify_handle: *mut Handle,
     ) -> Status,
     pub unregister_key_notify: unsafe extern "efiapi" fn(
-        this: *mut SimpleTextInputProtocol,
+        this: *mut SimpleTextInputProtocolFFI,
         notification_handle: *const Handle,
     ) -> Status,
 }
 
-impl Uuid for SimpleTextInputProtocol {
-    const GUID: Guid = Guid::new(
-        0xdd9e7534,
-        0x7762,
-        0x4698,
-        [0x8c, 0x14, 0xf5, 0x85, 0x17, 0xa6, 0x25, 0xaa],
-    );
+pub struct SimpleTextInputProtocol {
+    protocol: NonNull<SimpleTextInputProtocolFFI>,
 }
 
-pub struct SimpleTextInputProtocolWrapper {
-    protocol: NonNull<SimpleTextInputProtocol>,
-}
-
-impl SimpleTextInputProtocolWrapper {
+impl SimpleTextInputProtocol {
     /// # Safety
     /// So this function is safe to use because if you don't have this protocol mapped
     /// in your firmware you're screwd anyways so it gives a panic and reduces code smell
     /// (Need to apply this pattern for others) so it's completely secure to use
-    pub unsafe fn new(protocol: *mut SimpleTextInputProtocol) -> Self {
+    pub unsafe fn new(protocol: *mut SimpleTextInputProtocolFFI) -> Self {
         let non_null =
-            NonNull::new(protocol).expect("SimpleTextInputProtocol pointer cannot be null");
+            NonNull::new(protocol).expect("SimpleTextInputProtocolFFI pointer cannot be null");
         Self { protocol: non_null }
     }
     // Safety:
     // The previous assert in the new function must be ALWAYS PRESENT so this unsafe code doesn't
     // blow everything up.
     #[inline(always)]
-    fn get_protocol(&self) -> &SimpleTextInputProtocol {
+    fn get_protocol(&self) -> &SimpleTextInputProtocolFFI {
         unsafe { self.protocol.as_ref() }
     }
     /// Resets the input device hardware
@@ -135,6 +126,16 @@ impl SimpleTextInputProtocolWrapper {
         Ok(KeyNotifyHandle { handle })
     }
 }
+
+impl Uuid for SimpleTextInputProtocol {
+    const GUID: Guid = Guid::new(
+        0xdd9e7534,
+        0x7762,
+        0x4698,
+        [0x8c, 0x14, 0xf5, 0x85, 0x17, 0xa6, 0x25, 0xaa],
+    );
+}
+
 #[repr(C)]
 pub struct InputKey {
     pub scan_code: u16,
@@ -178,8 +179,10 @@ impl KeyShiftState {
         (self.0 & other.0) != 0
     }
 }
+
 #[repr(C)]
 pub struct KeyToggleState(pub u8);
+
 impl KeyToggleState {
     pub const TOGGLE_STATE_VALID: Self = Self(0x80);
     pub const KEY_STATE_EXPOSED: Self = Self(0x40);
@@ -193,14 +196,17 @@ impl KeyToggleState {
         (self.0 & other.0) != 0
     }
 }
+
 #[repr(C)]
 pub struct KeyNotifyFunction {
     key_data: *const KeyData,
 }
+
 #[repr(C)]
 pub struct KeyNotifyHandle {
     handle: Handle,
 }
+
 impl Drop for KeyNotifyHandle {
     fn drop(&mut self) {
         let stdin = SYSTEM_TABLE.get().get_stdin().unwrap();

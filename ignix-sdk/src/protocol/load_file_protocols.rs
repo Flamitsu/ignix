@@ -4,7 +4,7 @@ use crate::types::{DevicePathProtocol, Guid, Uuid};
 #[repr(C)]
 /// This protocol is used to retrieve boot files from arbitrary devices (Like PXE boot or boot from
 /// USB to the main disk)
-pub struct LoadFileProtocol {
+pub struct LoadFileProtocolFFI {
     pub load_file: unsafe extern "efiapi" fn(
         this: *mut Self,
         file_path: *const DevicePathProtocol,
@@ -13,8 +13,8 @@ pub struct LoadFileProtocol {
         buff: *mut c_void,
     ),
 }
-pub struct LoadFileProtocolWrapper {
-    pub protocol: NonNull<LoadFileProtocol>
+pub struct LoadFileProtocol {
+    pub protocol: NonNull<LoadFileProtocolFFI>
 }
 impl Uuid for LoadFileProtocol {
     const GUID: Guid = Guid::new(
@@ -25,7 +25,7 @@ impl Uuid for LoadFileProtocol {
     );
 }
 /// Used to obtain files from arbitrary devices but are not used as boot options
-pub struct LoadFile2Protocol {
+pub struct LoadFile2ProtocolFFI {
     pub load_file: unsafe extern "efiapi" fn(
         this: *mut Self,
         file_path: *const DevicePathProtocol,
@@ -34,7 +34,7 @@ pub struct LoadFile2Protocol {
         buff: *mut c_void,
     ),
 }
-pub struct LoadFile2ProtocolWrapper {
+pub struct LoadFile2Protocol {
     pub protocol: NonNull<LoadFile2Protocol>
 }
 impl Uuid for LoadFile2Protocol {

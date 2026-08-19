@@ -1,19 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::types::{Boolean, Event, Guid, Handle, IgnixError, Status, Uuid};
 use core::{ffi::c_void, ptr::NonNull};
-#[repr(C)]
-pub struct SimpleTextOutputMode {
-    pub max_mode: u32,
-    pub mode: u32,
-    pub attribute: u32,
-    pub cursor_col: u32,
-    pub cursor_row: u32,
-    pub cursor_visible: Boolean,
-}
 
 #[repr(C)]
 #[allow(unused)]
-pub struct SimpleTextOutputProtocol {
+pub struct SimpleTextOutputProtocolFFI {
     pub reset: unsafe extern "efiapi" fn(this: *mut Self, extended: bool) -> Status,
     pub output_string: unsafe extern "efiapi" fn(this: *mut Self, string: *const u16) -> Status,
     pub test_string: unsafe extern "efiapi" fn(this: *mut Self, string: *const u16) -> Status,
@@ -32,30 +23,21 @@ pub struct SimpleTextOutputProtocol {
     pub mode: *mut SimpleTextOutputMode,
 }
 
-impl Uuid for SimpleTextOutputProtocol {
-    const GUID: Guid = Guid::new(
-        0x387477c2,
-        0x69c7,
-        0x11d2,
-        [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
-    );
-}
-
 // This is the wrapper that allows to use SimpleTextOutputProtocol withouth unsafe lines
-pub struct SimpleTextOutputProtocolWrapper {
-    protocol: NonNull<SimpleTextOutputProtocol>,
+pub struct SimpleTextOutputProtocol {
+    protocol: NonNull<SimpleTextOutputProtocolFFI>,
 }
 
-impl SimpleTextOutputProtocolWrapper {
+impl SimpleTextOutputProtocol {
     /// # Safety
     /// The protocol should point to a valid instance assigned by the UEFI, and not null
-    pub unsafe fn new(protocol: *mut SimpleTextOutputProtocol) -> Self {
+    pub unsafe fn new(protocol: *mut SimpleTextOutputProtocolFFI) -> Self {
         let not_null =
             NonNull::new(protocol).expect("SimpleTextOutputProtocol pointer cannot be null");
         Self { protocol: not_null }
     }
 
-    fn get_protocol(&self) -> &SimpleTextOutputProtocol {
+    fn get_protocol(&self) -> &SimpleTextOutputProtocolFFI {
         unsafe { self.protocol.as_ref() }
     }
 
@@ -142,4 +124,23 @@ impl SimpleTextOutputProtocolWrapper {
         }
         Ok(())
     }
+}
+
+impl Uuid for SimpleTextOutputProtocol {
+    const GUID: Guid = Guid::new(
+        0x387477c2,
+        0x69c7,
+        0x11d2,
+        [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
+    );
+}
+
+#[repr(C)]
+pub struct SimpleTextOutputMode {
+    pub max_mode: u32,
+    pub mode: u32,
+    pub attribute: u32,
+    pub cursor_col: u32,
+    pub cursor_row: u32,
+    pub cursor_visible: Boolean,
 }

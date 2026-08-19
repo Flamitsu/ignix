@@ -1,8 +1,8 @@
 use crate::init::SYSTEM_TABLE;
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::protocol::console::{
-    SimpleTextInputProtocol, SimpleTextInputProtocolWrapper, SimpleTextOutputProtocol,
-    SimpleTextOutputProtocolWrapper,
+    SimpleTextInputProtocolFFI, SimpleTextInputProtocol, SimpleTextOutputProtocolFFI,
+    SimpleTextOutputProtocol,
 };
 use crate::table::Header;
 use crate::table::boot::BootServices;
@@ -18,11 +18,11 @@ pub struct SystemTable {
     firmware_vendor: *mut u16,
     firmware_revision: u32,
     console_in_handle: Handle,
-    con_in: *mut SimpleTextInputProtocol,
+    con_in: *mut SimpleTextInputProtocolFFI,
     console_out_handle: Handle,
-    con_out: *mut SimpleTextOutputProtocol,
+    con_out: *mut SimpleTextOutputProtocolFFI,
     standard_error_handle: Handle,
-    std_err: *mut SimpleTextOutputProtocol,
+    std_err: *mut SimpleTextOutputProtocolFFI,
     runtime_services: *mut RuntimeServices,
     boot_services: *mut BootServices,
     number_of_table_entries: usize,
@@ -32,23 +32,23 @@ pub struct SystemTable {
 impl Table for SystemTable {}
 
 impl SystemTable {
-    pub fn get_stdout(&self) -> Option<SimpleTextOutputProtocolWrapper> {
+    pub fn get_stdout(&self) -> Option<SimpleTextOutputProtocol> {
         if self.con_out.is_null() {
             return None;
         }
-        Some(unsafe { SimpleTextOutputProtocolWrapper::new(self.con_out) })
+        Some(unsafe { SimpleTextOutputProtocol::new(self.con_out) })
     }
-    pub fn get_stdin(&self) -> Option<SimpleTextInputProtocolWrapper> {
+    pub fn get_stdin(&self) -> Option<SimpleTextInputProtocol> {
         if self.con_in.is_null() {
             return None;
         }
-        Some(unsafe { SimpleTextInputProtocolWrapper::new(self.con_in) })
+        Some(unsafe { SimpleTextInputProtocol::new(self.con_in) })
     }
-    pub fn get_stderr(&self) -> Option<SimpleTextOutputProtocolWrapper> {
+    pub fn get_stderr(&self) -> Option<SimpleTextOutputProtocol> {
         if self.std_err.is_null() && self.con_out.is_null() {
             return None;
         }
-        Some(unsafe { SimpleTextOutputProtocolWrapper::new(self.std_err) })
+        Some(unsafe { SimpleTextOutputProtocol::new(self.std_err) })
     }
 }
 /* The panic in get_boot_services & get_runtime_services its because it can't do anything to
