@@ -1,13 +1,10 @@
 use crate::config::{CONFIG_ROUTE, ConfigKeywords, LoaderConfig, LoaderData};
 use ignix_sdk::{
-    init::SYSTEM_TABLE,
-    protocol::{
+    init::HANDLE, protocol::{
         file_protocol::{FileAttributes, FileProtocolWrapper, OpenModes},
         loaded_image::LoadedImageProtocol,
         simple_file_system_protocol::{SimpleFileSystemProtocol, SimpleFileSystemProtocolWrapper},
-    },
-    str_utf16,
-    types::{Handle, IgnixError, OpenProtocolAttributes, Uuid},
+    }, services::boot::handler::open_protocol, str_utf16, types::{IgnixError, OpenProtocolAttributes, Uuid}
 };
 
 pub fn read_config(fs: &mut FileProtocolWrapper) -> Result<LoaderConfig, IgnixError> {
@@ -71,19 +68,16 @@ pub fn load_kernel() -> Result<(), IgnixError> {
     Ok(())
 }
 
-pub fn open_root_fs(handle: Handle) -> Result<FileProtocolWrapper, IgnixError> {
-    let bt = SYSTEM_TABLE.get().unwrap().get_boot_services().unwrap();
-    let image_guard = bt.open_protocol::<LoadedImageProtocol>(
-        handle,
+pub fn open_root_fs() -> Result<FileProtocolWrapper, IgnixError> {
+    let image_guard = open_protocol::<LoadedImageProtocol>(
+        &HANDLE.get(),
         &LoadedImageProtocol::GUID,
-        handle,
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
     let device_handle = image_guard.device_handle;
-    let fs_guard = bt.open_protocol::<SimpleFileSystemProtocol>(
-        device_handle,
+    let fs_guard = open_protocol::<SimpleFileSystemProtocol>(
+        &device_handle,
         &SimpleFileSystemProtocol::GUID,
-        handle,
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
     let mut sfsp = unsafe { SimpleFileSystemProtocolWrapper::new(fs_guard.interface) };
