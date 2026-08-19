@@ -118,7 +118,7 @@ pub(crate) fn unload_image(efi_handle: Handle) -> Result<(), IgnixError> {
 /// (all child images must exit before this image can exit).
 /// Warning: You should not be using this function in the first place.
 /// The firmware already exits the binary whenever its needed (end of the code)
-/// 
+///
 /// RETURN CODES:
 /// EFI_SUCCESS The image specified by ImageHandle was unloaded. This condition only
 /// occurs for images that have been loaded with LoadImage() but have not been
@@ -129,8 +129,8 @@ pub(crate) fn unload_image(efi_handle: Handle) -> Result<(), IgnixError> {
 /// with LoadImage() and StartImage(), but the image is not the currently executing image.
 ///
 /// # Safety
-/// This function immediately terminates execution and does not run Rust drop code 
-/// for variables currently on the stack. All allocated resources should be 
+/// This function immediately terminates execution and does not run Rust drop code
+/// for variables currently on the stack. All allocated resources should be
 /// properly cleaned up before calling this.
 pub unsafe fn exit(efi_handle: &Handle, efi_status: Status) -> Result<(), IgnixError> {
     let status =
@@ -143,13 +143,16 @@ pub unsafe fn exit(efi_handle: &Handle, efi_status: Status) -> Result<(), IgnixE
 
 /// Terminates all boot services.
 /// The handle argument is the one the UEFI gives to the binary whenever it's executed
-/// 
+///
 /// # Safety
 /// Calling this function is inherently unsafe because it invalidates all UEFI boot services after
 /// calling it.
 /// - Boot services must NEVER be called again
 /// - Memory map must be up to date
-pub unsafe fn exit_boot_services(efi_handle: &Handle, memory_map: &MemoryMap) -> Result<(), IgnixError> {
+pub unsafe fn exit_boot_services(
+    efi_handle: &Handle,
+    memory_map: &MemoryMap,
+) -> Result<(), IgnixError> {
     let status = unsafe { (get_boot_services().exit_boot_services)(*efi_handle, memory_map.key) };
     if status.is_error() {
         Err(status.context("exit_boot_services"))?

@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    init::HANDLE, table::get_boot_services, types::{
-        DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, HandleBuffer, IgnixError, IgnixEvent, IgnixImage, IgnixProtocol, IgnixProtocolNotification, InterfaceType, OpenProtocolAttributes, OpenProtocolInformation, OpenProtocolInformationEntry, ProtocolGuard, ProtocolsPerHandle, SearchType, Status, Uuid
-    }
+    init::HANDLE,
+    table::get_boot_services,
+    types::{
+        DevicePath, DevicePathProtocol, Event, FixedHandleList, Guid, Handle, HandleBuffer,
+        IgnixError, IgnixEvent, IgnixImage, IgnixProtocol, IgnixProtocolNotification,
+        InterfaceType, OpenProtocolAttributes, OpenProtocolInformation,
+        OpenProtocolInformationEntry, ProtocolGuard, ProtocolsPerHandle, SearchType, Status, Uuid,
+    },
 };
 use core::{
     ffi::c_void,

@@ -1,5 +1,12 @@
-use core::{ffi::c_void, ptr::null_mut, sync::atomic::{AtomicPtr, Ordering}};
-use crate::{table::SystemTable, types::{Status, Handle}}; 
+use crate::{
+    table::SystemTable,
+    types::{Handle, Status},
+};
+use core::{
+    ffi::c_void,
+    ptr::null_mut,
+    sync::atomic::{AtomicPtr, Ordering},
+};
 pub struct InitGlobalSystemTable {
     ptr: AtomicPtr<SystemTable>,
 }
@@ -51,12 +58,7 @@ impl InitGlobalHandle {
     #[inline(always)]
     pub fn set(&self, handle: Handle) -> Result<(), Status> {
         self.ptr
-            .compare_exchange(
-                null_mut(),
-                handle,
-                Ordering::SeqCst,
-                Ordering::SeqCst,
-            )
+            .compare_exchange(null_mut(), handle, Ordering::SeqCst, Ordering::SeqCst)
             .map(|_| ())
             .map_err(|_| Status::NOT_FOUND)
     }
