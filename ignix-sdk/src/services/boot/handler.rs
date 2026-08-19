@@ -309,10 +309,10 @@ pub fn locate_device_path(
 pub fn open_protocol<'a, T>(
     handle: &Handle,
     protocol: &'a Guid,
-    agent_handle: Handle,
     attr: OpenProtocolAttributes,
 ) -> Result<ProtocolGuard<'a, T>, IgnixError> {
     let mut interface: *mut c_void = core::ptr::null_mut();
+    let agent_handle = HANDLE.get();
     let status = unsafe {
         (get_boot_services().open_protocol)(
             *handle,
@@ -329,7 +329,7 @@ pub fn open_protocol<'a, T>(
     }
 
     Ok(ProtocolGuard {
-        handle: handle.clone(),
+        handle: *handle,
         protocol,
         agent_handle,
         interface: interface as *mut T,
@@ -418,12 +418,13 @@ pub fn open_protocol_information<T>(
 /// EFI_INVALID_PARAMETER ProtocolBuffer is NULL.
 /// EFI_INVALID_PARAMETER ProtocolBufferCount is NULL.
 /// EFI_OUT_OF_RESOURCES There is not enough pool memory to store the results.
-pub fn protocols_per_handle(handle: Handle) -> Result<ProtocolsPerHandle, IgnixError> {
+pub fn protocols_per_handle(handle: &Handle) -> Result<ProtocolsPerHandle, IgnixError> {
     let mut protocol_buffer: *mut *const Guid = core::ptr::null_mut();
     let mut protocol_count: usize = 0;
+    let handle_clone = *handle;
     let status = unsafe {
         (get_boot_services().protocols_per_handle)(
-            handle,
+            *handle,
             protocol_buffer as *mut _ as *mut *mut *const Guid,
             &mut protocol_count,
         )
@@ -434,7 +435,7 @@ pub fn protocols_per_handle(handle: Handle) -> Result<ProtocolsPerHandle, IgnixE
     }
     let protocol_buff_ptr = NonNull::new(protocol_buffer.cast()).unwrap();
     Ok(ProtocolsPerHandle {
-        handle,
+        handle: handle_clone,
         protocol_buffer: protocol_buff_ptr,
         buffer_size: protocol_count,
     })
