@@ -12,7 +12,7 @@ use core::{
  * function.
  * Its just 2 functions any way*/
 #[repr(C)]
-pub struct LoadFileProtocolFFI {
+pub struct LoadFileFFI {
     pub load_file: unsafe extern "efiapi" fn(
         this: *mut Self,
         file_path: *const DevicePathProtocol,
@@ -23,13 +23,13 @@ pub struct LoadFileProtocolFFI {
 }
 /// This protocol is used to retrieve boot files from arbitrary devices (Like PXE boot or boot from
 /// USB to the main disk)
-pub struct LoadFileProtocol {
-    pub protocol: NonNull<LoadFileProtocolFFI>,
+pub struct LoadFile {
+    pub protocol: NonNull<LoadFileFFI>,
 }
 
-impl LoadFileProtocol {
+impl LoadFile {
     #[inline(always)]
-    fn get_protocol(&self) -> &LoadFileProtocolFFI {
+    fn get_protocol(&self) -> &LoadFileFFI {
         unsafe { self.protocol.as_ref() }
     }
 
@@ -88,7 +88,7 @@ impl LoadFileProtocol {
     }
 }
 
-impl Uuid for LoadFileProtocol {
+impl Uuid for LoadFile {
     const GUID: Guid = Guid::new(
         0x56EC3091,
         0x954C,
@@ -97,7 +97,7 @@ impl Uuid for LoadFileProtocol {
     );
 }
 
-pub struct LoadFile2ProtocolFFI {
+pub struct LoadFile2FFI {
     pub load_file: unsafe extern "efiapi" fn(
         this: *mut Self,
         file_path: *const DevicePathProtocol,
@@ -108,13 +108,13 @@ pub struct LoadFile2ProtocolFFI {
 }
 
 /// Used to obtain files from arbitrary devices but are not used as boot options
-pub struct LoadFile2Protocol {
-    pub protocol: NonNull<LoadFile2ProtocolFFI>,
+pub struct LoadFile2 {
+    pub protocol: NonNull<LoadFile2FFI>,
 }
 
-impl LoadFile2Protocol {
+impl LoadFile2 {
     #[inline(always)]
-    fn get_protocol(&self) -> &LoadFile2ProtocolFFI {
+    fn get_protocol(&self) -> &LoadFile2FFI {
         unsafe { self.protocol.as_ref() }
     }
 
@@ -171,7 +171,7 @@ impl LoadFile2Protocol {
     }
 }
 
-impl Uuid for LoadFile2Protocol {
+impl Uuid for LoadFile2 {
     const GUID: Guid = Guid::new(
         0x4006c0c1,
         0xfcb3,

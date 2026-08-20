@@ -5,11 +5,11 @@ use core::{
     ptr::{NonNull, null_mut},
 };
 #[repr(C)]
-pub struct FileProtocolFFI {
+pub struct FileFFI {
     revision: u64,
     pub open: unsafe extern "efiapi" fn(
         this: *mut Self,
-        new_handle: *mut *mut FileProtocolFFI,
+        new_handle: *mut *mut FileFFI,
         file_name: *const u16,
         open_mode: OpenModes,
         attr: FileAttributes,
@@ -43,15 +43,15 @@ pub struct FileProtocolFFI {
     file_ex: *mut c_void,
 }
 
-pub struct FileProtocol {
-    protocol: NonNull<FileProtocolFFI>,
+pub struct File {
+    protocol: NonNull<FileFFI>,
 }
-impl FileProtocol {
+impl File {
     /// # Safety
     /// So this function is safe to use because if you don't have this protocol mapped
     /// in your firmware you're screwd anyways so it gives a panic and reduces code smell
     /// (Need to apply this pattern for others) so it's completely secure to use
-    pub unsafe fn new(protocol: *mut FileProtocolFFI) -> Self {
+    pub unsafe fn new(protocol: *mut FileFFI) -> Self {
         let non_null = NonNull::new(protocol).expect("FileProtocolFFI pointer cannot be null");
         Self { protocol: non_null }
     }
@@ -59,7 +59,7 @@ impl FileProtocol {
     // The previous assert in the new function must be ALWAYS PRESENT so this unsafe code doesn't
     // blow everything up.
     #[inline(always)]
-    fn get_protocol(&self) -> &FileProtocolFFI {
+    fn get_protocol(&self) -> &FileFFI {
         unsafe { self.protocol.as_ref() }
     }
     /// Opens a new file relative to the source directory's location.
@@ -80,8 +80,8 @@ impl FileProtocol {
         filename: &[Char16],
         open_mode: OpenModes,
         attr: FileAttributes,
-    ) -> Result<FileProtocol, IgnixError> {
-        let mut new_handle: *mut FileProtocolFFI = null_mut();
+    ) -> Result<File, IgnixError> {
+        let mut new_handle: *mut FileFFI = null_mut();
         let status = unsafe {
             (self.get_protocol().open)(
                 self.protocol.as_ptr(),
@@ -94,7 +94,7 @@ impl FileProtocol {
         if status.is_error() {
             Err(status.context("FileProtocolFFI.open"))?
         }
-        Ok(unsafe { FileProtocol::new(new_handle) })
+        Ok(unsafe { File::new(new_handle) })
     }
     // Closes a file
     // The status return isn't used here since you don't usually need to call this,
@@ -254,7 +254,7 @@ impl FileProtocol {
     }
 }
 
-impl Drop for FileProtocol {
+impl Drop for File {
     fn drop(&mut self) {
         self.close();
     }

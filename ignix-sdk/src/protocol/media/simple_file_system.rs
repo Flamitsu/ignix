@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    protocol::media::file_protocol::{FileProtocol, FileProtocolFFI},
+    protocol::media::file::{File, FileFFI},
     types::{Guid, IgnixError, Status, Uuid},
 };
 use core::{
@@ -8,33 +8,33 @@ use core::{
     ptr::{NonNull, null_mut},
 };
 #[repr(C)]
-pub struct SimpleFileSystemProtocolFFI {
+pub struct SimpleFileSystemFFI {
     revision: u64,
     open_volume: unsafe extern "efiapi" fn(
         this: *mut Self,
-        file_protocol: *mut *mut FileProtocolFFI,
+        file_protocol: *mut *mut FileFFI,
     ) -> Status,
 }
 
-pub struct SimpleFileSystemProtocol {
-    protocol: NonNull<SimpleFileSystemProtocolFFI>,
+pub struct SimpleFileSystem {
+    protocol: NonNull<SimpleFileSystemFFI>,
 }
 
-impl SimpleFileSystemProtocol {
+impl SimpleFileSystem {
     /// # Safety
     /// This function is unsafe because the protocol itself is a pointer.
     /// But it's secure to use since the interface that you will be using has an idiomatic Option
     /// (get_protocol) and deref the pointer checking if it is null or not.
-    pub unsafe fn new(protocol: *mut SimpleFileSystemProtocolFFI) -> Self {
+    pub unsafe fn new(protocol: *mut SimpleFileSystemFFI) -> Self {
         let non_null =
             NonNull::new(protocol).expect("SimpleFileSystemProtocol pointer cannot be null");
         Self { protocol: non_null }
     }
-    fn get_protocol(&self) -> &SimpleFileSystemProtocolFFI {
+    fn get_protocol(&self) -> &SimpleFileSystemFFI {
         unsafe { self.protocol.as_ref() }
     }
-    pub fn open_volume(&mut self) -> Result<FileProtocol, IgnixError> {
-        let mut root: *mut FileProtocolFFI = null_mut();
+    pub fn open_volume(&mut self) -> Result<File, IgnixError> {
+        let mut root: *mut FileFFI = null_mut();
         let status =
             unsafe { (self.get_protocol().open_volume)(self.protocol.as_ptr(), &mut root) };
         if status.is_error() {
@@ -43,11 +43,11 @@ impl SimpleFileSystemProtocol {
         // Safety
         // if everything was okay, creates an instance of secure FileProtocolWrapper
         // It's mandatory to check if it gave any errors before this.
-        Ok(unsafe { FileProtocol::new(root) })
+        Ok(unsafe { File::new(root) })
     }
 }
 
-impl Uuid for SimpleFileSystemProtocol {
+impl Uuid for SimpleFileSystem {
     const GUID: Guid = Guid::new(
         0x0964e5b22,
         0x6459,
