@@ -10,16 +10,6 @@ pub type Char16 = u16;
 pub type PhysicalAddress = u64;
 pub type VirtualAddress = u64;
 
-/*
- * Okay so I know this is a protocol in theory, but it's going to remain here until i actually
- * reach this part reading the UEFI spec and can complete more to deserve it's own file.
- * */
-#[repr(C)]
-pub struct DevicePathProtocol {
-    pub dp_type: u8,
-    pub sub_type: u8,
-    pub length: [u8; 2],
-}
 // This is a marker trait, to make possible use some boot services functions that depends on it.
 pub trait Table {}
 

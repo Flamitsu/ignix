@@ -2,7 +2,8 @@
 use crate::{
     services::boot::memory,
     table::get_boot_services,
-    types::{DevicePathProtocol, Handle, IgnixError, IgnixImage, MemoryMap, Status},
+    types::{Handle, IgnixError, IgnixImage, MemoryMap, Status},
+    protocol::DevicePathProtocol
 };
 use core::{ffi::c_void, marker::PhantomData};
 

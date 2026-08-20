@@ -1,8 +1,7 @@
 use crate::{
-    services::boot::memory::allocate_pool,
-    types::{
-        AllocateType, DevicePathProtocol, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid,
-    },
+    protocol::DevicePathProtocol, services::boot::memory::allocate_pool, types::{
+        AllocateType, DevicePath, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid,
+    }
 };
 use core::{
     ffi::c_void,
@@ -178,4 +177,19 @@ impl Uuid for LoadFile2 {
         0x403e,
         [0x99, 0x6d, 0x4a, 0x6c, 0x87, 0x24, 0xe0, 0x6d],
     );
+}
+
+/* This part is exclusive for the Linux kernel to use. */
+pub extern "efiapi" fn initrd_load_file(
+    this: *mut LoadFile2FFI,
+    file_path: *const DevicePathProtocol,
+    boot_policy: bool,
+    buff_size: *mut usize,
+    buff: *mut c_void
+) -> Status {
+    Status::SUCCESS
+}
+
+pub struct LinuxInitrdFile {
+    pub node: DevicePathProtocol 
 }

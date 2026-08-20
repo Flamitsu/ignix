@@ -6,7 +6,8 @@ use crate::{
         handler::{close_protocol, uninstall_protocol_interface},
         memory::free_pool,
     },
-    types::{DevicePathProtocol, Event, Guid, IgnixImage},
+    protocol::DevicePathProtocol,
+    types::{Event, Guid, IgnixImage},
 };
 use core::{
     ffi::c_void,

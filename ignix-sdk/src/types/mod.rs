@@ -26,7 +26,7 @@ pub use handler::{
 };
 
 pub use misc::{
-    Char16, DevicePathProtocol, Guid, IgnixImage, PhysicalAddress, ResetType, Table, Uuid,
+    Char16, Guid, IgnixImage, PhysicalAddress, ResetType, Table, Uuid,
     VirtualAddress,
 };
 
