@@ -10,10 +10,8 @@ use core::{
 #[repr(C)]
 pub struct SimpleFileSystemFFI {
     revision: u64,
-    open_volume: unsafe extern "efiapi" fn(
-        this: *mut Self,
-        file_protocol: *mut *mut FileFFI,
-    ) -> Status,
+    open_volume:
+        unsafe extern "efiapi" fn(this: *mut Self, file_protocol: *mut *mut FileFFI) -> Status,
 }
 
 pub struct SimpleFileSystem {

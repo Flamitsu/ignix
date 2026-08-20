@@ -25,10 +25,7 @@ pub use handler::{
     ProtocolGuard, ProtocolsPerHandle, SearchType,
 };
 
-pub use misc::{
-    Char16, Guid, IgnixImage, PhysicalAddress, ResetType, Table, Uuid,
-    VirtualAddress,
-};
+pub use misc::{Char16, Guid, IgnixImage, PhysicalAddress, ResetType, Table, Uuid, VirtualAddress};
 
 pub use time::{Time, TimeCapabilities, TimeStruct, WakeupTime};
 

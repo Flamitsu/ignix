@@ -1,9 +1,9 @@
 #[allow(unused)]
 pub mod console;
 #[allow(unused)]
-pub mod media;
+mod device_path;
 #[allow(unused)]
 pub mod loaded_image;
 #[allow(unused)]
-mod device_path;
+pub mod media;
 pub use device_path::DevicePathProtocol;

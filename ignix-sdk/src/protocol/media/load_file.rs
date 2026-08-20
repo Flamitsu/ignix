@@ -1,7 +1,7 @@
 use crate::{
-    protocol::DevicePathProtocol, services::boot::memory::allocate_pool, types::{
-        AllocateType, DevicePath, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid,
-    }
+    protocol::{DevicePathProtocol, device_path::VendorDevicePathNode},
+    services::boot::memory::allocate_pool,
+    types::{AllocateType, DevicePath, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid},
 };
 use core::{
     ffi::c_void,
@@ -129,10 +129,7 @@ impl LoadFile2 {
     /// EFI_ABORTED The file load process was manually cancelled.
     /// EFI_BUFFER_TOO_SMALL The BufferSize is too small to read the current directory entry. BufferSize
     /// has been updated with the size needed to complete the request.
-    pub fn load_file(
-        &mut self,
-        file_path: &DevicePathProtocol,
-    ) -> Result<PoolBuffer, IgnixError> {
+    pub fn load_file(&mut self, file_path: &DevicePathProtocol) -> Result<PoolBuffer, IgnixError> {
         let mut buff_size = 0;
         let mut buff: *mut c_void = null_mut();
         let status = unsafe {
@@ -185,11 +182,19 @@ pub extern "efiapi" fn initrd_load_file(
     file_path: *const DevicePathProtocol,
     boot_policy: bool,
     buff_size: *mut usize,
-    buff: *mut c_void
-) -> Status {
+    buff: *mut c_void,
+) -> Status { 
+    if boot_policy {
+        return Status::UNSUPPORTED;
+    }
+    if buff_size.is_null() {
+        return Status::INVALID_PARAMETER;
+    }
     Status::SUCCESS
 }
 
+#[repr(C, packed)]
 pub struct LinuxInitrdFile {
-    pub node: DevicePathProtocol 
+    pub node: VendorDevicePathNode,
+    pub end_node: DevicePathProtocol,
 }

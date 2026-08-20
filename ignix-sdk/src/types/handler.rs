@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
     init::SYSTEM_TABLE,
+    protocol::DevicePathProtocol,
     services::boot::{
         event::close_event,
         handler::{close_protocol, uninstall_protocol_interface},
         memory::free_pool,
     },
-    protocol::DevicePathProtocol,
     types::{Event, Guid, IgnixImage},
 };
 use core::{

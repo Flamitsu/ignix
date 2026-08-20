@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
+    protocol::DevicePathProtocol,
     services::boot::memory,
     table::get_boot_services,
     types::{Handle, IgnixError, IgnixImage, MemoryMap, Status},
-    protocol::DevicePathProtocol
 };
 use core::{ffi::c_void, marker::PhantomData};
 

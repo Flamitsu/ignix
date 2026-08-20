@@ -2,8 +2,8 @@ use crate::config::{CONFIG_ROUTE, ConfigKeywords, LoaderConfig, LoaderData};
 use ignix_sdk::{
     init::HANDLE,
     protocol::{
-        media::{FileAttributes, File, OpenModes},
         loaded_image::LoadedImageProtocol,
+        media::{File, FileAttributes, OpenModes},
         media::{SimpleFileSystem, SimpleFileSystemFFI},
     },
     services::boot::handler::open_protocol,

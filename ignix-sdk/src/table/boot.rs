@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    protocol::DevicePathProtocol, table::header::Header, types::{
-        AllocateType, Event, EventGroup, EventNotifyFn, EventType, Guid,
-        Handle, InterfaceType, MemoryDescriptor, MemoryType, OpenProtocolAttributes,
-        OpenProtocolInformationEntry, PhysicalAddress, SearchType, Status, Table, TimerDelay, Tpl,
-    }
+    protocol::DevicePathProtocol,
+    table::header::Header,
+    types::{
+        AllocateType, Event, EventGroup, EventNotifyFn, EventType, Guid, Handle, InterfaceType,
+        MemoryDescriptor, MemoryType, OpenProtocolAttributes, OpenProtocolInformationEntry,
+        PhysicalAddress, SearchType, Status, Table, TimerDelay, Tpl,
+    },
 };
 use core::ffi::c_void;
 /*

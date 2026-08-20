@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    protocol::DevicePathProtocol, table::SystemTable, types::{Guid, Handle, MemoryType, Uuid}
+    protocol::DevicePathProtocol,
+    table::SystemTable,
+    types::{Guid, Handle, MemoryType, Uuid},
 };
 use core::{ffi::c_void, ptr::NonNull};
 /* You can find this struct defined in page 255, UEFI spec revision 2.11 PDF*/
