@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
-    protocol::file_protocol::{FileProtocol, FileProtocolFFI},
+    protocol::media::file_protocol::{FileProtocol, FileProtocolFFI},
     types::{Guid, IgnixError, Status, Uuid},
 };
 use core::{
