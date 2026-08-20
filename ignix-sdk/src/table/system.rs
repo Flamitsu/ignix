@@ -1,8 +1,8 @@
 use crate::init::SYSTEM_TABLE;
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::protocol::console::{
-    SimpleTextInputProtocolFFI, SimpleTextInputProtocol, SimpleTextOutputProtocolFFI,
-    SimpleTextOutputProtocol,
+    SimpleTextInputProtocol, SimpleTextInputProtocolFFI, SimpleTextOutputProtocol,
+    SimpleTextOutputProtocolFFI,
 };
 use crate::table::Header;
 use crate::table::boot::BootServices;
