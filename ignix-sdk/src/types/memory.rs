@@ -226,12 +226,11 @@ impl DebugDisposition {
     pub const OPTIONAL_PTR: Self = Self(0x00000001);
 }
 
-pub struct PagesBuffer<'a> {
+pub struct PagesBuffer {
     pub ptr: NonNull<u8>,
     pub num_pages: usize,
-    pub _m: PhantomData<&'a c_void>,
 }
-impl<'a> PagesBuffer<'a> {
+impl PagesBuffer {
     pub fn as_mut_slice(&mut self, len: usize) -> &mut [u8] {
         unsafe { from_raw_parts_mut(self.ptr.as_ptr(), len) }
     }
@@ -239,19 +238,18 @@ impl<'a> PagesBuffer<'a> {
         unsafe { from_raw_parts(self.ptr.as_ptr(), len) }
     }
 }
-impl<'a> Drop for PagesBuffer<'a> {
+impl Drop for PagesBuffer {
     fn drop(&mut self) {
         free_pages(self.ptr.as_ptr() as u64, self.num_pages);
     }
 }
 
-pub struct PoolBuffer<'a> {
+pub struct PoolBuffer {
     pub ptr: NonNull<u8>,
     pub num_bytes: usize,
-    pub _m: PhantomData<&'a c_void>,
 }
 
-impl<'a> PoolBuffer<'a> {
+impl PoolBuffer {
     pub fn as_mut_slice(&mut self, len: usize) -> &mut [u8] {
         unsafe { from_raw_parts_mut(self.ptr.as_ptr(), len) }
     }
@@ -260,7 +258,7 @@ impl<'a> PoolBuffer<'a> {
     }
 }
 
-impl<'a> Drop for PoolBuffer<'a> {
+impl Drop for PoolBuffer {
     fn drop(&mut self) {
         free_pool(self.ptr);
     }

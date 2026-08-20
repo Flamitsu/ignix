@@ -25,11 +25,11 @@ use core::{marker::PhantomData, ptr::NonNull};
 /// EFI_INVALID_PARAMETER MemoryType is EfiPersistentMemoryType or EfiUnacceptedMemory.
 /// EFI_INVALID_PARAMETER Memory is NULL.
 /// EFI_NOT_FOUND The requested pages could not be found
-pub fn allocate_pages<'a>(
+pub fn allocate_pages(
     allocate_type: AllocateType,
     memory_type: MemoryType,
     pages: usize,
-) -> Result<PagesBuffer<'a>, IgnixError> {
+) -> Result<PagesBuffer, IgnixError> {
     let mut addr: PhysicalAddress = 0;
     let status = unsafe {
         (get_boot_services().allocate_pages)(allocate_type, memory_type, pages, &mut addr)
@@ -41,7 +41,6 @@ pub fn allocate_pages<'a>(
             return Ok(PagesBuffer {
                 ptr: not_null,
                 num_pages: pages,
-                _m: PhantomData,
             });
         }
 
@@ -131,7 +130,7 @@ pub fn get_memory_map() -> Result<MemoryMap, IgnixError> {
 /// EFI_INVALID_PARAMETER PoolType is in the range EfiMaxMemoryType..0x6FFFFFFF.
 /// EFI_INVALID_PARAMETER PoolType is EfiPersistentMemory.
 /// EFI_INVALID_PARAMETER Buffer is NULL.
-pub fn allocate_pool<'a>(pool_type: MemoryType, size: usize) -> Result<PoolBuffer<'a>, IgnixError> {
+pub fn allocate_pool(pool_type: MemoryType, size: usize) -> Result<PoolBuffer, IgnixError> {
     let mut raw_ptr: *mut u8 = core::ptr::null_mut();
     let status = unsafe { (get_boot_services().allocate_pool)(pool_type, size, &mut raw_ptr) };
 
@@ -142,7 +141,6 @@ pub fn allocate_pool<'a>(pool_type: MemoryType, size: usize) -> Result<PoolBuffe
         return Ok(PoolBuffer {
             ptr,
             num_bytes: size,
-            _m: PhantomData,
         });
     }
     Err(status.context("allocate_pool"))
