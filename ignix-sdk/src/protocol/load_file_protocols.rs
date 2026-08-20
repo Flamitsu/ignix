@@ -8,9 +8,10 @@ use core::{
     ffi::c_void,
     ptr::{NonNull, null_mut},
 };
+/* I know I'm repeating here, but I haven't found any way to compact it into one main helper
+ * function.
+ * Its just 2 functions any way*/
 #[repr(C)]
-/// This protocol is used to retrieve boot files from arbitrary devices (Like PXE boot or boot from
-/// USB to the main disk)
 pub struct LoadFileProtocolFFI {
     pub load_file: unsafe extern "efiapi" fn(
         this: *mut Self,
@@ -20,7 +21,8 @@ pub struct LoadFileProtocolFFI {
         buff: *mut c_void,
     ) -> Status,
 }
-
+/// This protocol is used to retrieve boot files from arbitrary devices (Like PXE boot or boot from
+/// USB to the main disk)
 pub struct LoadFileProtocol {
     pub protocol: NonNull<LoadFileProtocolFFI>,
 }
@@ -31,6 +33,19 @@ impl LoadFileProtocol {
         unsafe { self.protocol.as_ref() }
     }
 
+    /// Causes the driver to load a specified file
+    ///
+    /// RETURN CODES:
+    /// EFI_UNSUPPORTED The device does not support the provided BootPolicy.
+    /// EFI_INVALID_PARAMETER FilePath is not a valid device path, or BufferSize is NULL.
+    /// EFI_NO_MEDIA No medium was present to load the file.
+    /// EFI_DEVICE_ERROR The file was not loaded due to a device error.
+    /// EFI_NO_RESPONSE The remote system did not respond.
+    /// EFI_NOT_FOUND The file was not found.
+    /// EFI_ABORTED The file load process was manually cancelled.
+    /// EFI_BUFFER_TOO_SMALL The BufferSize is too small to read the current directory entry. BufferSize
+    /// has been updated with the size needed to complete the request.
+    /// EFI_WARN_FILE_SYSTEM The resulting Buffer contains UEFI-compliant file system.
     pub fn load_file(
         &mut self,
         file_path: &DevicePathProtocol,
@@ -82,7 +97,6 @@ impl Uuid for LoadFileProtocol {
     );
 }
 
-/// Used to obtain files from arbitrary devices but are not used as boot options
 pub struct LoadFile2ProtocolFFI {
     pub load_file: unsafe extern "efiapi" fn(
         this: *mut Self,
@@ -93,11 +107,69 @@ pub struct LoadFile2ProtocolFFI {
     ) -> Status,
 }
 
+/// Used to obtain files from arbitrary devices but are not used as boot options
 pub struct LoadFile2Protocol {
     pub protocol: NonNull<LoadFile2ProtocolFFI>,
 }
 
-impl LoadFile2Protocol {}
+impl LoadFile2Protocol {
+    #[inline(always)]
+    fn get_protocol(&self) -> &LoadFile2ProtocolFFI {
+        unsafe { self.protocol.as_ref() }
+    }
+
+    /// Causes the driver to load a specified file
+    ///
+    /// RETURN CODES:
+    /// EFI_UNSUPPORTED BootPolicy is TRUE.
+    /// EFI_INVALID_PARAMETER FilePath is not a valid device path, or BufferSize is NULL.
+    /// EFI_NO_MEDIA No medium was present to load the file.
+    /// EFI_DEVICE_ERROR The file was not loaded due to a device error.
+    /// EFI_NO_RESPONSE The remote system did not respond.
+    /// EFI_NOT_FOUND The file was not found.
+    /// EFI_ABORTED The file load process was manually cancelled.
+    /// EFI_BUFFER_TOO_SMALL The BufferSize is too small to read the current directory entry. BufferSize
+    /// has been updated with the size needed to complete the request.
+    pub fn load_file(
+        &mut self,
+        file_path: &DevicePathProtocol,
+    ) -> Result<PoolBuffer, IgnixError> {
+        let mut buff_size = 0;
+        let mut buff: *mut c_void = null_mut();
+        let status = unsafe {
+            (self.get_protocol().load_file)(
+                self.protocol.as_ptr(),
+                file_path,
+                false,
+                &mut buff_size,
+                buff,
+            )
+        };
+
+        if status.is_error() && status != Status::BUFFER_TOO_SMALL {
+            Err(status.context("LoadFile2Protocol.load_file"))?
+        }
+
+        let pool_buffer = allocate_pool(MemoryType::EfiLoaderData, buff_size)?;
+        buff = pool_buffer.ptr.as_ptr() as *mut c_void;
+
+        let status = unsafe {
+            (self.get_protocol().load_file)(
+                self.protocol.as_ptr(),
+                file_path,
+                false,
+                &mut buff_size,
+                buff,
+            )
+        };
+
+        if status.is_error() {
+            Err(status.context("LoadFile2Protocol.load_file"))?
+        }
+
+        Ok(pool_buffer)
+    }
+}
 
 impl Uuid for LoadFile2Protocol {
     const GUID: Guid = Guid::new(
