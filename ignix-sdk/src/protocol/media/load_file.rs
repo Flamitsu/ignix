@@ -177,7 +177,7 @@ impl Uuid for LoadFile2 {
     );
 }
 
-// This part is exclusive for the Linux kernel to use. 
+// This part is exclusive for the Linux kernel to use.
 // You can find this GUID in https://github.com/torvalds/linux/blob/master/include/linux/efi.h line 420
 pub const LINUX_EFI_INITRD_MEDIA_GUID: Guid = Guid::new(
     0x5568e427,
@@ -190,8 +190,8 @@ pub extern "efiapi" fn initrd_load_file(
     this: *mut LoadFile2FFI,
     file_path: *const DevicePathProtocol,
     boot_policy: bool,
-    mut buff_size: *mut usize,
-    mut buff: *mut c_void,
+    buff_size: *mut usize,
+    buff: *mut c_void,
 ) -> Status {
     if boot_policy {
         return Status::UNSUPPORTED;
