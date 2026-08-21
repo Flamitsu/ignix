@@ -5,7 +5,8 @@ use crate::{
 };
 use core::{
     ffi::c_void,
-    ptr::{NonNull, null_mut},
+    ptr::{NonNull, copy_nonoverlapping, null_mut},
+    sync::atomic::{AtomicPtr, AtomicUsize, Ordering},
 };
 /* I know I'm repeating here, but I haven't found any way to compact it into one main helper
  * function.
@@ -176,19 +177,42 @@ impl Uuid for LoadFile2 {
     );
 }
 
-/* This part is exclusive for the Linux kernel to use. */
+// This part is exclusive for the Linux kernel to use. 
+// You can find this GUID in https://github.com/torvalds/linux/blob/master/include/linux/efi.h line 420
+pub const LINUX_EFI_INITRD_MEDIA_GUID: Guid = Guid::new(
+    0x5568e427,
+    0x68fc,
+    0x4f3d,
+    [0xac, 0x74, 0xca, 0x55, 0x52, 0x31, 0xcc, 0x68],
+);
+
 pub extern "efiapi" fn initrd_load_file(
     this: *mut LoadFile2FFI,
     file_path: *const DevicePathProtocol,
     boot_policy: bool,
-    buff_size: *mut usize,
-    buff: *mut c_void,
-) -> Status { 
+    mut buff_size: *mut usize,
+    mut buff: *mut c_void,
+) -> Status {
     if boot_policy {
         return Status::UNSUPPORTED;
     }
+
     if buff_size.is_null() {
         return Status::INVALID_PARAMETER;
+    }
+
+    let mut buff_size_needed = INITRD_FILES.len();
+    let buff_size_parameter = unsafe { *buff_size };
+
+    if buff.is_null() || buff_size_needed > buff_size_parameter {
+        unsafe {
+            *buff_size = buff_size_needed;
+        }
+        return Status::BUFFER_TOO_SMALL;
+    }
+
+    unsafe {
+        copy_nonoverlapping(INITRD_FILES.as_ptr(), buff as *mut u8, buff_size_needed);
     }
     Status::SUCCESS
 }
@@ -198,3 +222,32 @@ pub struct LinuxInitrdFile {
     pub node: VendorDevicePathNode,
     pub end_node: DevicePathProtocol,
 }
+
+pub struct InitrdBuffer {
+    ptr: AtomicPtr<u8>,
+    len: AtomicUsize,
+}
+
+impl InitrdBuffer {
+    pub const fn empty() -> Self {
+        Self {
+            ptr: AtomicPtr::new(null_mut()),
+            len: AtomicUsize::new(0),
+        }
+    }
+
+    pub fn set(&self, slice: &'static [u8]) {
+        self.ptr.store(slice.as_ptr() as *mut u8, Ordering::SeqCst);
+        self.len.store(slice.len(), Ordering::SeqCst);
+    }
+
+    pub fn len(&self) -> usize {
+        self.len.load(Ordering::SeqCst)
+    }
+
+    pub fn as_ptr(&self) -> *const u8 {
+        self.ptr.load(Ordering::SeqCst)
+    }
+}
+
+pub static INITRD_FILES: InitrdBuffer = InitrdBuffer::empty();
