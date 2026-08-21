@@ -5,7 +5,7 @@ use crate::{
 use core::{
     ffi::c_void,
     ptr::null_mut,
-    sync::atomic::{AtomicPtr, Ordering},
+    sync::atomic::{AtomicPtr, AtomicUsize, Ordering},
 };
 pub struct InitGlobalSystemTable {
     ptr: AtomicPtr<SystemTable>,
@@ -73,5 +73,37 @@ impl InitGlobalHandle {
     }
 }
 
+pub struct InitrdBuffer {
+    ptr: AtomicPtr<u8>,
+    len: AtomicUsize,
+}
+
+impl InitrdBuffer {
+    #[inline(always)]
+    pub const fn empty() -> Self {
+        Self {
+            ptr: AtomicPtr::new(null_mut()),
+            len: AtomicUsize::new(0),
+        }
+    }
+
+    #[inline(always)]
+    pub fn set(&self, slice: &'static [u8]) {
+        self.ptr.store(slice.as_ptr() as *mut u8, Ordering::SeqCst);
+        self.len.store(slice.len(), Ordering::SeqCst);
+    }
+
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.len.load(Ordering::SeqCst)
+    }
+
+    #[inline(always)]
+    pub fn as_ptr(&self) -> *const u8 {
+        self.ptr.load(Ordering::SeqCst)
+    }
+}
+
+pub static INITRD_FILES: InitrdBuffer = InitrdBuffer::empty();
 pub static SYSTEM_TABLE: InitGlobalSystemTable = InitGlobalSystemTable::empty();
 pub static HANDLE: InitGlobalHandle = InitGlobalHandle::empty();

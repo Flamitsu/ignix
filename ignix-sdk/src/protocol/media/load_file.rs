@@ -1,4 +1,5 @@
 use crate::{
+    init::INITRD_FILES,
     protocol::{DevicePathProtocol, device_path::VendorDevicePathNode},
     services::boot::memory::allocate_pool,
     types::{AllocateType, DevicePath, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid},
@@ -214,6 +215,7 @@ pub extern "efiapi" fn initrd_load_file(
     unsafe {
         copy_nonoverlapping(INITRD_FILES.as_ptr(), buff as *mut u8, buff_size_needed);
     }
+
     Status::SUCCESS
 }
 
@@ -222,32 +224,3 @@ pub struct LinuxInitrdFile {
     pub node: VendorDevicePathNode,
     pub end_node: DevicePathProtocol,
 }
-
-pub struct InitrdBuffer {
-    ptr: AtomicPtr<u8>,
-    len: AtomicUsize,
-}
-
-impl InitrdBuffer {
-    pub const fn empty() -> Self {
-        Self {
-            ptr: AtomicPtr::new(null_mut()),
-            len: AtomicUsize::new(0),
-        }
-    }
-
-    pub fn set(&self, slice: &'static [u8]) {
-        self.ptr.store(slice.as_ptr() as *mut u8, Ordering::SeqCst);
-        self.len.store(slice.len(), Ordering::SeqCst);
-    }
-
-    pub fn len(&self) -> usize {
-        self.len.load(Ordering::SeqCst)
-    }
-
-    pub fn as_ptr(&self) -> *const u8 {
-        self.ptr.load(Ordering::SeqCst)
-    }
-}
-
-pub static INITRD_FILES: InitrdBuffer = InitrdBuffer::empty();
