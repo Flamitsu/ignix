@@ -1,17 +1,23 @@
+use core::{ffi::c_void, marker::PhantomData, ptr::null_mut};
+
 use crate::config::{CONFIG_ROUTE, ConfigKeywords, LoaderConfig, LoaderData};
 use ignix_sdk::{
-    init::HANDLE,
+    init::{HANDLE, INITRD_FILES},
     protocol::{
+        DevicePathNode, DevicePathProtocol, VendorDevicePathNode,
         loaded_image::LoadedImageProtocol,
-        media::{File, FileAttributes, OpenModes, SimpleFileSystem, SimpleFileSystemFFI},
+        media::{
+            File, FileAttributes, LINUX_EFI_INITRD_MEDIA_GUID, LoadFile2, OpenModes,
+            SimpleFileSystem, SimpleFileSystemFFI,
+        },
     },
     services::boot::{
-        handler::open_protocol,
+        handler::{install_protocol_interface, open_protocol},
         image::{load_image, start_image},
         memory::allocate_pool,
     },
     str_utf16,
-    types::{IgnixError, MemoryType, OpenProtocolAttributes, Uuid},
+    types::{IgnixError, IgnixImage, InterfaceType, MemoryType, OpenProtocolAttributes, Uuid},
 };
 
 pub fn read_config(fs: &mut File) -> Result<LoaderConfig, IgnixError> {
@@ -88,6 +94,36 @@ pub fn load_kernel(kernel_name: &[u16]) -> Result<(), IgnixError> {
     let cmdline = &str_utf16!("root=/dev/vda rw");
     loaded_kernel.set_load_options(cmdline);
     start_image(kernel_handle).map_err(|(err, _image)| err)?;
+    Ok(())
+}
+
+pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
+    let mut fs = open_root_fs()?;
+    let mut initrd_file = fs.open(initrd_name, OpenModes::READ, FileAttributes::NONE)?;
+    let file_size: usize = initrd_file.get_info()?.file_size.try_into().unwrap();
+    let mut source_buffer = allocate_pool(MemoryType::EfiLoaderData, file_size)?;
+    initrd_file.read(source_buffer.as_mut_slice(file_size))?;
+    INITRD_FILES.set(source_buffer);
+    let mut initrd_image = IgnixImage {
+        handle: Some(null_mut()),
+        _m: PhantomData,
+    };
+    let vendor_dev_path = VendorDevicePathNode {
+        guid: LINUX_EFI_INITRD_MEDIA_GUID,
+    };
+    let device_path = DevicePathNode::new(0x04, 0x03, vendor_dev_path);
+    install_protocol_interface(
+        &mut initrd_image,
+        &DevicePathProtocol::GUID,
+        InterfaceType::Native,
+        Some(&device_path as *const _ as *mut c_void),
+    )?;
+    install_protocol_interface(
+        &mut initrd_image,
+        &LoadFile2::GUID,
+        InterfaceType::Native,
+        Some(&INITRD_FILES.ffi as *const _ as *mut c_void),
+    )?;
     Ok(())
 }
 

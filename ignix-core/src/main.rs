@@ -20,7 +20,7 @@ use ignix_sdk::{
 extern "efiapi" fn efi_main(image_handle: Handle, system_table: *mut SystemTable) -> Status {
     SYSTEM_TABLE.set(system_table).unwrap();
     HANDLE.set(image_handle).unwrap();
-    println!("Direccion de efi_main: {:p}", efi_main as *const ());
+    println!("efi_main: {:p}", efi_main as *const ());
     if let Err(e) = run() {
         println!("ERROR: {}", e);
         return e.as_status();
@@ -40,6 +40,7 @@ fn run() -> Result<(), IgnixError> {
         stall(Duration::from_millis(STEP_MS.into()))?;
         elapsed_ms += STEP_MS as usize;
     }
+    load_initrds(&str_utf16!("initramfs-linux.img"))?;
     load_kernel(&str_utf16!("vmlinuz-linux"))?;
     Ok(())
 }
