@@ -72,7 +72,7 @@ pub struct BootServices {
         handle: *mut Handle,
         protocol: *const Guid,
         interface_type: InterfaceType,
-        interface: *mut c_void,
+        interface: *const c_void,
     ) -> Status,
     pub reinstall_protocol_interface: unsafe extern "efiapi" fn(
         handle: Handle,
@@ -202,8 +202,10 @@ pub struct BootServices {
         interface: *mut *mut c_void,
     ) -> Status,
 
-    install_multiple_protocol_interfaces: *mut c_void,
-    uninstall_multiple_protocol_interfaces: *mut c_void,
+    pub install_multiple_protocol_interfaces:
+        unsafe extern "C" fn(handle: *mut Handle, ...) -> Status,
+    pub uninstall_multiple_protocol_interfaces:
+        unsafe extern "C" fn(handle: *mut Handle, ...) -> Status,
 
     // CRC32 services
     pub calculate_crc32:
