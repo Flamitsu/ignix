@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 use crate::{
+    init::HANDLE,
     protocol::DevicePathProtocol,
     services::boot::memory,
     table::get_boot_services,
@@ -31,7 +32,6 @@ use core::{ffi::c_void, marker::PhantomData};
 /// image should not be started
 pub fn load_image<'a>(
     boot_policy: bool,
-    parent_image_handle: &Handle,
     device_path: Option<&DevicePathProtocol>,
     source_buffer: Option<&[u8]>,
 ) -> Result<IgnixImage<'a>, IgnixError> {
@@ -50,7 +50,7 @@ pub fn load_image<'a>(
     let status = unsafe {
         (get_boot_services().load_image)(
             boot_policy,
-            *parent_image_handle,
+            *&HANDLE.get(),
             device_path_ptr,
             src_buff_ptr,
             src_size,

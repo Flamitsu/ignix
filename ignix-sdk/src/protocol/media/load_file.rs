@@ -218,9 +218,3 @@ pub extern "efiapi" fn initrd_load_file(
 
     Status::SUCCESS
 }
-
-#[repr(C, packed)]
-pub struct LinuxInitrdFile {
-    pub node: VendorDevicePathNode,
-    pub end_node: DevicePathProtocol,
-}

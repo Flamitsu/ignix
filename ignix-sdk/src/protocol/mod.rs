@@ -6,4 +6,4 @@ mod device_path;
 pub mod loaded_image;
 #[allow(unused)]
 pub mod media;
-pub use device_path::DevicePathProtocol;
+pub use device_path::{DevicePathNode, DevicePathProtocol, VendorDevicePathNode};

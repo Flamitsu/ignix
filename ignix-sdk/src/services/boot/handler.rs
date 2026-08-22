@@ -52,7 +52,7 @@ pub fn install_protocol_interface<'p, 'i: 'p>(
     if status.is_error() {
         Err(status.context("install_protocol_interface"))?
     }
-
+    image.handle = Some(handle);
     Ok(IgnixProtocol {
         image,
         guid: *guid,

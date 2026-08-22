@@ -1,6 +1,6 @@
 use crate::{
     table::SystemTable,
-    types::{Handle, Status},
+    types::{Handle, PoolBuffer, Status},
 };
 use core::{
     ffi::c_void,
@@ -73,37 +73,35 @@ impl InitGlobalHandle {
     }
 }
 
-pub struct InitrdBuffer {
+#[repr(C)]
+pub struct InitrdManager {
     ptr: AtomicPtr<u8>,
     len: AtomicUsize,
 }
 
-impl InitrdBuffer {
-    #[inline(always)]
-    pub const fn empty() -> Self {
+impl InitrdManager {
+    pub const fn new() -> Self {
         Self {
             ptr: AtomicPtr::new(null_mut()),
             len: AtomicUsize::new(0),
         }
     }
 
-    #[inline(always)]
-    pub fn set(&self, slice: &'static [u8]) {
-        self.ptr.store(slice.as_ptr() as *mut u8, Ordering::SeqCst);
-        self.len.store(slice.len(), Ordering::SeqCst);
+    pub fn set(&self, buffer: PoolBuffer) {
+        self.ptr.store(buffer.ptr.as_ptr(), Ordering::SeqCst);
+        self.len.store(buffer.num_bytes, Ordering::SeqCst);
+        core::mem::forget(buffer);
     }
 
-    #[inline(always)]
     pub fn len(&self) -> usize {
         self.len.load(Ordering::SeqCst)
     }
 
-    #[inline(always)]
     pub fn as_ptr(&self) -> *const u8 {
         self.ptr.load(Ordering::SeqCst)
     }
 }
 
-pub static INITRD_FILES: InitrdBuffer = InitrdBuffer::empty();
+pub static INITRD_FILES: InitrdManager = InitrdManager::new();
 pub static SYSTEM_TABLE: InitGlobalSystemTable = InitGlobalSystemTable::empty();
 pub static HANDLE: InitGlobalHandle = InitGlobalHandle::empty();
