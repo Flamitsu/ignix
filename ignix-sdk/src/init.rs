@@ -1,4 +1,5 @@
 use crate::{
+    protocol::media::{LoadFile2FFI, initrd_load_file},
     table::SystemTable,
     types::{Handle, PoolBuffer, Status},
 };
@@ -77,6 +78,7 @@ impl InitGlobalHandle {
 pub struct InitrdManager {
     ptr: AtomicPtr<u8>,
     len: AtomicUsize,
+    pub ffi: LoadFile2FFI,
 }
 
 impl InitrdManager {
@@ -84,6 +86,9 @@ impl InitrdManager {
         Self {
             ptr: AtomicPtr::new(null_mut()),
             len: AtomicUsize::new(0),
+            ffi: LoadFile2FFI {
+                load_file: initrd_load_file,
+            },
         }
     }
 
