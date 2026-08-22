@@ -72,7 +72,7 @@ pub struct BootServices {
         handle: *mut Handle,
         protocol: *const Guid,
         interface_type: InterfaceType,
-        interface: *const c_void,
+        interface: *mut c_void,
     ) -> Status,
     pub reinstall_protocol_interface: unsafe extern "efiapi" fn(
         handle: Handle,
@@ -202,16 +202,6 @@ pub struct BootServices {
         interface: *mut *mut c_void,
     ) -> Status,
 
-    /*
-     * Okay so let's talk about this bullshit. These two services are the worst services
-     * made by a human, in fact, I believe it was made by a psychopath.
-     * If you go to the page 194 of the UEFI spec 2.11, you will find these motherfuckers.
-     * Those monsters are literally crawling in every single fucking CPU because one
-     * Intel engineer didn't wanted to use a fucking variable size array in that moment.
-     * Now those functions have "VARIABLE ARGUMENTS", what does this mean?, you may ask. You're
-     * too innocent to be reading this... That's all I have to say and that's why it's not
-     * implemented.
-     */
     install_multiple_protocol_interfaces: *mut c_void,
     uninstall_multiple_protocol_interfaces: *mut c_void,
 

@@ -101,17 +101,21 @@ pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
     let mut fs = open_root_fs()?;
     let mut initrd_file = fs.open(initrd_name, OpenModes::READ, FileAttributes::NONE)?;
     let file_size: usize = initrd_file.get_info()?.file_size.try_into().unwrap();
+
     let mut source_buffer = allocate_pool(MemoryType::EfiLoaderData, file_size)?;
     initrd_file.read(source_buffer.as_mut_slice(file_size))?;
     INITRD_FILES.set(source_buffer);
+
     let mut initrd_image = IgnixImage {
         handle: Some(null_mut()),
         _m: PhantomData,
     };
+
     let vendor_dev_path = VendorDevicePathNode {
         guid: LINUX_EFI_INITRD_MEDIA_GUID,
     };
     let device_path = DevicePathNode::new(0x04, 0x03, vendor_dev_path);
+
     install_protocol_interface(
         &mut initrd_image,
         &DevicePathProtocol::GUID,
@@ -119,16 +123,15 @@ pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
         Some(&device_path as *const _ as *mut c_void),
     )?;
 
-    /* install_protocol_interface(
+    install_protocol_interface(
         &mut initrd_image,
         &LoadFile2::GUID,
         InterfaceType::Native,
         Some(&INITRD_FILES.ffi as *const _ as *mut c_void),
     )?;
-    */
+
     Ok(())
 }
-
 pub fn open_root_fs() -> Result<File, IgnixError> {
     let image_guard = open_protocol::<LoadedImageProtocol>(
         &HANDLE.get(),

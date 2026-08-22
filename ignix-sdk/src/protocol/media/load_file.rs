@@ -1,5 +1,6 @@
 use crate::{
     init::INITRD_FILES,
+    println,
     protocol::{DevicePathProtocol, device_path::VendorDevicePathNode},
     services::boot::memory::allocate_pool,
     types::{AllocateType, DevicePath, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid},
@@ -98,6 +99,7 @@ impl Uuid for LoadFile {
     );
 }
 
+#[repr(C)]
 pub struct LoadFile2FFI {
     pub load_file: unsafe extern "efiapi" fn(
         this: *mut Self,
@@ -205,7 +207,7 @@ pub extern "efiapi" fn initrd_load_file(
     let mut buff_size_needed = INITRD_FILES.len();
     let buff_size_parameter = unsafe { *buff_size };
 
-    if buff.is_null() || buff_size_needed > buff_size_parameter {
+    if buff.is_null() || buff_size_parameter < buff_size_needed {
         unsafe {
             *buff_size = buff_size_needed;
         }
