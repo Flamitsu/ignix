@@ -118,12 +118,14 @@ pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
         InterfaceType::Native,
         Some(&device_path as *const _ as *mut c_void),
     )?;
-    install_protocol_interface(
+
+    /* install_protocol_interface(
         &mut initrd_image,
         &LoadFile2::GUID,
         InterfaceType::Native,
         Some(&INITRD_FILES.ffi as *const _ as *mut c_void),
     )?;
+    */
     Ok(())
 }
 

@@ -13,7 +13,7 @@ use crate::{
 use core::{
     ffi::c_void,
     marker::PhantomData,
-    ptr::{NonNull, null_mut},
+    ptr::{NonNull, null, null_mut},
 };
 /// Installs a protocol interface on a device handle. If the handle doesn't exist, it's created
 /// and added to the handle list in the system.
@@ -32,8 +32,9 @@ pub fn install_protocol_interface<'p, 'i: 'p>(
     interface_type: InterfaceType,
     interface: Option<*mut c_void>,
 ) -> Result<IgnixProtocol<'p, 'i>, IgnixError> {
-    let Some(mut handle) = image.handle else {
-        Err(Status::HANDLE_DEVICE_IS_NULL.context("install_protocol_interface"))?
+    let mut handle_val = match image.handle {
+        Some(val) => val,
+        None => null_mut(),
     };
 
     let interface_ptr = match interface {
@@ -43,7 +44,7 @@ pub fn install_protocol_interface<'p, 'i: 'p>(
 
     let status = unsafe {
         (get_boot_services().install_protocol_interface)(
-            &mut handle,
+            &mut handle_val,
             guid as *const Guid,
             interface_type,
             interface_ptr,
@@ -52,7 +53,7 @@ pub fn install_protocol_interface<'p, 'i: 'p>(
     if status.is_error() {
         Err(status.context("install_protocol_interface"))?
     }
-    image.handle = Some(handle);
+    image.handle = Some(handle_val);
     Ok(IgnixProtocol {
         image,
         guid: *guid,
