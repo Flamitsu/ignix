@@ -11,6 +11,7 @@ use ignix_sdk::{
     init::{HANDLE, SYSTEM_TABLE},
     println,
     services::boot::misc::stall,
+    str_utf16,
     table::SystemTable,
     types::{Handle, IgnixError, Status},
 };
@@ -19,6 +20,7 @@ use ignix_sdk::{
 extern "efiapi" fn efi_main(image_handle: Handle, system_table: *mut SystemTable) -> Status {
     SYSTEM_TABLE.set(system_table).unwrap();
     HANDLE.set(image_handle).unwrap();
+    println!("Direccion de efi_main: {:p}", efi_main as *const ());
     if let Err(e) = run() {
         println!("ERROR: {}", e);
         return e.as_status();
@@ -35,12 +37,10 @@ fn run() -> Result<(), IgnixError> {
     /* Since UEFI is single threaded, need to detect input, refresh entries etc at 100ms (I mean, I
      * could have used events but... this is easier and less unstable)*/
     while elapsed_ms < timeout_ms {
-        println!("{}", elapsed_ms);
         stall(Duration::from_millis(STEP_MS.into()))?;
         elapsed_ms += STEP_MS as usize;
     }
-    stall(Duration::from_secs(30))?;
-    load_kernel()?;
+    load_kernel(&str_utf16!("vmlinuz-linux"))?;
     Ok(())
 }
 

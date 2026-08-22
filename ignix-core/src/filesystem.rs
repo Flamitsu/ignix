@@ -3,12 +3,15 @@ use ignix_sdk::{
     init::HANDLE,
     protocol::{
         loaded_image::LoadedImageProtocol,
-        media::{File, FileAttributes, OpenModes},
-        media::{SimpleFileSystem, SimpleFileSystemFFI},
+        media::{File, FileAttributes, OpenModes, SimpleFileSystem, SimpleFileSystemFFI},
     },
-    services::boot::handler::open_protocol,
+    services::boot::{
+        handler::open_protocol,
+        image::{load_image, start_image},
+        memory::allocate_pool,
+    },
     str_utf16,
-    types::{IgnixError, OpenProtocolAttributes, Uuid},
+    types::{IgnixError, MemoryType, OpenProtocolAttributes, Uuid},
 };
 
 pub fn read_config(fs: &mut File) -> Result<LoaderConfig, IgnixError> {
@@ -68,7 +71,23 @@ pub fn load_entries<'a>(// fs: &mut FileProtocolWrapper
     Ok(LoaderData::new())
 }
 
-pub fn load_kernel() -> Result<(), IgnixError> {
+pub fn load_kernel(kernel_name: &[u16]) -> Result<(), IgnixError> {
+    let mut fs = open_root_fs()?;
+    let mut file = fs.open(kernel_name, OpenModes::READ, FileAttributes::NONE)?;
+    let file_size: usize = file.get_info()?.file_size.try_into().unwrap();
+    let mut source_buffer = allocate_pool(MemoryType::EfiLoaderData, file_size)?;
+    file.read(source_buffer.as_mut_slice(file_size))?;
+
+    let kernel_handle = load_image(false, None, Some(source_buffer.as_mut_slice(file_size)))?;
+    let mut loaded_kernel = open_protocol::<LoadedImageProtocol>(
+        &kernel_handle.handle.unwrap(),
+        &LoadedImageProtocol::GUID,
+        OpenProtocolAttributes::GET_PROTOCOL,
+    )?;
+
+    let cmdline = &str_utf16!("root=/dev/vda rw");
+    loaded_kernel.set_load_options(cmdline);
+    start_image(kernel_handle).map_err(|(err, _image)| err)?;
     Ok(())
 }
 
