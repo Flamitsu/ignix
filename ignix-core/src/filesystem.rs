@@ -1,6 +1,5 @@
-use core::{ffi::c_void, marker::PhantomData, ptr::null_mut};
-
 use crate::config::{CONFIG_ROUTE, ConfigKeywords, LoaderConfig, LoaderData};
+use core::{ffi::c_void, marker::PhantomData, mem::forget, ptr::null_mut};
 use ignix_sdk::{
     init::{HANDLE, INITRD_FILES},
     protocol::{
@@ -91,7 +90,7 @@ pub fn load_kernel(kernel_name: &[u16]) -> Result<(), IgnixError> {
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
 
-    let cmdline = &str_utf16!("root=/dev/vda rw");
+    let cmdline = &str_utf16!("root=UUID=78b80ce8-f663-4e11-9b96-d036a4d0082d rw");
     loaded_kernel.set_load_options(cmdline);
     start_image(kernel_handle).map_err(|(err, _image)| err)?;
     Ok(())
@@ -111,10 +110,13 @@ pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
         _m: PhantomData,
     };
 
-    let vendor_dev_path = VendorDevicePathNode {
-        guid: LINUX_EFI_INITRD_MEDIA_GUID,
-    };
-    let device_path = DevicePathNode::new(0x04, 0x03, vendor_dev_path);
+    let device_path = DevicePathNode::new(
+        0x04,
+        0x03,
+        VendorDevicePathNode {
+            guid: LINUX_EFI_INITRD_MEDIA_GUID,
+        },
+    );
 
     install_protocol_interface(
         &mut initrd_image,
@@ -130,6 +132,9 @@ pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
         Some(&INITRD_FILES.ffi as *const _ as *mut c_void),
     )?;
 
+    // This is done so rust don't clean this memory (needed so the kernel can find this)
+    forget(initrd_image);
+    forget(device_path);
     Ok(())
 }
 pub fn open_root_fs() -> Result<File, IgnixError> {

@@ -26,12 +26,12 @@ use core::{
 /// EFI_INVALID_PARAMETER ProtocoL is NULL.
 /// EFI_INVALID_PARAMETER InterfaceType is not EFI_NATIVE_INTERFACE.
 /// EFI_INVALID_PARAMETER ProtocoL is already installed on the handle specified by HandLe
-pub fn install_protocol_interface<'p, 'i: 'p>(
-    image: &'p mut IgnixImage<'i>,
+pub fn install_protocol_interface(
+    image: &mut IgnixImage,
     guid: &Guid,
     interface_type: InterfaceType,
     interface: Option<*mut c_void>,
-) -> Result<IgnixProtocol<'p, 'i>, IgnixError> {
+) -> Result<(), IgnixError> {
     let mut handle_val = match image.handle {
         Some(val) => val,
         None => null_mut(),
@@ -54,6 +54,17 @@ pub fn install_protocol_interface<'p, 'i: 'p>(
         Err(status.context("install_protocol_interface"))?
     }
     image.handle = Some(handle_val);
+    Ok(())
+}
+
+pub fn install_ignix_protocol_interface<'p, 'i: 'p>(
+    image: &'p mut IgnixImage<'i>,
+    guid: &Guid,
+    interface_type: InterfaceType,
+    interface: Option<*mut c_void>,
+) -> Result<IgnixProtocol<'p, 'i>, IgnixError> {
+    let interface_ptr = interface.unwrap_or(null_mut());
+    install_protocol_interface(image, guid, interface_type, interface)?;
     Ok(IgnixProtocol {
         image,
         guid: *guid,
