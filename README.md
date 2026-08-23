@@ -1,7 +1,5 @@
-# Ignix
-
-# WARNING
-This project is not abandoned. Has been put on hold. My studies force me to do an application project and I need to switch focus. If you can't find my application project its because it needs to be private until June / July (presentation day).## Alpha stage
+# Ignix warning
+This project is not abandoned. Has been put on hold. My studies force me to do an application project and I need to switch focus. If you can't find my application project its because it needs to be private until June / July (presentation day).
 
 **Ignix** is an **ALPHA STAGE boot manager** written in Rust, **IT IS NOT MEANT TO BE USED IN PRODUCTION AT THIS MOMENT**.
 ## Table of contents
