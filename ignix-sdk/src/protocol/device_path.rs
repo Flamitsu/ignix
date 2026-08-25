@@ -1,6 +1,6 @@
 use crate::types::{Guid, Uuid};
 
-#[repr(C, packed)]
+#[repr(C)]
 pub struct DevicePathProtocol {
     pub r#type: u8,
     pub subtype: u8,
@@ -14,7 +14,7 @@ impl Uuid for DevicePathProtocol {
         [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
     );
 }
-#[repr(C, packed)]
+#[repr(C)]
 pub struct DevicePathNode<T> {
     pub hdr: DevicePathProtocol,
     pub node: T,
@@ -43,7 +43,7 @@ impl<T> DevicePathNode<T> {
         &self.hdr
     }
 }
-
+#[repr(C)]
 pub struct VendorDevicePathNode {
     pub guid: Guid,
 }

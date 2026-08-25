@@ -1,14 +1,8 @@
 use crate::{
-    init::INITRD_FILES,
-    println,
-    protocol::{DevicePathProtocol, device_path::VendorDevicePathNode},
-    services::boot::memory::allocate_pool,
-    types::{AllocateType, DevicePath, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid},
+    init::INITRD_MANAGER, println, protocol::{DevicePathProtocol, device_path::VendorDevicePathNode}, services::boot::{memory::allocate_pool, misc::stall}, types::{AllocateType, DevicePath, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid},
 };
 use core::{
-    ffi::c_void,
-    ptr::{NonNull, copy_nonoverlapping, null_mut},
-    sync::atomic::{AtomicPtr, AtomicUsize, Ordering},
+    ffi::c_void, ptr::{NonNull, copy_nonoverlapping, null_mut}, sync::atomic::{AtomicPtr, AtomicUsize, Ordering}, time::Duration,
 };
 /* I know I'm repeating here, but I haven't found any way to compact it into one main helper
  * function.
@@ -204,7 +198,7 @@ pub extern "efiapi" fn initrd_load_file(
         return Status::INVALID_PARAMETER;
     }
 
-    let mut buff_size_needed = INITRD_FILES.len();
+    let mut buff_size_needed = INITRD_MANAGER.len();
     let buff_size_parameter = unsafe { *buff_size };
 
     if buff.is_null() || buff_size_parameter < buff_size_needed {
@@ -215,7 +209,7 @@ pub extern "efiapi" fn initrd_load_file(
     }
 
     unsafe {
-        copy_nonoverlapping(INITRD_FILES.as_ptr(), buff as *mut u8, buff_size_needed);
+        copy_nonoverlapping(INITRD_MANAGER.as_ptr(), buff as *mut u8, buff_size_needed);
     }
 
     Status::SUCCESS
