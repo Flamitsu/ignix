@@ -4,7 +4,9 @@
 use core::time::Duration;
 #[allow(unused)]
 mod config;
+#[allow(unused)]
 mod filesystem;
+#[allow(unused)]
 use config::*;
 use filesystem::*;
 use ignix_sdk::{
@@ -25,12 +27,13 @@ extern "efiapi" fn efi_main(image_handle: Handle, system_table: *mut SystemTable
         println!("ERROR: {}", e);
         return e.as_status();
     }
+    stall(Duration::from_secs(10)).unwrap();
     Status::SUCCESS
 }
 
 #[allow(unused)]
 fn run() -> Result<(), IgnixError> {
-    let mut fs = open_root_fs()?;
+    /*let mut fs = open_root_fs()?;
     let loader_config: LoaderConfig = read_config(&mut fs)?;
     let timeout_ms = loader_config.timeout * 1000;
     let mut elapsed_ms = 0;
@@ -39,7 +42,7 @@ fn run() -> Result<(), IgnixError> {
     while elapsed_ms < timeout_ms {
         stall(Duration::from_millis(STEP_MS.into()))?;
         elapsed_ms += STEP_MS as usize;
-    }
+    }*/
     load_initrds(&str_utf16!("initramfs-linux.img"))?;
     load_kernel(&str_utf16!("vmlinuz-linux"))?;
     Ok(())

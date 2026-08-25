@@ -1,12 +1,12 @@
 use crate::config::{CONFIG_ROUTE, ConfigKeywords, LoaderConfig, LoaderData};
 use core::{ffi::c_void, marker::PhantomData, mem::forget, ptr::null_mut};
 use ignix_sdk::{
-    init::{HANDLE, INITRD_FILES},
+    init::{HANDLE, INITRD_MANAGER},
     protocol::{
-        DevicePathNode, DevicePathProtocol, VendorDevicePathNode,
+        DevicePathProtocol,
         loaded_image::LoadedImageProtocol,
         media::{
-            File, FileAttributes, LINUX_EFI_INITRD_MEDIA_GUID, LoadFile2, OpenModes,
+            File, FileAttributes, LoadFile2, OpenModes,
             SimpleFileSystem, SimpleFileSystemFFI,
         },
     },
@@ -89,7 +89,8 @@ pub fn load_kernel(kernel_name: &[u16]) -> Result<(), IgnixError> {
         &LoadedImageProtocol::GUID,
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
-
+    // I'm going to hardcode my root UUID, don't get scared, this will be dynamic in the future.
+    // But for now it works like this, i'm sowwy.
     let cmdline = &str_utf16!("root=UUID=78b80ce8-f663-4e11-9b96-d036a4d0082d rw");
     loaded_kernel.set_load_options(cmdline);
     start_image(kernel_handle).map_err(|(err, _image)| err)?;
@@ -103,38 +104,30 @@ pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
 
     let mut source_buffer = allocate_pool(MemoryType::EfiLoaderData, file_size)?;
     initrd_file.read(source_buffer.as_mut_slice(file_size))?;
-    INITRD_FILES.set(source_buffer);
+    INITRD_MANAGER.set(source_buffer);
 
     let mut initrd_image = IgnixImage {
         handle: Some(null_mut()),
         _m: PhantomData,
     };
 
-    let device_path = DevicePathNode::new(
-        0x04,
-        0x03,
-        VendorDevicePathNode {
-            guid: LINUX_EFI_INITRD_MEDIA_GUID,
-        },
-    );
-
+    
     install_protocol_interface(
         &mut initrd_image,
         &DevicePathProtocol::GUID,
         InterfaceType::Native,
-        Some(&device_path as *const _ as *mut c_void),
+        Some(INITRD_MANAGER.get_linux_path_ptr() as *mut c_void),
     )?;
 
     install_protocol_interface(
         &mut initrd_image,
         &LoadFile2::GUID,
         InterfaceType::Native,
-        Some(&INITRD_FILES.ffi as *const _ as *mut c_void),
+        Some(&INITRD_MANAGER.ffi as *const _ as *mut c_void),
     )?;
 
     // This is done so rust don't clean this memory (needed so the kernel can find this)
     forget(initrd_image);
-    forget(device_path);
     Ok(())
 }
 pub fn open_root_fs() -> Result<File, IgnixError> {
