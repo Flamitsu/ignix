@@ -22,12 +22,11 @@ use ignix_sdk::{
 extern "efiapi" fn efi_main(image_handle: Handle, system_table: *mut SystemTable) -> Status {
     SYSTEM_TABLE.set(system_table).unwrap();
     HANDLE.set(image_handle).unwrap();
-    println!("efi_main: {:p}", efi_main as *const ());
     if let Err(e) = run() {
         println!("ERROR: {}", e);
+        stall(Duration::from_secs(10)).unwrap();
         return e.as_status();
     }
-    stall(Duration::from_secs(10)).unwrap();
     Status::SUCCESS
 }
 
