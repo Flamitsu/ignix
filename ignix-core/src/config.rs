@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pub const CONFIG_ROUTE: &str = "\\loader\\ignix\\loader.conf";
+pub const ENTRIES_DIR: &str = "\\loader\\entries";
 
 pub struct LoaderConfig {
     pub timeout: usize,
