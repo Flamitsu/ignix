@@ -30,7 +30,6 @@ extern "efiapi" fn efi_main(image_handle: Handle, system_table: *mut SystemTable
     Status::SUCCESS
 }
 
-#[allow(unused)]
 fn run() -> Result<(), IgnixError> {
     /*let mut fs = open_root_fs()?;
     let loader_config: LoaderConfig = read_config(&mut fs)?;
