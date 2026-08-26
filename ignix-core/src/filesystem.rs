@@ -6,8 +6,7 @@ use ignix_sdk::{
         DevicePathProtocol,
         loaded_image::LoadedImageProtocol,
         media::{
-            File, FileAttributes, LoadFile2, OpenModes,
-            SimpleFileSystem, SimpleFileSystemFFI,
+            File, FileAttributes, LoadFile2, OpenModes, SimpleFileSystem, SimpleFileSystemFFI,
         },
     },
     services::boot::{
@@ -96,18 +95,32 @@ pub fn load_kernel(kernel_name: &[u16], fs: &mut File) -> Result<(), IgnixError>
     Ok(())
 }
 
-pub fn load_initrds(initrd_name: &[u16], fs: &mut File) -> Result<(), IgnixError> {
+pub fn load_initrds(
+    initrd_name: &[u16],
+    ucode_name: &[u16],
+    fs: &mut File,
+) -> Result<(), IgnixError> {
     let mut initrd_file = fs.open(initrd_name, OpenModes::READ, FileAttributes::NONE)?;
-    let file_size: usize = initrd_file.get_info()?.file_size.try_into().unwrap();
-    let mut source_buffer = allocate_pool(MemoryType::EfiLoaderData, file_size)?;
-    initrd_file.read(source_buffer.as_mut_slice(file_size))?;
+    let initrd_size: usize = initrd_file.get_info()?.file_size.try_into().unwrap();
+
+    let mut ucode_file = fs.open(ucode_name, OpenModes::READ, FileAttributes::NONE)?;
+    let ucode_size: usize = ucode_file.get_info()?.file_size.try_into().unwrap();
+
+    let buf_size = ucode_size + initrd_size;
+
+    let mut source_buffer = allocate_pool(MemoryType::EfiLoaderData, buf_size)?;
+
+    let buf = source_buffer.as_mut_slice(buf_size);
+    ucode_file.read(&mut buf[0..ucode_size])?;
+    initrd_file.read(&mut buf[ucode_size..buf_size])?;
+
     INITRD_MANAGER.set(source_buffer);
 
     let mut initrd_image = IgnixImage {
         handle: Some(null_mut()),
         _m: PhantomData,
     };
-    
+
     install_protocol_interface(
         &mut initrd_image,
         &DevicePathProtocol::GUID,

@@ -1,24 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-only
-use core::fmt::{self, Write};
 use crate::init::SYSTEM_TABLE;
+use core::fmt::{self, Write};
 
 const BUFF_LEN: usize = 128;
 
 pub struct Writer;
 impl Writer {
-    fn flush(buffer: &mut [u16;BUFF_LEN], len: usize) -> fmt::Result {
+    fn flush(buffer: &mut [u16; BUFF_LEN], len: usize) -> fmt::Result {
         if len == 0 {
             return Ok(());
         }
-        let mut con_out = SYSTEM_TABLE.get().get_stdout().unwrap(); 
+        let mut con_out = SYSTEM_TABLE.get().get_stdout().unwrap();
         buffer[len] = 0;
-        con_out.output_string(&buffer[..=len]).map_err(|_| fmt::Error)?;
+        con_out
+            .output_string(&buffer[..=len])
+            .map_err(|_| fmt::Error)?;
         Ok(())
     }
 }
 impl Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        let mut buffer = [0u16;BUFF_LEN];
+        let mut buffer = [0u16; BUFF_LEN];
         let mut i = 0;
         for c in s.encode_utf16() {
             if i >= BUFF_LEN - 1 {

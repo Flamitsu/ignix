@@ -1,8 +1,15 @@
 use crate::{
-    init::INITRD_MANAGER, println, protocol::{DevicePathProtocol, device_path::VendorDevicePathNode}, services::boot::{memory::allocate_pool, misc::stall}, types::{AllocateType, DevicePath, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid},
+    init::INITRD_MANAGER,
+    println,
+    protocol::{DevicePathProtocol, device_path::VendorDevicePathNode},
+    services::boot::{memory::allocate_pool, misc::stall},
+    types::{AllocateType, DevicePath, Guid, IgnixError, MemoryType, PoolBuffer, Status, Uuid},
 };
 use core::{
-    ffi::c_void, ptr::{NonNull, copy_nonoverlapping, null_mut}, sync::atomic::{AtomicPtr, AtomicUsize, Ordering}, time::Duration,
+    ffi::c_void,
+    ptr::{NonNull, copy_nonoverlapping, null_mut},
+    sync::atomic::{AtomicPtr, AtomicUsize, Ordering},
+    time::Duration,
 };
 /* I know I'm repeating here, but I haven't found any way to compact it into one main helper
  * function.

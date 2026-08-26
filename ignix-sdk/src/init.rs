@@ -1,5 +1,10 @@
 use crate::{
-    protocol::{DevicePathNode, DevicePathProtocol, VendorDevicePathNode, media::{LINUX_EFI_INITRD_MEDIA_GUID, LoadFile2FFI, initrd_load_file}}, table::SystemTable, types::{Handle, PoolBuffer, Status},
+    protocol::{
+        DevicePathNode, DevicePathProtocol, VendorDevicePathNode,
+        media::{LINUX_EFI_INITRD_MEDIA_GUID, LoadFile2FFI, initrd_load_file},
+    },
+    table::SystemTable,
+    types::{Handle, PoolBuffer, Status},
 };
 use core::{
     ffi::c_void,
@@ -77,12 +82,13 @@ pub struct InitrdManager {
     ptr: AtomicPtr<u8>,
     len: AtomicUsize,
     pub ffi: LoadFile2FFI,
-    initrd_device_path: DevicePathNode<VendorDevicePathNode>
+    initrd_device_path: DevicePathNode<VendorDevicePathNode>,
 }
 
 impl InitrdManager {
     pub const fn new() -> Self {
-        let node_size = (size_of::<DevicePathProtocol>() + size_of::<VendorDevicePathNode>()) as u16;
+        let node_size =
+            (size_of::<DevicePathProtocol>() + size_of::<VendorDevicePathNode>()) as u16;
         Self {
             ptr: AtomicPtr::new(null_mut()),
             len: AtomicUsize::new(0),
@@ -93,20 +99,20 @@ impl InitrdManager {
                 hdr: DevicePathProtocol {
                     r#type: 0x04,
                     subtype: 0x03,
-                    length: node_size.to_le_bytes()
+                    length: node_size.to_le_bytes(),
                 },
                 node: VendorDevicePathNode {
-                    guid: LINUX_EFI_INITRD_MEDIA_GUID
+                    guid: LINUX_EFI_INITRD_MEDIA_GUID,
                 },
                 end: DevicePathProtocol {
                     r#type: 0x7F,
                     subtype: 0xFF,
-                    length: [4,0]
-                }
-            }
+                    length: [4, 0],
+                },
+            },
         }
     }
-    
+
     pub fn get_linux_path_ptr(&self) -> *const DevicePathNode<VendorDevicePathNode> {
         &self.initrd_device_path
     }

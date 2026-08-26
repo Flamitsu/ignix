@@ -42,9 +42,13 @@ fn run() -> Result<(), IgnixError> {
         elapsed_ms += STEP_MS as usize;
     }*/
     /* As the same as the cmdline string, this is hardcoded at this time to 'work on my machine™©' */
-    
-    load_initrds(&str_utf16!("initramfs-linux.img"), &mut fs)?;
-    load_kernel(&str_utf16!("vmlinuz-linux"),&mut fs)?;
+
+    load_initrds(
+        &str_utf16!("initramfs-linux.img"),
+        &str_utf16!("intel-ucode.img"),
+        &mut fs,
+    )?;
+    load_kernel(&str_utf16!("vmlinuz-linux"), &mut fs)?;
     Ok(())
 }
 
