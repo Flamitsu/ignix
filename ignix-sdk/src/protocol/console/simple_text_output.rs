@@ -41,8 +41,8 @@ impl SimpleTextOutputProtocol {
         unsafe { self.protocol.as_ref() }
     }
 
-    pub fn reset(&mut self, extended: bool) -> Result<(), IgnixError> {
-        let status = unsafe { (self.get_protocol().reset)(self.protocol.as_ptr(), extended) };
+    pub fn reset(&mut self) -> Result<(), IgnixError> {
+        let status = unsafe { (self.get_protocol().reset)(self.protocol.as_ptr(), true) };
         if status.is_error() {
             Err(status.context("SimpleTextOutputProtocol.reset"))?
         }

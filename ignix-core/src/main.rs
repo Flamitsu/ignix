@@ -31,8 +31,8 @@ extern "efiapi" fn efi_main(image_handle: Handle, system_table: *mut SystemTable
 }
 
 fn run() -> Result<(), IgnixError> {
-    /*let mut fs = open_root_fs()?;
-    let loader_config: LoaderConfig = read_config(&mut fs)?;
+    let mut fs = open_root_fs()?;
+    /*let loader_config: LoaderConfig = read_config(&mut fs)?;
     let timeout_ms = loader_config.timeout * 1000;
     let mut elapsed_ms = 0;
     /* Since UEFI is single threaded, need to detect input, refresh entries etc at 100ms (I mean, I
@@ -41,8 +41,10 @@ fn run() -> Result<(), IgnixError> {
         stall(Duration::from_millis(STEP_MS.into()))?;
         elapsed_ms += STEP_MS as usize;
     }*/
-    load_initrds(&str_utf16!("initramfs-linux.img"))?;
-    load_kernel(&str_utf16!("vmlinuz-linux"))?;
+    /* As the same as the cmdline string, this is hardcoded at this time to 'work on my machine™©' */
+    
+    load_initrds(&str_utf16!("initramfs-linux.img"), &mut fs)?;
+    load_kernel(&str_utf16!("vmlinuz-linux"),&mut fs)?;
     Ok(())
 }
 

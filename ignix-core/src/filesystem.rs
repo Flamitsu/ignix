@@ -69,15 +69,14 @@ pub fn read_config(fs: &mut File) -> Result<LoaderConfig, IgnixError> {
     }
     Ok(LoaderConfig { timeout })
 }
-#[allow(unused)]
-pub fn load_entries<'a>(// fs: &mut FileProtocolWrapper
+/*#[allow(unused)]
+pub fn load_entries<'a>(fs: &mut File
 ) -> Result<LoaderData<'a>, IgnixError> {
-    // let entries = fs.open(&str_utf16!(ENTRIES_DIR), OpenModes::READ, FileAttributes::DIRECTORY)?;
+    let entries = fs.open(&str_utf16!(ENTRIES_DIR), OpenModes::READ, FileAttributes::DIRECTORY)?;
     Ok(LoaderData::new())
-}
+}*/
 
-pub fn load_kernel(kernel_name: &[u16]) -> Result<(), IgnixError> {
-    let mut fs = open_root_fs()?;
+pub fn load_kernel(kernel_name: &[u16], fs: &mut File) -> Result<(), IgnixError> {
     let mut file = fs.open(kernel_name, OpenModes::READ, FileAttributes::NONE)?;
     let file_size: usize = file.get_info()?.file_size.try_into().unwrap();
     let mut source_buffer = allocate_pool(MemoryType::EfiLoaderData, file_size)?;
@@ -97,11 +96,9 @@ pub fn load_kernel(kernel_name: &[u16]) -> Result<(), IgnixError> {
     Ok(())
 }
 
-pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
-    let mut fs = open_root_fs()?;
+pub fn load_initrds(initrd_name: &[u16], fs: &mut File) -> Result<(), IgnixError> {
     let mut initrd_file = fs.open(initrd_name, OpenModes::READ, FileAttributes::NONE)?;
     let file_size: usize = initrd_file.get_info()?.file_size.try_into().unwrap();
-
     let mut source_buffer = allocate_pool(MemoryType::EfiLoaderData, file_size)?;
     initrd_file.read(source_buffer.as_mut_slice(file_size))?;
     INITRD_MANAGER.set(source_buffer);
@@ -110,7 +107,6 @@ pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
         handle: Some(null_mut()),
         _m: PhantomData,
     };
-
     
     install_protocol_interface(
         &mut initrd_image,
@@ -126,11 +122,13 @@ pub fn load_initrds(initrd_name: &[u16]) -> Result<(), IgnixError> {
         Some(&INITRD_MANAGER.ffi as *const _ as *mut c_void),
     )?;
 
-    // This is done so rust don't clean this memory (needed so the kernel can find this)
+    /* This is so initrd_image survives the scope, so the Kernel can actually point to the initrd
+     * and not to a dangling pointer (It doesn't execute the Drop) */
     forget(initrd_image);
     Ok(())
 }
 pub fn open_root_fs() -> Result<File, IgnixError> {
+    // This is done because I need the device handle of the ignix binary
     let image_guard = open_protocol::<LoadedImageProtocol>(
         &HANDLE.get(),
         &LoadedImageProtocol::GUID,
@@ -142,6 +140,6 @@ pub fn open_root_fs() -> Result<File, IgnixError> {
         &SimpleFileSystem::GUID,
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
-    let mut sfsp = unsafe { SimpleFileSystem::new(fs_guard.interface) };
-    sfsp.open_volume()
+    let mut sfs = unsafe { SimpleFileSystem::new(fs_guard.interface) };
+    sfs.open_volume()
 }

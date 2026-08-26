@@ -108,7 +108,7 @@ impl InitrdManager {
     }
     
     pub fn get_linux_path_ptr(&self) -> *const DevicePathNode<VendorDevicePathNode> {
-        core::ptr::addr_of!(self.initrd_device_path)
+        &self.initrd_device_path
     }
 
     pub fn set(&self, buffer: PoolBuffer) {
