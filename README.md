@@ -100,4 +100,4 @@ To contribute to this project you should look at the [contributing guidelines](h
 This project is licensed under the [GPL-3.0](https://github.com/Flamitsu/ignix/blob/main/LICENSE)
 
 ## Credits
-Flamitsu - student 
+Flamitsu - Lead developer 
