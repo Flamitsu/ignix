@@ -9,9 +9,7 @@ use crate::table::boot::BootServices;
 use crate::table::runtime::RuntimeServices;
 use crate::types::{Handle, Table};
 use core::ffi::c_void;
-// Code that is with '*mut c_void' is for structure normally. Don't even think of trying them!
 #[allow(unused)]
-// All structs that are here, needs the parameter #[repr(C)]
 #[repr(C)]
 pub struct SystemTable {
     hdr: Header,

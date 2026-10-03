@@ -13,9 +13,7 @@ pub fn get_next_high_monotonic_count() -> Result<u32, IgnixError> {
     }
     Ok(number)
 }
-/// Resets the entire platform. If the platform supports See ref:EFI_RESET_NOTIFICATION_PROTOCOL,
-/// then prior to completing the reset of the platform, all of the pending notifications must
-/// be called
+/// Resets the entire platform. 
 pub fn reset_system<const N: usize>(
     reset_type: ResetType,
     reset_status: Status,
