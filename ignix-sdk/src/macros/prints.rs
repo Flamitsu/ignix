@@ -48,7 +48,7 @@ macro_rules! println {
     () => {
         $crate::print!("\r\n");
     };
-    // This is a pattern that catchs parameters like {int} for example to show them into a print
+    // This is a pattern that catches parameters like {int} for example to show them into a print
     ($($arg:tt)*) => {
         $crate::print!("{}\r\n", format_args!($($arg)*));
     };

@@ -22,7 +22,7 @@ impl InitGlobalSystemTable {
         }
     }
     /* Just a big disclaimer, UEFI is single-threaded. I'm doing this so its safe for rust and
-     * lets me use this withouth using unsafe keyword.*/
+     * lets me use this without using unsafe keyword.*/
     #[inline(always)]
     pub fn set(&self, item: *const SystemTable) -> Result<(), Status> {
         let item_mut = item as *mut SystemTable;

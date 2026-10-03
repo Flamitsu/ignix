@@ -48,12 +48,13 @@ impl EventType {
  * will see what I mean */
 pub type EventNotifyFn = unsafe extern "efiapi" fn(event: Event, context: *mut c_void);
 
-#[derive(Clone, Copy)] // Just in case you need to use it inside a loop
+/// Task Priority Level type that implements RAII to restore old TPL
+#[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct Tpl(pub usize);
-// Those numbers can be found in UEFI spec 2.11 page 150 section "Related definitions"
 #[allow(unused)]
 impl Tpl {
+    // You can find those numbers can be found in UEFI spec 2.11 page 150 section "Related definitions"
     /// the lowest priority level
     pub const TPL_APPLICATION: Self = Self(4);
     /// An intermediate priority level
@@ -65,6 +66,32 @@ impl Tpl {
     /// long periods of time since it may cause inestability
     pub const TPL_HIGH_LEVEL: Self = Self(31);
 }
+
+/* NOTE FROM THE UEFI SPEC:
+ * If NewTPL is below the current TPL level, then the system behaviour is indeterminate.
+ * Executing TPLs ABOVE TPL_APPLICATION for longer periods of time may also result
+ * in unpredictable behaviour
+ * ( I was wondering how to manage this, looked to uefi-rs code in uefi/src/boot.rs
+ * and it shows this same solution. Thank you guys. )
+ * Just to clarify, this next section is licensed as:
+ * SDPX-License identifier: MIT OR Apache 2.0 */
+pub struct TplGuardian {
+    pub old_tlp: Tpl,
+}
+
+impl TplGuardian {
+    #[must_use]
+    pub const fn get_old_tpl(&self) -> Tpl {
+        self.old_tlp
+    }
+}
+
+impl Drop for TplGuardian {
+    fn drop(&mut self) {
+        restore_tpl(self.old_tlp);
+    }
+}
+// This section is back licensed to GPL-3
 
 #[repr(transparent)]
 pub struct EventGroup(pub Guid);
@@ -173,30 +200,5 @@ pub struct IgnixEvent<'a> {
 impl<'a> Drop for IgnixEvent<'a> {
     fn drop(&mut self) {
         let _ = close_event(self.raw_event);
-    }
-}
-
-/* NOTE FROM THE UEFI SPEC:
- * If NewTPL is below the current TPL level, then the system behaviour is indeterminate.
- * Executing TPLs ABOVE TPL_APPLICATION for longer periods of time may also result
- * in unpredictable behaviour
- * ( I was wondering how to manage this, looked to uefi-rs code in uefi/src/boot.rs
- * and it shows this same solution. Thank you guys. )
- * Just to clarify, this next section is licensed as:
- * SDPX-License identifier: MIT OR Apache 2.0 */
-pub struct TplGuardian {
-    pub old_tlp: Tpl,
-}
-
-impl TplGuardian {
-    #[must_use]
-    pub const fn get_old_tpl(&self) -> Tpl {
-        self.old_tlp
-    }
-}
-
-impl Drop for TplGuardian {
-    fn drop(&mut self) {
-        restore_tpl(self.old_tlp);
     }
 }

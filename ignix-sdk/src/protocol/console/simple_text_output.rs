@@ -23,7 +23,7 @@ pub struct SimpleTextOutputProtocolFFI {
     pub mode: *mut SimpleTextOutputMode,
 }
 
-// This is the wrapper that allows to use SimpleTextOutputProtocol withouth unsafe lines
+// This is the wrapper that allows to use SimpleTextOutputProtocol without unsafe lines
 pub struct SimpleTextOutputProtocol {
     protocol: NonNull<SimpleTextOutputProtocolFFI>,
 }

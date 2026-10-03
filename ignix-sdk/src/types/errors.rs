@@ -1,6 +1,5 @@
-use core::ops::Not;
-
 // SPDX-License-Identifier: GPL-3.0-only
+/// Status type that the UEFI returns when an action occurs.
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Status(pub usize);
@@ -183,16 +182,11 @@ impl core::fmt::Debug for Status {
             Self::COMPROMISED_DATA => write!(f, "FW: COMPROMISED_DATA"),
             Self::IP_ADDRESS_CONFLICT => write!(f, "FW: IP_ADDRESS_CONFLICT"),
             Self::HTTP_ERROR => write!(f, "FW: HTTP_ERROR"),
-            Self::ST_POINTER_MISSING => write!(f, "IGNIX: ST_POINTER_MISSING"),
-            Self::BST_POINTER_MISSING => write!(f, "IGNIX: BST_POINTER_MISSING"),
-            Self::RST_POINTER_MISSING => write!(f, "IGNIX: RST_POINTER_MISSING"),
-            Self::HANDLE_DEVICE_IS_NULL => write!(f, "IGNIX: HANDLE_DEVICE_IS_NULL"),
-            Self::PROTOCOL_POINTER_NOT_FOUND => write!(f, "IGNIX: PROTOCOL_POINTER_NOT_FOUND"),
             _ => write!(f, "What the fuck did you do Status(0x{:X})", self.0),
         }
     }
 }
-
+/// Self error type that contains the errors status & the function
 pub struct IgnixError {
     pub status: Status,
     pub func: &'static str,

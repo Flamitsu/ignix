@@ -34,7 +34,7 @@ pub struct RuntimeServices {
     ) -> Status,
     pub convert_pointer: unsafe extern "efiapi" fn(
         debug_position: DebugDisposition,
-        addres: *mut *mut c_void,
+        address: *mut *mut c_void,
     ) -> Status,
 
     // Variable services

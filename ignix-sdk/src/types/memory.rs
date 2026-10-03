@@ -92,7 +92,7 @@ pub enum AllocateType {
     /// On input, the address pointed to by Memory is ignored
     AllocateAnyPages = 0,
 
-    /// allocate any aviable range of pages whose uppermost address
+    /// allocate any available range of pages whose uppermost address
     /// is less than or equal to the address pointed to and by Memory on input
     AllocateMaxAddress = 1,
 

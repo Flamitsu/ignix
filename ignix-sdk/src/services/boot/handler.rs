@@ -422,7 +422,7 @@ pub fn open_protocol_information<T>(
         ptr,
     })
 }
-/* I'm going to left those functions withouth completing for now. Because I don't see them as
+/* I'm going to left those functions without completing for now. Because I don't see them as
  * urgent as the others are.
  * pub fn connect_controller(&self) {}
  * pub fn disconnect_controller(&self) {}*/

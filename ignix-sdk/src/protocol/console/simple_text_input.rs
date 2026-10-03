@@ -9,7 +9,7 @@ use core::{
     ptr::{NonNull, null, null_mut},
 };
 /* This is the EXTENDED VERSION of the Input Protocol. Means motherboards before 2006 may not support
- * this, but anyways they also do whathever they want with the firmware so its not even granted on
+ * this, but anyways they also do whatever they want with the firmware so its not even granted on
  * any other */
 #[repr(C)]
 pub struct SimpleTextInputProtocolFFI {
@@ -78,7 +78,7 @@ impl SimpleTextInputProtocol {
         let mut key_data: KeyData = unsafe { zeroed() };
         let status =
             unsafe { (self.get_protocol().read_key_stroke)(self.protocol.as_ptr(), &mut key_data) };
-        // Whenever you call this function and there is not a key stroke in that milisecond
+        // Whenever you call this function and there is not a key stroke in that millisecond
         // the input handle returns not_ready. That doesn't mean its not right it's just that
         // the data didn't changed, like the Status::NOT_READY documentation says
         if status == Status::NOT_READY {
