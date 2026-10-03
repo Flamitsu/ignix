@@ -88,7 +88,7 @@ pub fn load_kernel(kernel_name: &[u16], fs: &mut File) -> Result<(), IgnixError>
         OpenProtocolAttributes::GET_PROTOCOL,
     )?;
     // I'm going to hardcode my root UUID, don't get scared, this will be dynamic in the future.
-    // But for now it works like this, i'm sowwy.
+    // But for now it works like this, i'm srry.
     let cmdline = &str_utf16!("root=UUID=78b80ce8-f663-4e11-9b96-d036a4d0082d rw");
     loaded_kernel.set_load_options(cmdline);
     start_image(kernel_handle).map_err(|(err, _image)| err)?;

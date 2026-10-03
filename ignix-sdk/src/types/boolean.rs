@@ -7,6 +7,7 @@
  * are diabolical, so, sometimes they can return a "0x02" instead
  * of "0x01" as true. That causes UB in Rust. (Yeah my jaw also dropped)
 */
+/// ABI compatible UEFI boolean.
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct Boolean(pub u8);
