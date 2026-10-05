@@ -42,12 +42,9 @@ pub fn stall(duration: Duration) -> Result<(), IgnixError> {
 
 /// Copies the contents of one buffer to another.
 /// The following rules can be used to guarantee the correct behavior:
-/// 1. If Destination and Source are identical, then no operation should be performed.
-/// 2. If Destination > Source and Destination < ( Source + Length ), then the data should be
-///    copied from the Source buffer to the Destination buffer starting
-///    from the end of the buffers and working toward the beginning of the buffers.
-/// 3. Otherwise, the data should be copied from the Source buffer to the Destination buffer
-///    starting from the beginning of the buffers and working toward the end of the buffers.
+/// 1. If destination and source are equal, no operation is performed.
+/// 2. If destination is greater than source and destination is lesser than source and length the data
+/// will be copied from the Source buffer to the Destination buffer
 pub fn copy_mem(dest: &mut [u8], src: &[u8]) -> Result<(), IgnixError> {
     assert!(
         dest.len() >= src.len(),

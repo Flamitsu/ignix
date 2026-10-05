@@ -56,7 +56,9 @@ pub fn install_protocol_interface(
     image.handle = Some(handle_val);
     Ok(())
 }
-
+/// Install an ignix protocol interface.
+/// This is a helper that should be used EXCLUSIVELY for Ignix protocols interfaces to communicate
+/// between modules.
 pub fn install_ignix_protocol_interface<'p, 'i: 'p>(
     image: &'p mut IgnixImage<'i>,
     guid: &Guid,

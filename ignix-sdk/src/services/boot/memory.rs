@@ -91,9 +91,7 @@ pub fn get_memory_map() -> Result<MemoryMap, IgnixError> {
      * Sometimes some bullshit implementations do too much
      * fragmentation so 8 is a good margin for me I think */
     mem_map.map_size += (mem_map.descriptor_size * 8);
-    /* I know this is a war crime, but rust forced me to do this fix as that function.
-     * However since this is a cleaner method, I prefer to keep it.
-     * old: let pages_needed = (mem_map.map_size + PAGE_SIZE - 1) / PAGE_SIZE*/
+    
     let pages_needed = mem_map.map_size.div_ceil(PAGE_SIZE);
 
     let buffer_ptr = allocate_pages(
@@ -120,6 +118,7 @@ pub fn get_memory_map() -> Result<MemoryMap, IgnixError> {
     Err(status.context("get_memory_map"))
 }
 /// Allocates pool memory.
+/// You will most likely use MemoryType::EfiLoaderData
 /// Allocates a memory region of Size bytes from memory of type PoolType and returns the
 /// address of the allocated memory in the location referenced by Buffer. This function
 /// allocates pages from EfiConventionalMemory as needed to grow the requested pool type
